@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate --schema=src/superadmin/prisma/schema.prisma && next build",
+    "postinstall": "prisma generate --schema=src/superadmin/prisma/schema.prisma",
     "start": "next start",
     "lint": "next lint",
     "create-super-admin": "tsx scripts/create-super-admin.ts",
