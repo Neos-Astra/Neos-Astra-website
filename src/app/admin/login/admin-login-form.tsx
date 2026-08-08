@@ -31,8 +31,8 @@ export default function AdminLoginForm() {
         return;
       }
 
-      // Success → go to admin dashboard
-      router.replace("/superadmin");
+      // Success → go to staff admin dashboard
+      router.replace("/admin");
       router.refresh();
     } catch {
       setError("An unexpected error occurred. Please try again.");

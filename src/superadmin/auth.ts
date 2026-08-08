@@ -3,6 +3,15 @@ import "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 
+// Ensure NextAuth v5 environment variables are populated on Vercel deployments
+if (!process.env.AUTH_SECRET) {
+  process.env.AUTH_SECRET = "neos-astra-secret-key-production-2026-v1-super-key";
+}
+if (!process.env.NEXTAUTH_SECRET) {
+  process.env.NEXTAUTH_SECRET = "neos-astra-secret-key-production-2026-v1-super-key";
+}
+process.env.AUTH_TRUST_HOST = "true";
+
 export type AdminRole = "SUPER_ADMIN" | "ADMIN";
 
 declare module "next-auth" {
