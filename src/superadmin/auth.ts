@@ -42,7 +42,8 @@ declare module "next-auth/jwt" {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "fallback-secret-for-development-only",
+  trustHost: true,
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "fallback-secret-for-neos-astra-2026-production",
   session: {
     strategy: "jwt",
     maxAge: 8 * 60 * 60, // 8 hours — persists across browser restarts
