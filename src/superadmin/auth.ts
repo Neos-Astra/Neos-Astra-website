@@ -68,12 +68,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const { prisma } = await import("@/superadmin/prisma/client");
 
-        const user = await prisma.adminUser.findUnique({
-          where: { email },
-        });
+        let user;
+        try {
+          user = await prisma.adminUser.findUnique({
+            where: { email },
+          });
+        } catch (dbErr: any) {
+          console.error("Database connection error in NextAuth authorize:", dbErr);
+          throw new Error("Database connection failed. Please check Vercel DATABASE_URL.");
+        }
 
         if (!user) {
-          throw new Error("Invalid credentials.");
+          throw new Error("No account found with this email.");
         }
 
         if (!user.isActive) {

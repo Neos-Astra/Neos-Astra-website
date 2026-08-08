@@ -29,7 +29,7 @@ export function LoginForm() {
       });
 
       if (res?.error) {
-        setError("Invalid email or password.");
+        setError(res.error.replace("Error: ", "") || "Invalid email or password.");
         setLoading(false);
         return;
       }
