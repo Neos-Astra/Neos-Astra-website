@@ -217,61 +217,6 @@ export default function Explore() {
 
   return (
     <div className="min-h-screen bg-[#030712] text-white">
-      {/* ========== HEADER / NAVIGATION ========== */}
-      <header className="sticky top-0 z-50 border-b border-white/5 bg-[#030712]/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-black tracking-tight">
-              NEOS <span className="text-cyan-400">ASTRA</span>
-            </span>
-            <span className="hidden text-xs text-slate-500 sm:inline">School of Innovation</span>
-          </div>
-
-          {/* Desktop Nav */}
-          <nav className="hidden items-center gap-6 text-sm md:flex">
-            <a href="#" className="text-slate-300 hover:text-white transition-colors">Home</a>
-            <a href="#" className="text-slate-300 hover:text-white transition-colors">Courses</a>
-            <a href="#" className="text-slate-300 hover:text-white transition-colors">About</a>
-            <a href="#" className="text-slate-300 hover:text-white transition-colors">Team</a>
-            <a href="#" className="text-slate-300 hover:text-white transition-colors">Events</a>
-            <a href="#" className="text-slate-300 hover:text-white transition-colors">Community</a>
-          </nav>
-
-          {/* Right side */}
-          <div className="flex items-center gap-3">
-            <button className="hidden rounded-lg border border-white/10 px-4 py-1.5 text-sm text-slate-300 hover:bg-white/5 md:block">
-              Login
-            </button>
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="block text-slate-300 hover:text-white md:hidden"
-            >
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Nav */}
-        {isMenuOpen && (
-          <div className="border-t border-white/5 bg-[#030712]/95 px-4 py-4 md:hidden">
-            <div className="flex flex-col gap-3 text-sm">
-              <a href="#" className="text-slate-300 hover:text-white">Home</a>
-              <a href="#" className="text-slate-300 hover:text-white">Courses</a>
-              <a href="#" className="text-slate-300 hover:text-white">About</a>
-              <a href="#" className="text-slate-300 hover:text-white">Team</a>
-              <a href="#" className="text-slate-300 hover:text-white">Events</a>
-              <a href="#" className="text-slate-300 hover:text-white">Community</a>
-              <button className="mt-2 rounded-lg border border-white/10 px-4 py-2 text-left text-slate-300 hover:bg-white/5">
-                Login
-              </button>
-            </div>
-          </div>
-        )}
-      </header>
-
       {/* ========== MAIN CONTENT ========== */}
       <main className="relative overflow-hidden">
         {/* Ambient glows */}
