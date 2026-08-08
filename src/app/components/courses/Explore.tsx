@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { generateOfficialFeeReceiptHTML } from "@/lib/receiptTemplate";
 
 // ---------------------------------------------------------------------------
 // Neos Astra — Course Enrollment Form (FINAL VERSION)
@@ -736,151 +737,17 @@ function printReceipt({
   data: FormData;
   course: CourseItem;
 }) {
-  const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <title>Neos Astra Enrollment Receipt — ${registrationNo}</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', sans-serif; background: #fff; color: #111; padding: 40px 50px; font-size: 13px; }
+  const html = generateOfficialFeeReceiptHTML({
+    registrationNo,
+    studentName: data.studentName,
+    courseTitle: course.name,
+    admissionFee: course.admissionFee,
+    kitPrice: course.kitPrice,
+    total: course.total,
+    date: submittedAt,
+  });
 
-    .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 20px; border-bottom: 3px solid #06b6d4; margin-bottom: 24px; }
-    .brand-name { font-size: 26px; font-weight: 900; letter-spacing: 2px; color: #0e1726; }
-    .brand-name span { color: #06b6d4; }
-    .brand-sub { font-size: 11px; color: #6b7280; margin-top: 3px; letter-spacing: 0.5px; }
-    .reg-box { text-align: right; background: #f0fdfe; border: 1px solid #a5f3fc; border-radius: 8px; padding: 10px 16px; }
-    .reg-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; }
-    .reg-no { font-family: monospace; font-size: 16px; font-weight: 800; color: #0891b2; margin-top: 3px; }
-
-    .receipt-title { text-align: center; margin-bottom: 24px; }
-    .receipt-title h2 { font-size: 16px; font-weight: 700; color: #111; letter-spacing: 1px; text-transform: uppercase; }
-    .receipt-title p { font-size: 11px; color: #9ca3af; margin-top: 4px; }
-
-    .section { margin-bottom: 20px; }
-    .section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #06b6d4; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 12px; }
-
-    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .full { grid-column: span 2; }
-    .field label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #9ca3af; display: block; margin-bottom: 3px; }
-    .field p { font-size: 13px; font-weight: 600; color: #111; }
-
-    .fee-table { width: 100%; border-collapse: collapse; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
-    .fee-table th { background: #f8fafc; text-align: left; padding: 10px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: #6b7280; border-bottom: 1px solid #e5e7eb; }
-    .fee-table td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; }
-    .fee-table tr:last-child td { border-bottom: none; background: #f0fdfe; font-weight: 700; font-size: 14px; color: #0891b2; }
-    .course-name { font-weight: 700; font-size: 14px; }
-    .course-sub { font-size: 11px; color: #6b7280; margin-top: 2px; }
-
-    .status { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
-
-    .footer { margin-top: 32px; border-top: 2px dashed #e5e7eb; padding-top: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
-    .footer-left p { font-size: 11px; color: #9ca3af; line-height: 1.6; }
-    .footer-right { text-align: right; }
-    .footer-right .sig-line { border-top: 1px solid #111; width: 160px; margin-left: auto; padding-top: 4px; font-size: 10px; color: #9ca3af; }
-
-    .watermark { position: fixed; bottom: 40px; right: 40px; font-size: 10px; color: #d1d5db; letter-spacing: 1px; }
-
-    @media print {
-      body { padding: 30px 40px; }
-      .watermark { display: none; }
-    }
-  </style>
-</head>
-<body>
-
-  <div class="header">
-    <div>
-      <div class="brand-name">NEOS <span>ASTRA</span></div>
-      <div class="brand-sub">School of Innovation · STEM Education</div>
-    </div>
-    <div class="reg-box">
-      <div class="reg-label">Registration No.</div>
-      <div class="reg-no">${registrationNo}</div>
-    </div>
-  </div>
-
-  <div class="receipt-title">
-    <h2>Course Enrollment Receipt</h2>
-    <p>Date: ${submittedAt}</p>
-  </div>
-
-  <div class="section">
-    <div class="section-title">Student Information</div>
-    <div class="grid2">
-      <div class="field"><label>Student Name</label><p>${data.studentName}</p></div>
-      <div class="field"><label>Date of Birth</label><p>${data.dob || "—"}</p></div>
-      <div class="field"><label>Gender</label><p>${data.gender || "—"}</p></div>
-      <div class="field"><label>Class / Grade</label><p>${data.classGrade || "—"}</p></div>
-      <div class="field full"><label>School / Institution</label><p>${data.school || "—"}</p></div>
-      <div class="field"><label>Phone Number</label><p>${data.studentPhone}</p></div>
-      <div class="field"><label>Email Address</label><p>${data.studentEmail}</p></div>
-      <div class="field full"><label>Parent / Guardian Name</label><p>${data.guardianName || "—"}</p></div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">Course & Fee Details</div>
-    <table class="fee-table">
-      <thead>
-        <tr>
-          <th>Description</th>
-          <th style="text-align:right">Amount</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>
-            <div class="course-name">${course.name}</div>
-            <div class="course-sub">${course.subtitle} · ${course.duration}</div>
-          </td>
-          <td style="text-align:right"></td>
-        </tr>
-        <tr>
-          <td>Admission Fee</td>
-          <td style="text-align:right; font-weight:600">${course.admissionFee}</td>
-        </tr>
-        <tr>
-          <td>Kit Price</td>
-          <td style="text-align:right; font-weight:600">${course.kitPrice}</td>
-        </tr>
-        <tr>
-          <td>Total Amount</td>
-          <td style="text-align:right">${course.total}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  ${data.message ? `
-  <div class="section">
-    <div class="section-title">Additional Message</div>
-    <p style="color:#374151;line-height:1.6">${data.message}</p>
-  </div>` : ""}
-
-  <div style="margin-bottom:24px">
-    <span class="status">✓ Status: CONFIRMED</span>
-  </div>
-
-  <div class="footer">
-    <div class="footer-left">
-      <p><strong>Neos Astra — School of Innovation</strong></p>
-      <p>hello@neosastra.com · +91 98765 43210</p>
-      <p style="margin-top:6px;font-size:10px">This is a computer-generated receipt. No signature required.</p>
-    </div>
-    <div class="footer-right">
-      <div class="sig-line">Authorized Signatory</div>
-    </div>
-  </div>
-
-  <div class="watermark">NEOS ASTRA · ${new Date().getFullYear()}</div>
-
-  <script>window.onload = function(){ window.print(); }</script>
-</body>
-</html>`;
-
-  const printWin = window.open("", "_blank", "width=860,height=750");
+  const printWin = window.open("", "_blank", "width=900,height=800");
   if (!printWin) {
     alert("Pop-up blocked! Allow popups for this site in your browser, then try again.");
     return;

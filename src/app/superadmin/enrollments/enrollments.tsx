@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Users, Search, Eye, X, Download, RefreshCw } from "lucide-react";
+import { Users, Search, Eye, X, Download, RefreshCw, Printer } from "lucide-react";
+import { generateOfficialFeeReceiptHTML } from "@/lib/receiptTemplate";
 
 interface Enrollment {
   id: string;
@@ -85,6 +86,30 @@ export default function EnrollmentsManagement() {
     const a = parseInt(e.admissionFee.replace(/[^0-9]/g, "") || "0");
     const k = parseInt(e.kitPrice.replace(/[^0-9]/g, "") || "0");
     return `₹${(a + k).toLocaleString("en-IN")}`;
+  };
+
+  const handlePrintReceipt = (eRecord: Enrollment) => {
+    const html = generateOfficialFeeReceiptHTML({
+      registrationNo: eRecord.registrationNo,
+      studentName: eRecord.studentName,
+      courseTitle: eRecord.courseTitle,
+      admissionFee: eRecord.admissionFee,
+      kitPrice: eRecord.kitPrice,
+      total: total(eRecord),
+      date: new Date(eRecord.createdAt).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }),
+    });
+
+    const printWin = window.open("", "_blank", "width=900,height=800");
+    if (!printWin) {
+      alert("Pop-up blocked! Allow popups for this site in your browser, then try again.");
+      return;
+    }
+    printWin.document.write(html);
+    printWin.document.close();
   };
 
   return (
@@ -179,12 +204,21 @@ export default function EnrollmentsManagement() {
                       {new Date(e.createdAt).toLocaleDateString("en-IN")}
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => setSelected(e)}
-                        className="flex items-center gap-1 rounded-lg border border-[#1D2436] px-3 py-1.5 text-xs text-[#8891A8] hover:border-[#4DE8E0] hover:text-[#4DE8E0] transition-all"
-                      >
-                        <Eye className="h-3 w-3" /> View
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setSelected(e)}
+                          className="flex items-center gap-1 rounded-lg border border-[#1D2436] px-3 py-1.5 text-xs text-[#8891A8] hover:border-[#4DE8E0] hover:text-[#4DE8E0] transition-all"
+                        >
+                          <Eye className="h-3 w-3" /> View
+                        </button>
+                        <button
+                          onClick={() => handlePrintReceipt(e)}
+                          title="Print Official Fee Receipt"
+                          className="flex items-center gap-1 rounded-lg border border-[#1D2436] px-3 py-1.5 text-xs text-[#4DE8E0] bg-[#4DE8E010] hover:bg-[#4DE8E020] transition-all"
+                        >
+                          <Printer className="h-3 w-3" /> Print
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -203,9 +237,17 @@ export default function EnrollmentsManagement() {
                 <h2 className="font-bold text-[#F3F6FB]">{selected.studentName}</h2>
                 <p className="font-mono text-xs text-[#4DE8E0]">{selected.registrationNo}</p>
               </div>
-              <button onClick={() => setSelected(null)} className="text-[#8891A8] hover:text-[#F3F6FB]">
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => handlePrintReceipt(selected)}
+                  className="flex items-center gap-1.5 rounded-xl border border-[#4DE8E033] bg-[#4DE8E010] px-4 py-2 text-xs font-bold text-[#4DE8E0] hover:bg-[#4DE8E020] transition-all"
+                >
+                  <Printer className="h-4 w-4" /> Print Fee Receipt
+                </button>
+                <button onClick={() => setSelected(null)} className="text-[#8891A8] hover:text-[#F3F6FB]">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 text-sm mb-6">
