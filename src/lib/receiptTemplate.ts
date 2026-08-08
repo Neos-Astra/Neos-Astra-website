@@ -1,4 +1,15 @@
 // src/lib/receiptTemplate.ts
+import fs from "fs";
+import path from "path";
+
+let logoDataUri = "";
+try {
+  const logoPath = path.join(process.cwd(), "public", "logo.png");
+  if (fs.existsSync(logoPath)) {
+    const b64 = fs.readFileSync(logoPath).toString("base64");
+    logoDataUri = `data:image/png;base64,${b64}`;
+  }
+} catch (e) {}
 
 export interface ReceiptData {
   registrationNo: string;
@@ -34,15 +45,19 @@ export function generateOfficialFeeReceiptHTML(data: ReceiptData): string {
           <div class="brand-web">www.neosastra.com | +91 9348059284</div>
         </div>
         <div class="header-center">
-          <div class="logo-circle">
-            <svg width="60" height="60" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="50" cy="50" r="46" stroke="#000" stroke-width="2.5" fill="#fff"/>
-              <path d="M25 65 C 25 35, 75 35, 75 65" stroke="#000" stroke-width="2.5" fill="none"/>
-              <circle cx="38" cy="48" r="6" fill="#000"/>
-              <circle cx="62" cy="48" r="6" fill="#000"/>
-              <text x="50" y="78" text-anchor="middle" font-family="Times New Roman, serif" font-size="14" font-weight="bold" fill="#000">Neos Astra</text>
-            </svg>
-          </div>
+          ${
+            logoDataUri
+              ? `<img src="${logoDataUri}" alt="Neos Astra Logo" style="height: 60px; max-width: 120px; object-fit: contain;" />`
+              : `<div class="logo-circle">
+                  <svg width="55" height="55" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="46" stroke="#000" stroke-width="2.5" fill="#fff"/>
+                    <path d="M25 65 C 25 35, 75 35, 75 65" stroke="#000" stroke-width="2.5" fill="none"/>
+                    <circle cx="38" cy="48" r="6" fill="#000"/>
+                    <circle cx="62" cy="48" r="6" fill="#000"/>
+                    <text x="50" y="78" text-anchor="middle" font-family="Times New Roman, serif" font-size="14" font-weight="bold" fill="#000">Neos Astra</text>
+                  </svg>
+                </div>`
+          }
         </div>
         <div class="header-right">
           <div class="receipt-badge">FEE RECEIPT</div>
@@ -123,7 +138,6 @@ export function generateOfficialFeeReceiptHTML(data: ReceiptData): string {
     .brand-web { font-size: 10px; margin-top: 2px; text-decoration: underline; }
 
     .header-center { width: 16%; text-align: center; }
-    .logo-circle { display: inline-block; }
 
     .header-right { width: 42%; text-align: right; font-family: 'Times New Roman', serif; }
     .receipt-badge { font-size: 15px; font-weight: bold; text-transform: uppercase; }
