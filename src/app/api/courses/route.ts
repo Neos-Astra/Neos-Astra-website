@@ -9,7 +9,11 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       where: { isActive: true },
     });
-    return NextResponse.json(courses);
+    return NextResponse.json(courses, {
+      headers: {
+        "Cache-Control": "public, s-maxage=30, stale-while-revalidate=120",
+      },
+    });
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch courses" }, { status: 500 });
   }

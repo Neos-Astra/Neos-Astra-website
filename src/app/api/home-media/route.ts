@@ -11,7 +11,11 @@ export async function GET() {
     const media = await prisma.homeMedia.findMany({
       orderBy: { position: "asc" },
     });
-    return NextResponse.json(media);
+    return NextResponse.json(media, {
+      headers: {
+        "Cache-Control": "public, s-maxage=30, stale-while-revalidate=120",
+      },
+    });
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch home media" }, { status: 500 });
   }
