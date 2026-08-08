@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+}
+
+model AdminUser {
+  id               String     @id @default(cuid())
+  name             String
+  email            String     @unique
+  passwordHash     String
+  role             AdminRole  @default(ADMIN)
+  canManageAdmins  Boolean    @default(false)
+  canDeleteUsers   Boolean    @default(false)
+  canEditCourses   Boolean    @default(true)
+  canManageEvents  Boolean    @default(true)
+  canManageContent Boolean    @default(true)
+  isActive         Boolean    @default(true)
+  lastLoginAt      DateTime?
+  failedLoginCount Int        @default(0)
+  lockedUntil      DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  auditLogs        AuditLog[]
+}
+
+model AuditLog {
+  id          String    @id @default(cuid())
+  action      String
+  targetType  String?
+  targetId    String?
+  details     String?
+  ipAddress   String?
+  adminUserId String
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+}
+
+model Course {
+  id           String   @id @default(cuid())
+  title        String
+  description  String
+  category     String   @default("General")
+  track        String?  @default("General")
+  price        String   @default("₹3,100")
+  admissionFee String   @default("₹2,000")
+  kitPrice     String   @default("₹1,100")
+  duration     String   @default("4 Weeks")
+  badge        String?  @default("Popular")
+  image        String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  createdBy    String?  @default("system")
+  updatedAt    DateTime @updatedAt
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  name      String
+  role      String
+  domain    String?  @default("General")
+  badge     String?  @default("Innovator")
+  bio       String
+  image     String?
+  linkedin  String?  @default("#")
+  twitter   String?  @default("#")
+  email     String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  createdBy String?  @default("system")
+  updatedAt DateTime @updatedAt
+}
+
+model Student {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  phone        String?
+  college      String?
+  branch       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Enrollment {
+  id             String   @id @default(cuid())
+  registrationNo String   @unique
+  studentName    String
+  dob            String?
+  gender         String?
+  classGrade     String?
+  school         String?
+  studentPhone   String
+  studentEmail   String
+  guardianName   String?
+  courseTitle    String
+  admissionFee   String   @default("₹2,000")
+  kitPrice       String   @default("₹1,100")
+  message        String?
+  status         String   @default("CONFIRMED")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model HomeMedia {
+  id        String   @id @default(cuid())
+  imageUrl  String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+}
