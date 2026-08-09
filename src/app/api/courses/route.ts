@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { title, description, category, track, price, admissionFee, kitPrice, duration, badge, image } = body;
+    const { title, description, category, track, price, admissionFee, kitPrice, hasKit, gstPercent, duration, badge, image } = body;
 
     if (!title || !description) {
       return NextResponse.json({ error: "Title and description are required" }, { status: 400 });
@@ -42,6 +42,8 @@ export async function POST(request: Request) {
         price: price || "₹3,100",
         admissionFee: admissionFee || "₹2,000",
         kitPrice: kitPrice || "₹1,100",
+        hasKit: hasKit ?? false,
+        gstPercent: gstPercent ?? 0,
         duration: duration || "4 Weeks",
         badge: badge || "Popular",
         image: image || null,

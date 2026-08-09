@@ -13,10 +13,34 @@ interface Course {
   price: string;
   admissionFee: string;
   kitPrice: string;
+  hasKit: boolean;
+  gstPercent: number;
   duration: string;
   badge: string | null;
   image: string | null;
   isActive: boolean;
+}
+
+// Helper: parse numeric value from price string like "₹2,000" → 2000
+function parseAmount(val: string): number {
+  return parseFloat(val.replace(/[^0-9.]/g, "")) || 0;
+}
+
+// Helper: format number to ₹ string
+function formatAmount(val: number): string {
+  return `₹${val.toLocaleString("en-IN")}`;
+}
+
+// Helper: compute total with GST
+function computeTotal(admissionFee: string, kitPrice: string, hasKit: boolean, gstPercent: number): string {
+  const base = parseAmount(admissionFee) + (hasKit ? parseAmount(kitPrice) : 0);
+  const gst = (base * gstPercent) / 100;
+  return formatAmount(Math.round(base + gst));
+}
+
+// Is the category Robotics-related?
+function isRoboticsCourse(category: string): boolean {
+  return category.toLowerCase().includes("robotics");
 }
 
 export default function CourseManagement() {
@@ -31,13 +55,24 @@ export default function CourseManagement() {
     description: "",
     category: "Robotics & AI",
     track: "Robotics",
-    price: "₹3,100",
     admissionFee: "₹2,000",
     kitPrice: "₹1,100",
+    hasKit: true,
+    gstPercent: 0,
+    price: "₹3,100",
     duration: "4 Weeks",
     badge: "Popular",
     image: "",
   });
+
+  // Auto-recalculate total whenever fees/GST/hasKit change
+  const autoTotal = computeTotal(formData.admissionFee, formData.kitPrice, formData.hasKit, formData.gstPercent);
+
+  // When category changes, auto-toggle hasKit
+  const handleCategoryChange = (category: string) => {
+    const isRobotics = isRoboticsCourse(category);
+    setFormData((prev) => ({ ...prev, category, hasKit: isRobotics }));
+  };
 
   const fetchCourses = async (showLoadingSpinner = false) => {
     try {
@@ -64,9 +99,11 @@ export default function CourseManagement() {
         description: course.description,
         category: course.category,
         track: course.track || "Robotics",
-        price: course.price || "₹3,100",
         admissionFee: course.admissionFee || "₹2,000",
         kitPrice: course.kitPrice || "₹1,100",
+        hasKit: course.hasKit ?? isRoboticsCourse(course.category),
+        gstPercent: course.gstPercent ?? 0,
+        price: course.price || "₹3,100",
         duration: course.duration,
         badge: course.badge || "Popular",
         image: course.image || "",
@@ -78,9 +115,11 @@ export default function CourseManagement() {
         description: "",
         category: "Robotics & AI",
         track: "Robotics",
-        price: "₹3,100",
         admissionFee: "₹2,000",
         kitPrice: "₹1,100",
+        hasKit: true,
+        gstPercent: 0,
+        price: "₹3,100",
         duration: "4 Weeks",
         badge: "Popular",
         image: "",
@@ -91,18 +130,19 @@ export default function CourseManagement() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const payload = { ...formData, price: autoTotal };
     try {
       if (editingCourse) {
         await fetch(`/api/courses/${editingCourse.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(payload),
         });
       } else {
         await fetch("/api/courses", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(payload),
         });
       }
       setIsModalOpen(false);
@@ -114,7 +154,6 @@ export default function CourseManagement() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this course? This cannot be undone.")) return;
-    // Instant UI update (0ms)
     setCourses((prev) => prev.filter((c) => c.id !== id));
     try {
       const res = await fetch(`/api/courses/${id}`, { method: "DELETE" });
@@ -134,6 +173,8 @@ export default function CourseManagement() {
       c.category.toLowerCase().includes(search.toLowerCase()) ||
       (c.track && c.track.toLowerCase().includes(search.toLowerCase()))
   );
+
+  const inputClass = "w-full px-4 py-2.5 bg-[#090C14] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] text-sm rounded-xl transition-colors";
 
   return (
     <AdminShell title="Courses">
@@ -168,58 +209,53 @@ export default function CourseManagement() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredCourses.map((c) => (
-            <div
-              key={c.id}
-              className="rounded-2xl border border-[#1D2436] bg-[#0F1420] overflow-hidden flex flex-col hover:border-[#4DE8E066] hover:-translate-y-1 transition-all duration-300"
-            >
-              {c.image ? (
-                <img src={c.image} alt={c.title} className="w-full h-36 object-cover" />
-              ) : (
-                <div className="w-full h-36 bg-gradient-to-br from-[#1D2436] to-[#0F1420] flex items-center justify-center">
-                  <BookOpen className="h-8 w-8 text-[#8891A8]" />
-                </div>
-              )}
-              <div className="p-4 flex flex-col flex-1">
-                <div className="flex items-center gap-1.5 flex-wrap mb-2">
-                  <span className="px-2 py-0.5 bg-[#4DE8E0]/10 text-[#4DE8E0] text-[10px] font-medium rounded-full">
-                    {c.category}
-                  </span>
-                  {c.track && (
-                    <span className="px-2 py-0.5 bg-[#8B7CFF]/10 text-[#8B7CFF] text-[10px] font-medium rounded-full">
-                      {c.track}
-                    </span>
-                  )}
-                </div>
-                <h3 className="text-base font-bold text-[#F3F6FB] mb-1.5 truncate">{c.title}</h3>
-                <p className="text-xs text-[#8891A8] line-clamp-2 mb-2 flex-1">{c.description}</p>
-                <div className="text-[11px] text-[#8891A8] space-y-0.5 mb-3 bg-[#090C14] p-2 rounded-lg border border-[#1D2436]">
-                  <div className="flex justify-between"><span>Admission:</span> <span className="text-[#F3F6FB]">{c.admissionFee || "₹2,000"}</span></div>
-                  <div className="flex justify-between"><span>Kit Price:</span> <span className="text-[#F3F6FB]">{c.kitPrice || "₹1,100"}</span></div>
-                  <div className="flex justify-between font-bold border-t border-[#1D2436] pt-1 mt-1 text-[#4DE8E0]"><span>Total:</span> <span>{c.price || "₹3,100"}</span></div>
-                </div>
-                <div className="flex items-center gap-3 text-xs text-[#8891A8] mb-4">
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> {c.duration}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 pt-3 border-t border-[#1D2436]">
-                  <button
-                    onClick={() => handleOpenModal(c)}
-                    className="flex-1 py-2 border border-[#1D2436] text-[#F3F6FB] text-xs font-medium hover:bg-[#1D2436] rounded-lg flex items-center justify-center gap-1.5 transition-colors"
-                  >
-                    <Pencil className="h-3 w-3" /> Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(c.id)}
-                    className="py-2 px-3 border border-red-500/20 text-red-400 text-xs font-medium hover:bg-red-500/10 rounded-lg flex items-center justify-center gap-1.5 transition-colors"
-                  >
-                    <Trash2 className="h-3 w-3" /> Delete
-                  </button>
+          {filteredCourses.map((c) => {
+            const gst = c.gstPercent ?? 0;
+            const base = parseAmount(c.admissionFee) + (c.hasKit ? parseAmount(c.kitPrice) : 0);
+            const gstAmt = Math.round(base * gst / 100);
+            return (
+              <div
+                key={c.id}
+                className="rounded-2xl border border-[#1D2436] bg-[#0F1420] overflow-hidden flex flex-col hover:border-[#4DE8E066] hover:-translate-y-1 transition-all duration-300"
+              >
+                {c.image ? (
+                  <img src={c.image} alt={c.title} className="w-full h-36 object-cover" />
+                ) : (
+                  <div className="w-full h-36 bg-gradient-to-br from-[#1D2436] to-[#0F1420] flex items-center justify-center">
+                    <BookOpen className="h-8 w-8 text-[#8891A8]" />
+                  </div>
+                )}
+                <div className="p-4 flex flex-col flex-1">
+                  <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                    <span className="px-2 py-0.5 bg-[#4DE8E0]/10 text-[#4DE8E0] text-[10px] font-medium rounded-full">{c.category}</span>
+                    {c.track && <span className="px-2 py-0.5 bg-[#8B7CFF]/10 text-[#8B7CFF] text-[10px] font-medium rounded-full">{c.track}</span>}
+                    {gst > 0 && <span className="px-2 py-0.5 bg-amber-400/10 text-amber-400 text-[10px] font-medium rounded-full">GST {gst}%</span>}
+                  </div>
+                  <h3 className="text-base font-bold text-[#F3F6FB] mb-1.5 truncate">{c.title}</h3>
+                  <p className="text-xs text-[#8891A8] line-clamp-2 mb-2 flex-1">{c.description}</p>
+                  <div className="text-[11px] text-[#8891A8] space-y-0.5 mb-3 bg-[#090C14] p-2 rounded-lg border border-[#1D2436]">
+                    <div className="flex justify-between"><span>Admission:</span> <span className="text-[#F3F6FB]">{c.admissionFee || "₹2,000"}</span></div>
+                    {c.hasKit && <div className="flex justify-between"><span>Kit Price:</span> <span className="text-[#F3F6FB]">{c.kitPrice || "₹1,100"}</span></div>}
+                    {gst > 0 && <div className="flex justify-between"><span>GST ({gst}%):</span> <span className="text-amber-400">{formatAmount(gstAmt)}</span></div>}
+                    <div className="flex justify-between font-bold border-t border-[#1D2436] pt-1 mt-1 text-[#4DE8E0]"><span>Total:</span> <span>{c.price || "₹3,100"}</span></div>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-[#8891A8] mb-4">
+                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {c.duration}</span>
+                  </div>
+                  <div className="flex items-center gap-2 pt-3 border-t border-[#1D2436]">
+                    <button onClick={() => handleOpenModal(c)}
+                      className="flex-1 py-2 border border-[#1D2436] text-[#F3F6FB] text-xs font-medium hover:bg-[#1D2436] rounded-lg flex items-center justify-center gap-1.5 transition-colors">
+                      <Pencil className="h-3 w-3" /> Edit
+                    </button>
+                    <button onClick={() => handleDelete(c.id)}
+                      className="py-2 px-3 border border-red-500/20 text-red-400 text-xs font-medium hover:bg-red-500/10 rounded-lg flex items-center justify-center gap-1.5 transition-colors">
+                      <Trash2 className="h-3 w-3" /> Delete
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -228,13 +264,8 @@ export default function CourseManagement() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="w-full max-w-xl border border-[#1D2436] bg-[#0F1420] p-6 rounded-2xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center pb-4 mb-5 border-b border-[#1D2436]">
-              <h2 className="text-[#F3F6FB] font-bold text-lg">
-                {editingCourse ? "Edit Course" : "New Course"}
-              </h2>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-[#8891A8] hover:text-[#F3F6FB] transition-colors"
-              >
+              <h2 className="text-[#F3F6FB] font-bold text-lg">{editingCourse ? "Edit Course" : "New Course"}</h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-[#8891A8] hover:text-[#F3F6FB] transition-colors">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -242,123 +273,102 @@ export default function CourseManagement() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs text-[#8891A8] mb-1.5">Title</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.title}
+                <input type="text" required value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-[#090C14] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] text-sm rounded-xl transition-colors"
-                  placeholder="e.g. Intro to Robotics"
-                />
+                  className={inputClass} placeholder="e.g. Intro to Robotics" />
               </div>
+
               <div>
                 <label className="block text-xs text-[#8891A8] mb-1.5">Description</label>
-                <textarea
-                  required
-                  rows={3}
-                  value={formData.description}
+                <textarea required rows={3} value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-[#090C14] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] text-sm rounded-xl transition-colors"
-                  placeholder="What will students learn?"
-                />
+                  className={inputClass} placeholder="What will students learn?" />
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs text-[#8891A8] mb-1.5">Category</label>
-                  <input
-                    type="text"
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-[#090C14] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] text-sm rounded-xl transition-colors"
-                  />
+                  <input type="text" value={formData.category}
+                    onChange={(e) => handleCategoryChange(e.target.value)}
+                    className={inputClass} placeholder="Robotics & AI, AI, IoT..." />
+                  <p className="text-[10px] text-[#8891A8] mt-1">💡 Kit shown only for Robotics</p>
                 </div>
                 <div>
                   <label className="block text-xs text-[#8891A8] mb-1.5">Track</label>
-                  <input
-                    type="text"
-                    value={formData.track}
+                  <input type="text" value={formData.track}
                     onChange={(e) => setFormData({ ...formData, track: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-[#090C14] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] text-sm rounded-xl transition-colors"
-                    placeholder="Robotics, AI..."
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs text-[#8891A8] mb-1.5">Admission Fee</label>
-                  <input
-                    type="text"
-                    value={formData.admissionFee}
-                    onChange={(e) => setFormData({ ...formData, admissionFee: e.target.value })}
-                    className="w-full px-3 py-2 bg-[#090C14] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] text-sm rounded-xl transition-colors"
-                    placeholder="₹2,000"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-[#8891A8] mb-1.5">Kit Price</label>
-                  <input
-                    type="text"
-                    value={formData.kitPrice}
-                    onChange={(e) => setFormData({ ...formData, kitPrice: e.target.value })}
-                    className="w-full px-3 py-2 bg-[#090C14] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] text-sm rounded-xl transition-colors"
-                    placeholder="₹1,100"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-[#8891A8] mb-1.5">Total Price</label>
-                  <input
-                    type="text"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    className="w-full px-3 py-2 bg-[#090C14] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] text-sm rounded-xl transition-colors"
-                    placeholder="₹3,100"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs text-[#8891A8] mb-1.5">Duration</label>
-                <input
-                  type="text"
-                  value={formData.duration}
-                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-[#090C14] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] text-sm rounded-xl transition-colors"
-                  placeholder="4 Weeks"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs text-[#8891A8] mb-1.5">Badge</label>
-                  <input
-                    type="text"
-                    value={formData.badge}
-                    onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-[#090C14] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] text-sm rounded-xl transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-[#8891A8] mb-1.5">Image URL</label>
-                  <input
-                    type="text"
-                    value={formData.image}
-                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-[#090C14] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] text-sm rounded-xl transition-colors"
-                    placeholder="https://..."
-                  />
+                    className={inputClass} placeholder="Robotics, AI..." />
                 </div>
               </div>
 
+              {/* Pricing box */}
+              <div className="rounded-xl border border-[#1D2436] bg-[#090C14] p-4 space-y-3">
+                <p className="text-xs font-semibold text-[#4DE8E0]">💰 Pricing</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-[#8891A8] mb-1.5">Admission Fee</label>
+                    <input type="text" value={formData.admissionFee}
+                      onChange={(e) => setFormData({ ...formData, admissionFee: e.target.value })}
+                      className={inputClass} placeholder="₹2,000" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-[#8891A8] mb-1.5">GST %</label>
+                    <input type="number" min="0" max="100" step="0.5"
+                      value={formData.gstPercent}
+                      onChange={(e) => setFormData({ ...formData, gstPercent: parseFloat(e.target.value) || 0 })}
+                      className={inputClass} placeholder="0" />
+                  </div>
+                </div>
+
+                {isRoboticsCourse(formData.category) && (
+                  <div>
+                    <label className="block text-xs text-[#8891A8] mb-1.5">
+                      Kit Price <span className="text-[#4DE8E0]">(Robotics only)</span>
+                    </label>
+                    <input type="text" value={formData.kitPrice}
+                      onChange={(e) => setFormData({ ...formData, kitPrice: e.target.value })}
+                      className={inputClass} placeholder="₹1,100" />
+                  </div>
+                )}
+
+                {/* Auto-computed total */}
+                <div className="flex items-center justify-between rounded-lg border border-[#4DE8E0]/20 bg-[#4DE8E0]/5 px-4 py-2.5">
+                  <span className="text-xs text-[#8891A8]">
+                    Auto Total {formData.gstPercent > 0 ? `(incl. ${formData.gstPercent}% GST)` : ""}
+                  </span>
+                  <span className="text-lg font-bold text-[#4DE8E0]">{autoTotal}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-[#8891A8] mb-1.5">Duration</label>
+                  <input type="text" value={formData.duration}
+                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                    className={inputClass} placeholder="4 Weeks" />
+                </div>
+                <div>
+                  <label className="block text-xs text-[#8891A8] mb-1.5">Badge</label>
+                  <input type="text" value={formData.badge}
+                    onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
+                    className={inputClass} />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs text-[#8891A8] mb-1.5">Image URL</label>
+                <input type="text" value={formData.image}
+                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                  className={inputClass} placeholder="https://..." />
+              </div>
+
               <div className="flex justify-end gap-3 pt-4 border-t border-[#1D2436]">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2.5 border border-[#1D2436] text-[#8891A8] text-sm rounded-xl hover:text-[#F3F6FB] transition-colors"
-                >
+                <button type="button" onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2.5 border border-[#1D2436] text-[#8891A8] text-sm rounded-xl hover:text-[#F3F6FB] transition-colors">
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 bg-[#4DE8E0] text-[#090C14] text-sm font-semibold rounded-xl hover:bg-[#5FF0E8] transition-colors flex items-center gap-2"
-                >
+                <button type="submit"
+                  className="px-6 py-2.5 bg-[#4DE8E0] text-[#090C14] text-sm font-semibold rounded-xl hover:bg-[#5FF0E8] transition-colors flex items-center gap-2">
                   <Save className="h-4 w-4" /> {editingCourse ? "Save Changes" : "Create Course"}
                 </button>
               </div>

@@ -36,6 +36,14 @@ const emptyForm: FormData = {
   message: "",
 };
 
+// Helper: parse numeric value from price string like "₹2,000" → 2000
+function parseAmt(val: string): number {
+  return parseFloat(val.replace(/[^0-9.]/g, "")) || 0;
+}
+function fmtAmt(val: number): string {
+  return `₹${val.toLocaleString("en-IN")}`;
+}
+
 type RegistrationResult = {
   registrationNo: string;
   submittedAt: string;
@@ -49,8 +57,9 @@ interface CourseItem {
   duration: string;
   admissionFee: string;
   kitPrice: string;
+  hasKit: boolean;
+  gstPercent: number;
   total: string;
-  description: string;
   highlights: string[];
   badge: string;
 }
@@ -81,7 +90,6 @@ export default function Explore() {
               .map((s: string) => s.trim())
               .filter((s: string) => s.length > 5)
               .slice(0, 4);
-
             return {
               id: c.id,
               name: c.title || "Untitled Course",
@@ -89,9 +97,10 @@ export default function Explore() {
               duration: c.duration || "4 Weeks",
               admissionFee: c.admissionFee || "₹2,000",
               kitPrice: c.kitPrice || "₹1,100",
+              hasKit: c.hasKit ?? c.category?.toLowerCase().includes("robotics") ?? false,
+              gstPercent: c.gstPercent ?? 0,
               total: c.price || "₹3,100",
-              description: rawDesc,
-              highlights: highlights.length > 0 ? highlights : ["Engineering program basics", "Project based learning", "Industry certification"],
+              highlights: highlights.length > 0 ? highlights : [rawDesc.slice(0, 80)],
               badge: c.badge || "Popular",
             };
           });
@@ -195,7 +204,7 @@ export default function Explore() {
   return (
     <div className="min-h-screen bg-[#030712] text-white">
       {/* ========== MAIN CONTENT ========== */}
-      <main className="relative">
+      <main className="relative overflow-hidden">
         {/* Ambient glows */}
         <div className="pointer-events-none absolute left-1/2 top-0 h-[600px] w-[900px] -translate-x-1/2 rounded-full bg-cyan-500/10 blur-[120px]" />
         <div className="pointer-events-none absolute right-0 top-1/3 h-[400px] w-[400px] rounded-full bg-blue-600/10 blur-[100px]" />
@@ -221,73 +230,92 @@ export default function Explore() {
 
           {/* ===== 2-COLUMN LAYOUT ===== */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_480px] lg:items-start">
-            {/* LEFT: Course Cards — sticky so it pins next to the scrollable form */}
-            <div className="lg:sticky lg:top-6 space-y-4">
-              {coursesList.map((c) => (
-                <div
-                  key={c.id}
-                  onClick={() => { setSelectedCourse(c); update("courseTitle", c.name); }}
-                  className={`cursor-pointer rounded-2xl border p-5 transition-all duration-200 ${
-                    selectedCourse.id === c.id
-                      ? "border-cyan-400/60 bg-cyan-400/5 shadow-[0_0_30px_rgba(34,211,238,0.08)]"
-                      : "border-white/10 bg-white/[0.02] hover:border-white/20"
-                  }`}
-                >
-                  {/* Header */}
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <span className="rounded-full bg-cyan-400/15 px-2.5 py-0.5 text-xs font-semibold text-cyan-300">
+            {/* LEFT: Course Cards — selected one expands, others stay compact */}
+            <div className="lg:sticky lg:top-6 space-y-3">
+              {coursesList.map((c) => {
+                const isSelected = selectedCourse.id === c.id;
+                return (
+                  <div
+                    key={c.id}
+                    onClick={() => { setSelectedCourse(c); update("courseTitle", c.name); }}
+                    className={`cursor-pointer rounded-2xl border transition-all duration-300 ${
+                      isSelected
+                        ? "border-cyan-400/60 bg-cyan-400/5 shadow-[0_0_30px_rgba(34,211,238,0.08)] p-5"
+                        : "border-white/10 bg-white/[0.02] hover:border-cyan-400/30 hover:bg-white/[0.04] px-5 py-3"
+                    }`}
+                  >
+                    {/* Always visible: compact header */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="rounded-full bg-cyan-400/15 px-2.5 py-0.5 text-xs font-semibold text-cyan-300 shrink-0">
                           {c.badge}
                         </span>
-                        <span className="text-xs text-slate-500">• {c.duration}</span>
+                        <span className={`font-bold truncate ${isSelected ? "text-xl text-white" : "text-base text-slate-300"}`}>
+                          {c.name}
+                        </span>
                       </div>
-                      <h2 className="mt-1 text-xl font-bold text-white sm:text-2xl">{c.name}</h2>
-                      <p className="text-sm text-slate-400">{c.subtitle}</p>
+                      <div className="flex items-center gap-3 shrink-0 ml-3">
+                        {!isSelected && (
+                          <span className="text-sm font-bold text-cyan-400">{c.total}</span>
+                        )}
+                        <span className={`transition-transform duration-300 text-slate-500 ${isSelected ? "rotate-180" : ""}`}>
+                          ▾
+                        </span>
+                      </div>
                     </div>
+
+                    {/* Expanded: only for selected course */}
+                    {isSelected && (
+                      <>
+                        <p className="text-sm text-slate-400 mt-1">{c.subtitle} • {c.duration}</p>
+
+                        {/* Highlights */}
+                        <ul className="mt-4 grid grid-cols-2 gap-1.5">
+                          {c.highlights.map((h) => (
+                            <li key={h} className="flex items-center gap-2 text-sm text-slate-300">
+                              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-400" />
+                              {h}
+                            </li>
+                          ))}
+                        </ul>
+
+                        {/* Fee Breakdown - Conditional Kit + GST */}
+                        <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-3 text-sm space-y-1.5">
+                          <div className="flex justify-between">
+                            <span className="text-slate-400">Admission Fee</span>
+                            <span className="font-bold text-white">{c.admissionFee}</span>
+                          </div>
+                          {c.hasKit && (
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Kit Price</span>
+                              <span className="font-bold text-white">{c.kitPrice}</span>
+                            </div>
+                          )}
+                          {c.gstPercent > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">GST ({c.gstPercent}%)</span>
+                              <span className="font-bold text-amber-400">
+                                {fmtAmt(Math.round((parseAmt(c.admissionFee) + (c.hasKit ? parseAmt(c.kitPrice) : 0)) * c.gstPercent / 100))}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex justify-between border-t border-white/10 pt-2">
+                            <span className="text-xs text-slate-500">Total {c.gstPercent > 0 ? "(incl. GST)" : ""}</span>
+                            <span className="text-xl font-bold text-cyan-400">{c.total}</span>
+                          </div>
+                        </div>
+
+                        <div className="mt-2 flex items-center gap-2 text-xs text-cyan-400">
+                          <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                          </svg>
+                          Selected Course
+                        </div>
+                      </>
+                    )}
                   </div>
-
-                  {/* Highlights - 2 columns */}
-                  <ul className="mt-4 grid grid-cols-2 gap-1.5">
-                    {c.highlights.map((h) => (
-                      <li key={h} className="flex items-center gap-2 text-sm text-slate-300">
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-400" />
-                        {h}
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* Fee Breakdown - Compact Horizontal */}
-                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/30 p-3">
-                    <div className="flex items-center gap-6 text-sm">
-                      <div>
-                        <p className="text-xs text-slate-500">Admission</p>
-                        <p className="font-bold text-white">{c.admissionFee}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500">Kit</p>
-                        <p className="font-bold text-white">{c.kitPrice}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-px bg-white/10" />
-                      <div>
-                        <p className="text-xs text-slate-500">Total</p>
-                        <p className="text-xl font-bold text-cyan-400">{c.total}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {selectedCourse.id === c.id && (
-                    <div className="mt-2 flex items-center gap-2 text-xs text-cyan-400">
-                      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
-                      </svg>
-                      Selected Course
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* RIGHT: Form */}
@@ -621,12 +649,22 @@ function RegistrationReceipt({
                 <span className="text-slate-400">Admission Fee</span>
                 <span className="font-semibold text-white">{course.admissionFee}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Kit Price</span>
-                <span className="font-semibold text-white">{course.kitPrice}</span>
-              </div>
+              {course.hasKit && (
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Kit Price</span>
+                  <span className="font-semibold text-white">{course.kitPrice}</span>
+                </div>
+              )}
+              {course.gstPercent > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-slate-400">GST ({course.gstPercent}%)</span>
+                  <span className="font-semibold text-amber-400">
+                    {fmtAmt(Math.round((parseAmt(course.admissionFee) + (course.hasKit ? parseAmt(course.kitPrice) : 0)) * course.gstPercent / 100))}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between border-t border-white/10 pt-2">
-                <span className="font-bold text-white">Total Amount</span>
+                <span className="font-bold text-white">Total Amount {course.gstPercent > 0 ? "(incl. GST)" : ""}</span>
                 <span className="text-lg font-bold text-cyan-400">{course.total}</span>
               </div>
             </div>
@@ -666,6 +704,8 @@ async function printReceipt({
     courseTitle: course.name,
     admissionFee: course.admissionFee,
     kitPrice: course.kitPrice,
+    hasKit: course.hasKit,
+    gstPercent: course.gstPercent,
     total: course.total,
     date: submittedAt,
   });

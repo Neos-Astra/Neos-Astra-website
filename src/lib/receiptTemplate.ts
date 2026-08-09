@@ -7,9 +7,19 @@ export interface ReceiptData {
   courseTitle: string;
   admissionFee: string;
   kitPrice: string;
+  hasKit?: boolean;
+  gstPercent?: number;
   total: string;
   date?: string;
   paymentMode?: string;
+}
+
+// Helper: parse numeric value from price string like "₹2,000" → 2000
+function parseAmt(val: string): number {
+  return parseFloat(val.replace(/[^0-9.]/g, "")) || 0;
+}
+function fmtAmt(val: number): string {
+  return `₹ ${val.toLocaleString("en-IN")}.00`;
 }
 
 export function generateOfficialFeeReceiptHTML(data: ReceiptData): string {
@@ -20,10 +30,28 @@ export function generateOfficialFeeReceiptHTML(data: ReceiptData): string {
   });
 
   const receiptNo = data.registrationNo;
+  const hasKit = data.hasKit ?? false;
+  const gstPercent = data.gstPercent ?? 0;
+  const baseAmt = parseAmt(data.admissionFee) + (hasKit ? parseAmt(data.kitPrice) : 0);
+  const gstAmt = Math.round(baseAmt * gstPercent / 100);
+
+  // ---- GST row (only if gstPercent > 0) ----
+  const gstRow = gstPercent > 0
+    ? `<tr>
+        <td>GST (${gstPercent}%)</td>
+        <td style="text-align: right;">${fmtAmt(gstAmt)}</td>
+      </tr>`
+    : "";
+
+  // ---- Kit row (only if hasKit) ----
+  const kitRow = hasKit
+    ? `<tr>
+        <td>Innovators Starter Kit Fee</td>
+        <td style="text-align: right;">${data.kitPrice || "₹ 1,100.00"}</td>
+      </tr>`
+    : "";
 
   const renderSingleReceipt = (
-    feeTypeTitle: string,
-    amountStr: string,
     copyType: "STUDENT COPY" | "OFFICE COPY"
   ) => `
     <div class="receipt-box">
@@ -43,7 +71,7 @@ export function generateOfficialFeeReceiptHTML(data: ReceiptData): string {
         </div>
       </div>
 
-      <!-- Info Table 1 (Receipt No, Date, Student Name, Course) -->
+      <!-- Info Table -->
       <table class="grid-table">
         <tr>
           <td style="width: 55%;"><strong>RECEIPT NO.:</strong> ${receiptNo}</td>
@@ -65,12 +93,14 @@ export function generateOfficialFeeReceiptHTML(data: ReceiptData): string {
         </thead>
         <tbody>
           <tr>
-            <td>${feeTypeTitle}</td>
-            <td style="text-align: right;">${amountStr}</td>
+            <td>Course Admission Fee</td>
+            <td style="text-align: right;">${data.admissionFee || "₹ 2,000.00"}</td>
           </tr>
+          ${kitRow}
+          ${gstRow}
           <tr class="total-row">
-            <td><strong>Total Paid</strong></td>
-            <td style="text-align: right;"><strong>${amountStr}</strong></td>
+            <td><strong>Total Paid ${gstPercent > 0 ? `(incl. ${gstPercent}% GST)` : ""}</strong></td>
+            <td style="text-align: right;"><strong>${data.total}</strong></td>
           </tr>
         </tbody>
       </table>
@@ -145,26 +175,15 @@ export function generateOfficialFeeReceiptHTML(data: ReceiptData): string {
 </head>
 <body>
 
-  <!-- PAGE 1: Course Fee Receipt (Student Copy & Office Copy) -->
+  <!-- PAGE 1: Unified Fee Receipt (Student Copy & Office Copy) -->
   <div class="page">
-    ${renderSingleReceipt("Course Fee", data.admissionFee || "₹ 2,000.00", "STUDENT COPY")}
+    ${renderSingleReceipt("STUDENT COPY")}
 
     <div class="dotted-divider">
       <span class="divider-text">✂ CUT HERE FOR OFFICE COPY</span>
     </div>
 
-    ${renderSingleReceipt("Course Fee", data.admissionFee || "₹ 2,000.00", "OFFICE COPY")}
-  </div>
-
-  <!-- PAGE 2: Innovators Starter Kit Fee Receipt (Student Copy & Office Copy) -->
-  <div class="page">
-    ${renderSingleReceipt("Innovators Starter Kit Fee", data.kitPrice || "₹ 1,100.00", "STUDENT COPY")}
-
-    <div class="dotted-divider">
-      <span class="divider-text">✂ CUT HERE FOR OFFICE COPY</span>
-    </div>
-
-    ${renderSingleReceipt("Innovators Starter Kit Fee", data.kitPrice || "✂ OFFICE COPY", "OFFICE COPY")}
+    ${renderSingleReceipt("OFFICE COPY")}
   </div>
 
   <script>

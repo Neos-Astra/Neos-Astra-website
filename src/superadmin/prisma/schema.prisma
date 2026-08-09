@@ -54,6 +54,8 @@ model Course {
   price        String   @default("₹3,100")
   admissionFee String   @default("₹2,000")
   kitPrice     String   @default("₹1,100")
+  hasKit       Boolean  @default(false)
+  gstPercent   Float    @default(0)
   duration     String   @default("4 Weeks")
   badge        String?  @default("Popular")
   image        String?
