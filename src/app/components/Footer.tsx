@@ -22,7 +22,7 @@ const FOOTER_LINKS = {
   ],
   Contact: [
     { label: "Contact Us", href: "/contact" },
-    { label: "hello@neosastra.com", href: "mailto:hello@neosastra.com" },
+    { label: "neos.astra.india@gmail.com", href: "mailto:neos.astra.india@gmail.com" },
     { label: "+91 98765 43210", href: "tel:+919876543210" },
   ],
 };
@@ -31,7 +31,7 @@ const SOCIALS = [
   { label: "Instagram", href: "https://instagram.com", icon: Instagram },
   { label: "Facebook", href: "https://facebook.com", icon: Facebook },
   { label: "LinkedIn", href: "https://linkedin.com", icon: Linkedin },
-  { label: "Email", href: "mailto:hello@neosastra.com", icon: Mail },
+  { label: "Email", href: "mailto:neos.astra.india@gmail.com", icon: Mail },
 ];
 
 export default function Footer() {
