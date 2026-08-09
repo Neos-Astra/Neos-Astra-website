@@ -230,92 +230,101 @@ export default function Explore() {
 
           {/* ===== 2-COLUMN LAYOUT ===== */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_480px] lg:items-start">
-            {/* LEFT: Course Cards — selected one expands, others stay compact */}
-            <div className="lg:sticky lg:top-6 space-y-3">
-              {coursesList.map((c) => {
-                const isSelected = selectedCourse.id === c.id;
-                return (
-                  <div
-                    key={c.id}
-                    onClick={() => { setSelectedCourse(c); update("courseTitle", c.name); }}
-                    className={`cursor-pointer rounded-2xl border transition-all duration-300 ${
-                      isSelected
-                        ? "border-cyan-400/60 bg-cyan-400/5 shadow-[0_0_30px_rgba(34,211,238,0.08)] p-5"
-                        : "border-white/10 bg-white/[0.02] hover:border-cyan-400/30 hover:bg-white/[0.04] px-5 py-3"
-                    }`}
-                  >
-                    {/* Always visible: compact header */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className="rounded-full bg-cyan-400/15 px-2.5 py-0.5 text-xs font-semibold text-cyan-300 shrink-0">
-                          {c.badge}
-                        </span>
-                        <span className={`font-bold truncate ${isSelected ? "text-xl text-white" : "text-base text-slate-300"}`}>
+            {/* LEFT: Only render the currently selected course card */}
+            <div className="lg:sticky lg:top-6 space-y-4">
+              {/* Optional Course Switcher Tabs if there are multiple courses */}
+              {coursesList.length > 1 && (
+                <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                    Select Course
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {coursesList.map((c) => {
+                      const isSel = selectedCourse.id === c.id;
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => { setSelectedCourse(c); update("courseTitle", c.name); }}
+                          className={`rounded-xl px-3.5 py-2 text-xs font-medium transition-all ${
+                            isSel
+                              ? "bg-cyan-400 text-slate-950 font-bold shadow-[0_0_15px_rgba(34,211,238,0.3)]"
+                              : "bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10"
+                          }`}
+                        >
                           {c.name}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3 shrink-0 ml-3">
-                        {!isSelected && (
-                          <span className="text-sm font-bold text-cyan-400">{c.total}</span>
-                        )}
-                        <span className={`transition-transform duration-300 text-slate-500 ${isSelected ? "rotate-180" : ""}`}>
-                          ▾
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Expanded: only for selected course */}
-                    {isSelected && (
-                      <>
-                        <p className="text-sm text-slate-400 mt-1">{c.subtitle} • {c.duration}</p>
-
-                        {/* Highlights */}
-                        <ul className="mt-4 grid grid-cols-2 gap-1.5">
-                          {c.highlights.map((h) => (
-                            <li key={h} className="flex items-center gap-2 text-sm text-slate-300">
-                              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-400" />
-                              {h}
-                            </li>
-                          ))}
-                        </ul>
-
-                        {/* Fee Breakdown - Conditional Kit + GST */}
-                        <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-3 text-sm space-y-1.5">
-                          <div className="flex justify-between">
-                            <span className="text-slate-400">Admission Fee</span>
-                            <span className="font-bold text-white">{c.admissionFee}</span>
-                          </div>
-                          {c.hasKit && (
-                            <div className="flex justify-between">
-                              <span className="text-slate-400">Kit Price</span>
-                              <span className="font-bold text-white">{c.kitPrice}</span>
-                            </div>
-                          )}
-                          {c.gstPercent > 0 && (
-                            <div className="flex justify-between">
-                              <span className="text-slate-400">GST ({c.gstPercent}%)</span>
-                              <span className="font-bold text-amber-400">
-                                {fmtAmt(Math.round((parseAmt(c.admissionFee) + (c.hasKit ? parseAmt(c.kitPrice) : 0)) * c.gstPercent / 100))}
-                              </span>
-                            </div>
-                          )}
-                          <div className="flex justify-between border-t border-white/10 pt-2">
-                            <span className="text-xs text-slate-500">Total {c.gstPercent > 0 ? "(incl. GST)" : ""}</span>
-                            <span className="text-xl font-bold text-cyan-400">{c.total}</span>
-                          </div>
-                        </div>
-
-                        <div className="mt-2 flex items-center gap-2 text-xs text-cyan-400">
-                          <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
-                          </svg>
-                          Selected Course
-                        </div>
-                      </>
-                    )}
+                        </button>
+                      );
+                    })}
                   </div>
-                );
-              })}
+                </div>
+              )}
+
+              {/* Single Selected Course Card */}
+              <div className="rounded-2xl border border-cyan-400/60 bg-cyan-400/5 shadow-[0_0_30px_rgba(34,211,238,0.08)] p-6 space-y-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <span className="rounded-full bg-cyan-400/15 px-2.5 py-0.5 text-xs font-semibold text-cyan-300">
+                        {selectedCourse.badge}
+                      </span>
+                      <span className="text-xs text-slate-500">• {selectedCourse.duration}</span>
+                    </div>
+                    <h2 className="mt-2 text-2xl font-bold text-white sm:text-3xl">{selectedCourse.name}</h2>
+                    <p className="text-sm text-slate-400 mt-0.5">{selectedCourse.subtitle}</p>
+                  </div>
+                </div>
+
+                {/* Highlights */}
+                {selectedCourse.highlights.length > 0 && (
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                      Key Highlights
+                    </p>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {selectedCourse.highlights.map((h) => (
+                        <li key={h} className="flex items-center gap-2 text-sm text-slate-300">
+                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-400" />
+                          {h}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Fee Breakdown */}
+                <div className="rounded-xl border border-white/10 bg-black/30 p-4 text-sm space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Admission Fee</span>
+                    <span className="font-bold text-white">{selectedCourse.admissionFee}</span>
+                  </div>
+                  {selectedCourse.hasKit && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Kit Price</span>
+                      <span className="font-bold text-white">{selectedCourse.kitPrice}</span>
+                    </div>
+                  )}
+                  {selectedCourse.gstPercent > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">GST ({selectedCourse.gstPercent}%)</span>
+                      <span className="font-bold text-amber-400">
+                        {fmtAmt(Math.round((parseAmt(selectedCourse.admissionFee) + (selectedCourse.hasKit ? parseAmt(selectedCourse.kitPrice) : 0)) * selectedCourse.gstPercent / 100))}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between border-t border-white/10 pt-2.5">
+                    <span className="text-xs text-slate-400">Total Amount {selectedCourse.gstPercent > 0 ? "(incl. GST)" : ""}</span>
+                    <span className="text-2xl font-black text-cyan-400">{selectedCourse.total}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-cyan-400 font-semibold pt-1">
+                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                  </svg>
+                  Selected Course for Enrollment
+                </div>
+              </div>
             </div>
 
             {/* RIGHT: Form */}
