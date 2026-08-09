@@ -19,9 +19,9 @@ export default function HomeMediaManagement() {
   const [preview, setPreview] = useState<string | null>(null);
   const [position, setPosition] = useState(0);
 
-  const fetchMedia = async () => {
+  const fetchMedia = async (showLoadingSpinner = false) => {
     try {
-      setLoading(true);
+      if (showLoadingSpinner) setLoading(true);
       const res = await fetch("/api/home-media");
       const data = await res.json();
       if (Array.isArray(data)) setMediaList(data);
@@ -33,7 +33,7 @@ export default function HomeMediaManagement() {
   };
 
   useEffect(() => {
-    fetchMedia();
+    fetchMedia(true);
   }, []);
 
   const handleOpenModal = () => {
@@ -65,7 +65,7 @@ export default function HomeMediaManagement() {
       });
       if (res.ok) {
         setIsModalOpen(false);
-        fetchMedia();
+        fetchMedia(false);
       } else {
         alert("Upload failed. Please try again.");
       }
@@ -78,11 +78,17 @@ export default function HomeMediaManagement() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this photo? It will be removed from the home page.")) return;
+    // Instant UI removal (0ms)
+    setMediaList((prev) => prev.filter((m) => m.id !== id));
     try {
-      await fetch(`/api/home-media/${id}`, { method: "DELETE" });
-      fetchMedia();
+      const res = await fetch(`/api/home-media/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        alert("Failed to delete photo");
+        fetchMedia(false);
+      }
     } catch (err) {
       console.error(err);
+      fetchMedia(false);
     }
   };
 

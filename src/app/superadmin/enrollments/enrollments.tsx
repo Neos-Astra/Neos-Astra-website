@@ -29,8 +29,8 @@ export default function EnrollmentsManagement() {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Enrollment | null>(null);
 
-  const fetchEnrollments = async () => {
-    setLoading(true);
+  const fetchEnrollments = async (showLoadingSpinner = false) => {
+    if (showLoadingSpinner) setLoading(true);
     try {
       const res = await fetch("/api/enrollments");
       const data = await res.json();
@@ -42,7 +42,7 @@ export default function EnrollmentsManagement() {
     }
   };
 
-  useEffect(() => { fetchEnrollments(); }, []);
+  useEffect(() => { fetchEnrollments(true); }, []);
 
   const updateStatus = async (id: string, newStatus: string) => {
     // Optimistic update

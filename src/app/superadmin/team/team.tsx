@@ -42,9 +42,9 @@ export default function TeamManagement() {
     order: 0,
   });
 
-  const fetchMembers = async () => {
+  const fetchMembers = async (showLoadingSpinner = false) => {
     try {
-      setLoading(true);
+      if (showLoadingSpinner) setLoading(true);
       const res = await fetch("/api/team");
       const data = await res.json();
       if (Array.isArray(data)) setMembers(data);
@@ -56,7 +56,7 @@ export default function TeamManagement() {
   };
 
   useEffect(() => {
-    fetchMembers();
+    fetchMembers(true);
   }, []);
 
   const handleOpenModal = (member?: TeamMember) => {
@@ -110,7 +110,7 @@ export default function TeamManagement() {
         });
       }
       setIsModalOpen(false);
-      fetchMembers();
+      fetchMembers(false);
     } catch (err) {
       console.error(err);
     }
@@ -119,11 +119,17 @@ export default function TeamManagement() {
   const handleDelete = async (id: string) => {
     if (!isSuperAdmin) return;
     if (!confirm("Delete this team member? This cannot be undone.")) return;
+    // Instant UI removal (0ms)
+    setMembers((prev) => prev.filter((m) => m.id !== id));
     try {
-      await fetch(`/api/team/${id}`, { method: "DELETE" });
-      fetchMembers();
+      const res = await fetch(`/api/team/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        alert("Failed to delete team member");
+        fetchMembers(false);
+      }
     } catch (err) {
       console.error(err);
+      fetchMembers(false);
     }
   };
 

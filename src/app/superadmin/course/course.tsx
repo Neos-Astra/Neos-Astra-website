@@ -39,9 +39,9 @@ export default function CourseManagement() {
     image: "",
   });
 
-  const fetchCourses = async () => {
+  const fetchCourses = async (showLoadingSpinner = false) => {
     try {
-      setLoading(true);
+      if (showLoadingSpinner) setLoading(true);
       const res = await fetch("/api/courses");
       const data = await res.json();
       if (Array.isArray(data)) setCourses(data);
@@ -53,7 +53,7 @@ export default function CourseManagement() {
   };
 
   useEffect(() => {
-    fetchCourses();
+    fetchCourses(true);
   }, []);
 
   const handleOpenModal = (course?: Course) => {
@@ -106,7 +106,7 @@ export default function CourseManagement() {
         });
       }
       setIsModalOpen(false);
-      fetchCourses();
+      fetchCourses(false);
     } catch (err) {
       console.error(err);
     }
@@ -114,11 +114,17 @@ export default function CourseManagement() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this course? This cannot be undone.")) return;
+    // Instant UI update (0ms)
+    setCourses((prev) => prev.filter((c) => c.id !== id));
     try {
-      await fetch(`/api/courses/${id}`, { method: "DELETE" });
-      fetchCourses();
+      const res = await fetch(`/api/courses/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        alert("Failed to delete course");
+        fetchCourses(false);
+      }
     } catch (err) {
       console.error(err);
+      fetchCourses(false);
     }
   };
 
