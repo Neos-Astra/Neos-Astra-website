@@ -157,7 +157,7 @@ export default function EnrollmentsManagement() {
             </p>
           </div>
           <button
-            onClick={fetchEnrollments}
+            onClick={() => fetchEnrollments()}
             className="flex items-center gap-2 rounded-lg border border-[#1D2436] px-4 py-2 text-sm text-[#8891A8] hover:border-[#4DE8E0] hover:text-[#4DE8E0] transition-all"
           >
             <RefreshCw className="h-4 w-4" /> Refresh
