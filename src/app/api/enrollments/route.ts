@@ -121,3 +121,44 @@ export async function PATCH(request: Request) {
   }
 }
 
+// DELETE: delete enrollment record (admin/superadmin)
+export async function DELETE(request: Request) {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const url = new URL(request.url);
+    let id = url.searchParams.get("id");
+
+    if (!id) {
+      try {
+        const body = await request.json();
+        id = body.id;
+      } catch (e) {
+        // no body
+      }
+    }
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Enrollment ID is required" },
+        { status: 400 }
+      );
+    }
+
+    await prisma.enrollment.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true, message: "Enrollment deleted successfully" });
+  } catch (error) {
+    console.error("Delete enrollment error:", error);
+    return NextResponse.json(
+      { error: "Failed to delete enrollment" },
+      { status: 500 }
+    );
+  }
+}
+
