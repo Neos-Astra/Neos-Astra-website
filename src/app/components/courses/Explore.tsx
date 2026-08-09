@@ -1,31 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { generateOfficialFeeReceiptHTML } from "@/lib/receiptTemplate";
+// receiptTemplate is dynamically imported inside printReceipt to avoid webpack crash with large logoBase64
 
 // ---------------------------------------------------------------------------
 // Neos Astra — Course Enrollment Form (FINAL VERSION)
 // All issues fixed: layout, scrolling, navigation, footer
 // ---------------------------------------------------------------------------
 
-const COURSES = [
-  {
-    id: "robotics-ai",
-    name: "Robotics & AI",
-    subtitle: "Hands-on Engineering Program",
-    duration: "4 Weeks",
-    admissionFee: "₹2,000",
-    kitPrice: "₹1,100",
-    total: "₹3,100",
-    highlights: [
-      "Build real robots from scratch",
-      "AI & Machine Learning basics",
-      "Sensors, Arduino & IoT",
-      "Live project + certification",
-    ],
-    badge: "Most Popular",
-  },
-];
+// No hardcoded courses — all data comes from admin/superadmin via API
 
 type FormData = {
   studentName: string;
@@ -49,7 +32,7 @@ const emptyForm: FormData = {
   studentPhone: "",
   studentEmail: "",
   guardianName: "",
-  courseTitle: "Robotics & AI",
+  courseTitle: "",
   message: "",
 };
 
@@ -67,35 +50,23 @@ interface CourseItem {
   admissionFee: string;
   kitPrice: string;
   total: string;
+  description: string;
   highlights: string[];
   badge: string;
 }
 
 export default function Explore() {
-  const [coursesList, setCoursesList] = useState<CourseItem[]>(COURSES);
+  const [coursesList, setCoursesList] = useState<CourseItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState<FormData>(emptyForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [submitting, setSubmitting] = useState(false);
   const [registration, setRegistration] = useState<RegistrationResult | null>(null);
   const [apiError, setApiError] = useState("");
-  const [selectedCourse, setSelectedCourse] = useState<CourseItem>(COURSES[0]);
+  const [selectedCourse, setSelectedCourse] = useState<CourseItem | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const courseParam = params.get("course");
-      if (courseParam) {
-        const match = COURSES.find(
-          (item) => item.name.toLowerCase() === courseParam.toLowerCase()
-        );
-        if (match) {
-          setSelectedCourse(match);
-          setForm((prev) => ({ ...prev, courseTitle: match.name }));
-        }
-      }
-    }
-
     fetch("/api/courses")
       .then((res) => {
         if (!res.ok) return [];
@@ -103,46 +74,41 @@ export default function Explore() {
       })
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          const mapped: CourseItem[] = data.map((c: any) => ({
-            id: c.id,
-            name: c.title || "Untitled Course",
-            subtitle: c.track || c.category || "Engineering Program",
-            duration: c.duration || "4 Weeks",
-            admissionFee: c.admissionFee || "₹2,000",
-            kitPrice: c.kitPrice || "₹1,100",
-            total: c.price || "₹3,100",
-            highlights: [
-              "Build real projects from scratch",
-              "AI & Technology fundamentals",
-              "Sensors, Microcontrollers & IoT",
-              "Live project + certification",
-            ],
-            badge: c.badge || "Popular",
-          }));
+          const mapped: CourseItem[] = data.map((c: any) => {
+            const rawDesc: string = c.description || "";
+            const highlights = rawDesc
+              .split(/\.\s+|\n/)
+              .map((s: string) => s.trim())
+              .filter((s: string) => s.length > 5)
+              .slice(0, 4);
+
+            return {
+              id: c.id,
+              name: c.title || "Untitled Course",
+              subtitle: c.track || c.category || "Engineering Program",
+              duration: c.duration || "4 Weeks",
+              admissionFee: c.admissionFee || "₹2,000",
+              kitPrice: c.kitPrice || "₹1,100",
+              total: c.price || "₹3,100",
+              description: rawDesc,
+              highlights: highlights.length > 0 ? highlights : ["Engineering program basics", "Project based learning", "Industry certification"],
+              badge: c.badge || "Popular",
+            };
+          });
           setCoursesList(mapped);
 
-          if (typeof window !== "undefined") {
-            const params = new URLSearchParams(window.location.search);
-            const courseParam = params.get("course");
-            if (courseParam) {
-              const match = mapped.find(
-                (item) => item.name.toLowerCase() === courseParam.toLowerCase()
-              );
-              if (match) {
-                setSelectedCourse(match);
-                setForm((prev) => ({ ...prev, courseTitle: match.name }));
-              } else {
-                setSelectedCourse(mapped[0]);
-                setForm((prev) => ({ ...prev, courseTitle: mapped[0].name }));
-              }
-            } else {
-              setSelectedCourse(mapped[0]);
-              setForm((prev) => ({ ...prev, courseTitle: mapped[0].name }));
-            }
-          }
+          const params = new URLSearchParams(window.location.search);
+          const courseParam = params.get("course");
+          const match = courseParam
+            ? mapped.find((item) => item.name.toLowerCase() === courseParam.toLowerCase())
+            : null;
+          const active = match || mapped[0];
+          setSelectedCourse(active);
+          setForm((prev) => ({ ...prev, courseTitle: active.name }));
         }
       })
-      .catch((err) => console.error("Error fetching courses:", err));
+      .catch((err) => console.error("Error fetching courses:", err))
+      .finally(() => setLoading(false));
   }, []);
 
   function update<K extends keyof FormData>(key: K, value: FormData[K]) {
@@ -173,7 +139,7 @@ export default function Explore() {
       const res = await fetch("/api/enrollments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, courseTitle: selectedCourse.name }),
+        body: JSON.stringify({ ...form, courseTitle: selectedCourse?.name || "" }),
       });
 
       const json = await res.json();
@@ -192,13 +158,24 @@ export default function Explore() {
       setRegistration({
         registrationNo: json.registrationNo,
         submittedAt,
-        data: { ...form, courseTitle: selectedCourse.name },
+        data: { ...form, courseTitle: selectedCourse?.name || "" },
       });
     } catch (err) {
       setApiError("Network error. Please check your connection.");
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (loading || !selectedCourse) {
+    return (
+      <div className="min-h-screen bg-[#030712] flex items-center justify-center text-slate-400">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-400/30 border-t-cyan-400 mx-auto mb-3" />
+          <p className="text-sm">Loading courses...</p>
+        </div>
+      </div>
+    );
   }
 
   if (registration) {
@@ -218,7 +195,7 @@ export default function Explore() {
   return (
     <div className="min-h-screen bg-[#030712] text-white">
       {/* ========== MAIN CONTENT ========== */}
-      <main className="relative overflow-hidden">
+      <main className="relative">
         {/* Ambient glows */}
         <div className="pointer-events-none absolute left-1/2 top-0 h-[600px] w-[900px] -translate-x-1/2 rounded-full bg-cyan-500/10 blur-[120px]" />
         <div className="pointer-events-none absolute right-0 top-1/3 h-[400px] w-[400px] rounded-full bg-blue-600/10 blur-[100px]" />
@@ -243,9 +220,9 @@ export default function Explore() {
           </div>
 
           {/* ===== 2-COLUMN LAYOUT ===== */}
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_480px]">
-            {/* LEFT: Course Card */}
-            <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_480px] lg:items-start">
+            {/* LEFT: Course Cards — sticky so it pins next to the scrollable form */}
+            <div className="lg:sticky lg:top-6 space-y-4">
               {coursesList.map((c) => (
                 <div
                   key={c.id}
@@ -674,7 +651,7 @@ function RegistrationReceipt({
   );
 }
 
-function printReceipt({
+async function printReceipt({
   registrationNo, submittedAt, data, course,
 }: {
   registrationNo: string;
@@ -682,6 +659,7 @@ function printReceipt({
   data: FormData;
   course: CourseItem;
 }) {
+  const { generateOfficialFeeReceiptHTML } = await import("@/lib/receiptTemplate");
   const html = generateOfficialFeeReceiptHTML({
     registrationNo,
     studentName: data.studentName,

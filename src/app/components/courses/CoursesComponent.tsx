@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { BookOpen, Clock, Tag, Sparkles, ArrowRight, ShieldCheck } from "lucide-react";
+import { BookOpen, Clock, Sparkles, ArrowRight } from "lucide-react";
 
 interface Course {
   id: string;
