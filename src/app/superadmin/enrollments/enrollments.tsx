@@ -448,23 +448,23 @@ export default function EnrollmentsManagement() {
             {enrollments.length} total verified student{enrollments.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <button
             onClick={exportToExcelCSV}
-            className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-all"
+            className="flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-all w-full sm:w-auto"
             title="Download currently filtered enrollments to Excel file"
           >
             <FileSpreadsheet className="h-4 w-4" /> Download Excel ({filtered.length})
           </button>
           <button
             onClick={() => fetchEnrollments(true)}
-            className="flex items-center gap-2 rounded-xl border border-[#1D2436] px-4 py-2.5 text-sm text-[#8891A8] hover:border-[#4DE8E0] hover:text-[#4DE8E0] transition-all"
+            className="flex items-center justify-center gap-2 rounded-xl border border-[#1D2436] px-4 py-2.5 text-sm text-[#8891A8] hover:border-[#4DE8E0] hover:text-[#4DE8E0] transition-all w-full sm:w-auto"
           >
             <RefreshCw className="h-4 w-4" /> Refresh
           </button>
           <button
             onClick={() => setIsNewModalOpen(true)}
-            className="flex items-center gap-2 rounded-xl bg-[#4DE8E0] px-4 py-2.5 text-sm font-semibold text-[#090C14] hover:bg-[#5FF0E8] transition-all"
+            className="flex items-center justify-center gap-2 rounded-xl bg-[#4DE8E0] px-4 py-2.5 text-sm font-semibold text-[#090C14] hover:bg-[#5FF0E8] transition-all w-full sm:w-auto"
           >
             <Plus className="h-4 w-4" /> Register New Student
           </button>
@@ -485,15 +485,15 @@ export default function EnrollmentsManagement() {
         </div>
 
         {/* Date Filter Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#1D2436] bg-[#0F1420] p-3">
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-[#8891A8] font-medium mr-1 flex items-center gap-1">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 rounded-xl border border-[#1D2436] bg-[#0F1420] p-3">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs">
+            <span className="text-[#8891A8] font-medium mr-1 flex items-center gap-1 w-full sm:w-auto mb-1 sm:mb-0">
               <Calendar className="h-3.5 w-3.5 text-[#4DE8E0]" /> Filter Date:
             </span>
 
             <button
               onClick={() => setDateFilter("ALL")}
-              className={`rounded-lg px-3 py-1.5 font-medium transition-all ${
+              className={`rounded-lg px-2.5 py-1.5 font-medium transition-all ${
                 dateFilter === "ALL"
                   ? "bg-[#4DE8E0] text-[#090C14] font-bold"
                   : "bg-[#090C14] border border-[#1D2436] text-[#8891A8] hover:text-[#F3F6FB]"
@@ -504,7 +504,7 @@ export default function EnrollmentsManagement() {
 
             <button
               onClick={() => setDateFilter("TODAY")}
-              className={`rounded-lg px-3 py-1.5 font-medium transition-all ${
+              className={`rounded-lg px-2.5 py-1.5 font-medium transition-all ${
                 dateFilter === "TODAY"
                   ? "bg-[#4DE8E0] text-[#090C14] font-bold"
                   : "bg-[#090C14] border border-[#1D2436] text-[#8891A8] hover:text-[#F3F6FB]"
@@ -515,7 +515,7 @@ export default function EnrollmentsManagement() {
 
             <button
               onClick={() => setDateFilter("YESTERDAY")}
-              className={`rounded-lg px-3 py-1.5 font-medium transition-all ${
+              className={`rounded-lg px-2.5 py-1.5 font-medium transition-all ${
                 dateFilter === "YESTERDAY"
                   ? "bg-[#4DE8E0] text-[#090C14] font-bold"
                   : "bg-[#090C14] border border-[#1D2436] text-[#8891A8] hover:text-[#F3F6FB]"
@@ -526,7 +526,7 @@ export default function EnrollmentsManagement() {
 
             <button
               onClick={() => setDateFilter("THIS_MONTH")}
-              className={`rounded-lg px-3 py-1.5 font-medium transition-all ${
+              className={`rounded-lg px-2.5 py-1.5 font-medium transition-all ${
                 dateFilter === "THIS_MONTH"
                   ? "bg-[#4DE8E0] text-[#090C14] font-bold"
                   : "bg-[#090C14] border border-[#1D2436] text-[#8891A8] hover:text-[#F3F6FB]"
@@ -537,13 +537,13 @@ export default function EnrollmentsManagement() {
 
             <button
               onClick={() => setDateFilter("CUSTOM")}
-              className={`rounded-lg px-3 py-1.5 font-medium transition-all ${
+              className={`rounded-lg px-2.5 py-1.5 font-medium transition-all ${
                 dateFilter === "CUSTOM"
                   ? "bg-[#4DE8E0] text-[#090C14] font-bold"
                   : "bg-[#090C14] border border-[#1D2436] text-[#8891A8] hover:text-[#F3F6FB]"
               }`}
             >
-              Select Custom Date
+              Custom Date
             </button>
 
             {dateFilter === "CUSTOM" && (
@@ -551,12 +551,12 @@ export default function EnrollmentsManagement() {
                 type="date"
                 value={customDate}
                 onChange={(e) => setCustomDate(e.target.value)}
-                className="ml-1 px-3 py-1 bg-[#090C14] border border-[#4DE8E0]/40 text-[#4DE8E0] text-xs rounded-lg outline-none font-mono"
+                className="w-full sm:w-auto mt-1 sm:mt-0 px-3 py-1 bg-[#090C14] border border-[#4DE8E0]/40 text-[#4DE8E0] text-xs rounded-lg outline-none font-mono"
               />
             )}
           </div>
 
-          <div className="text-xs text-[#8891A8]">
+          <div className="text-xs text-[#8891A8] self-end md:self-auto">
             Showing <span className="font-bold text-[#4DE8E0]">{filtered.length}</span> record{filtered.length !== 1 ? "s" : ""}
           </div>
         </div>
@@ -577,7 +577,7 @@ export default function EnrollmentsManagement() {
         </div>
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-[#1D2436]">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[750px] text-sm">
             <thead>
               <tr className="border-b border-[#1D2436] bg-[#0F1420]">
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#8891A8]">Reg No.</th>
