@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import NavItem from "./NavItem"
+import NavItem from "./NavItem";
 
-type Props = { onClick?: () => void }
+type Props = { activeSection?: string; onClick?: () => void };
 
-export default function AboutNavItem({ onClick }: Props) {
-  return <NavItem label="About" href="/about" onClick={onClick} />
+export default function AboutNavItem({ activeSection, onClick }: Props) {
+  return <NavItem label="About" href="/about" sectionId="about" activeSection={activeSection} onClick={onClick} />;
 }
