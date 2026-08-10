@@ -348,7 +348,7 @@ export default function Explore() {
                     <option value="College">College</option>
                   </select>
                 </Field>
-                <Field label="School / College" optional>
+                <Field label="College / School / NGO" optional>
                   <input
                     type="text"
                     placeholder="Institution name"
@@ -593,7 +593,7 @@ function RegistrationReceipt({
             <ReceiptRow label="Date of Birth" value={data.dob || "—"} />
             <ReceiptRow label="Gender" value={data.gender || "—"} />
             <ReceiptRow label="Class / Grade" value={data.classGrade || "—"} />
-            <ReceiptRow label="School / College" value={data.school || "—"} className="col-span-2" />
+            <ReceiptRow label="College / School / NGO" value={data.school || "—"} className="col-span-2" />
             <ReceiptRow label="Phone" value={data.studentPhone} />
             <ReceiptRow label="Email" value={data.studentEmail} />
             <ReceiptRow label="Parent / Guardian" value={data.guardianName || "—"} className="col-span-2" />

@@ -546,7 +546,7 @@ export default function EnrollmentsManagement() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-[#8891A8] mb-1.5">School / College</label>
+                    <label className="block text-xs text-[#8891A8] mb-1.5">College / School / NGO Name</label>
                     <input
                       type="text"
                       value={newForm.school}

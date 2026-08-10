@@ -381,7 +381,7 @@ export default function InquiriesManagement() {
                 <div><p className="text-xs uppercase text-[#8891A8]">Date of Birth</p><p className="font-medium text-white">{selectedInquiry.dob || "—"}</p></div>
                 <div><p className="text-xs uppercase text-[#8891A8]">Gender</p><p className="font-medium text-white">{selectedInquiry.gender || "—"}</p></div>
                 <div><p className="text-xs uppercase text-[#8891A8]">Class / Grade</p><p className="font-medium text-white">{selectedInquiry.classGrade || "—"}</p></div>
-                <div className="col-span-2"><p className="text-xs uppercase text-[#8891A8]">School / College</p><p className="font-medium text-white">{selectedInquiry.school || "—"}</p></div>
+                <div className="col-span-2"><p className="text-xs uppercase text-[#8891A8]">College / School / NGO</p><p className="font-medium text-white">{selectedInquiry.school || "—"}</p></div>
                 <div className="col-span-2"><p className="text-xs uppercase text-[#8891A8]">Guardian Name</p><p className="font-medium text-white">{selectedInquiry.guardianName || "—"}</p></div>
               </div>
 
