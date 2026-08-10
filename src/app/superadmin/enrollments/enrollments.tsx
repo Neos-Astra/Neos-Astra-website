@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Users, Search, Eye, X, Download, RefreshCw, Printer, Trash2 } from "lucide-react";
+import { Users, Search, Eye, X, RefreshCw, Printer, Trash2 } from "lucide-react";
 import { generateOfficialFeeReceiptHTML } from "@/lib/receiptTemplate";
 
 interface Enrollment {
@@ -18,9 +18,59 @@ interface Enrollment {
   courseTitle: string;
   admissionFee: string;
   kitPrice: string;
+  hasKit?: boolean;
+  gstPercent?: number;
+  total?: string;
   message: string | null;
   status: string;
   createdAt: string;
+}
+
+function parseAmt(val: string | undefined): number {
+  if (!val) return 0;
+  return parseFloat(val.replace(/[^0-9.]/g, "")) || 0;
+}
+
+function fmtAmt(val: number): string {
+  return `₹${val.toLocaleString("en-IN")}`;
+}
+
+function getEnrollmentDetails(e: Enrollment) {
+  const isRobo = Boolean(
+    e.hasKit === true ||
+    e.courseTitle?.toLowerCase().includes("robotics")
+  );
+  const admissionAmt = parseAmt(e.admissionFee);
+  const kitAmt = isRobo ? parseAmt(e.kitPrice) : 0;
+  const baseAmt = admissionAmt + kitAmt;
+
+  let gstPercent = e.gstPercent ?? 0;
+  let totalAmt = parseAmt(e.total);
+
+  // If total is stored in DB and greater than baseAmt, infer GST %
+  if (totalAmt > baseAmt && baseAmt > 0 && gstPercent === 0) {
+    const diff = totalAmt - baseAmt;
+    gstPercent = Math.round((diff / baseAmt) * 100);
+  }
+
+  const gstAmt = Math.round(baseAmt * gstPercent / 100);
+
+  if (totalAmt === 0) {
+    totalAmt = baseAmt + gstAmt;
+  }
+
+  const totalStr = e.total || fmtAmt(totalAmt);
+
+  return {
+    isRobo,
+    admissionAmt,
+    kitAmt,
+    baseAmt,
+    gstPercent,
+    gstAmt,
+    totalAmt,
+    totalStr,
+  };
 }
 
 export default function EnrollmentsManagement() {
@@ -45,7 +95,6 @@ export default function EnrollmentsManagement() {
   useEffect(() => { fetchEnrollments(true); }, []);
 
   const updateStatus = async (id: string, newStatus: string) => {
-    // Optimistic update
     setEnrollments((prev) =>
       prev.map((item) => (item.id === id ? { ...item, status: newStatus } : item))
     );
@@ -74,7 +123,6 @@ export default function EnrollmentsManagement() {
       return;
     }
 
-    // Optimistic removal
     setEnrollments((prev) => prev.filter((item) => item.id !== id));
     if (selected && selected.id === id) {
       setSelected(null);
@@ -85,7 +133,6 @@ export default function EnrollmentsManagement() {
         method: "DELETE",
       });
       if (!res.ok) {
-        // Fallback search param DELETE
         const res2 = await fetch(`/api/enrollments?id=${id}`, {
           method: "DELETE",
         });
@@ -114,20 +161,18 @@ export default function EnrollmentsManagement() {
     return "text-yellow-400 border-yellow-400/30 bg-yellow-400/10";
   };
 
-  const total = (e: Enrollment) => {
-    const a = parseInt(e.admissionFee.replace(/[^0-9]/g, "") || "0");
-    const k = parseInt(e.kitPrice.replace(/[^0-9]/g, "") || "0");
-    return `₹${(a + k).toLocaleString("en-IN")}`;
-  };
-
   const handlePrintReceipt = (eRecord: Enrollment) => {
+    const details = getEnrollmentDetails(eRecord);
+
     const html = generateOfficialFeeReceiptHTML({
       registrationNo: eRecord.registrationNo,
       studentName: eRecord.studentName,
       courseTitle: eRecord.courseTitle,
       admissionFee: eRecord.admissionFee,
-      kitPrice: eRecord.kitPrice,
-      total: total(eRecord),
+      kitPrice: details.isRobo ? eRecord.kitPrice : "",
+      hasKit: details.isRobo,
+      gstPercent: details.gstPercent,
+      total: details.totalStr,
       date: new Date(eRecord.createdAt).toLocaleDateString("en-IN", {
         day: "numeric",
         month: "short",
@@ -204,63 +249,66 @@ export default function EnrollmentsManagement() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((e) => (
-                  <tr key={e.id} className="border-b border-[#1D2436] bg-[#090C14] hover:bg-[#0F1420] transition-colors">
-                    <td className="px-4 py-3 font-mono text-xs text-[#4DE8E0]">{e.registrationNo}</td>
-                    <td className="px-4 py-3">
-                      <p className="font-semibold text-[#F3F6FB]">{e.studentName}</p>
-                      <p className="text-xs text-[#8891A8]">{e.studentEmail}</p>
-                    </td>
-                    <td className="px-4 py-3 text-[#F3F6FB]">{e.courseTitle}</td>
-                    <td className="px-4 py-3 font-bold text-[#4DE8E0]">{total(e)}</td>
-                    <td className="px-4 py-3">
-                      <select
-                        value={e.status}
-                        onChange={(ev) => updateStatus(e.id, ev.target.value)}
-                        className={`rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-[#090C14] cursor-pointer outline-none transition-all ${statusColor(
-                          e.status
-                        )}`}
-                      >
-                        <option value="PENDING" className="bg-[#0F1420] text-yellow-400 font-bold">
-                          PENDING
-                        </option>
-                        <option value="CONFIRMED" className="bg-[#0F1420] text-emerald-400 font-bold">
-                          CONFIRMED
-                        </option>
-                        <option value="REJECTED" className="bg-[#0F1420] text-red-400 font-bold">
-                          REJECTED
-                        </option>
-                      </select>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-[#8891A8]">
-                      {new Date(e.createdAt).toLocaleDateString("en-IN")}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setSelected(e)}
-                          className="flex items-center gap-1 rounded-lg border border-[#1D2436] px-3 py-1.5 text-xs text-[#8891A8] hover:border-[#4DE8E0] hover:text-[#4DE8E0] transition-all"
+                {filtered.map((e) => {
+                  const details = getEnrollmentDetails(e);
+                  return (
+                    <tr key={e.id} className="border-b border-[#1D2436] bg-[#090C14] hover:bg-[#0F1420] transition-colors">
+                      <td className="px-4 py-3 font-mono text-xs text-[#4DE8E0]">{e.registrationNo}</td>
+                      <td className="px-4 py-3">
+                        <p className="font-semibold text-[#F3F6FB]">{e.studentName}</p>
+                        <p className="text-xs text-[#8891A8]">{e.studentEmail}</p>
+                      </td>
+                      <td className="px-4 py-3 text-[#F3F6FB]">{e.courseTitle}</td>
+                      <td className="px-4 py-3 font-bold text-[#4DE8E0]">{details.totalStr}</td>
+                      <td className="px-4 py-3">
+                        <select
+                          value={e.status}
+                          onChange={(ev) => updateStatus(e.id, ev.target.value)}
+                          className={`rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-[#090C14] cursor-pointer outline-none transition-all ${statusColor(
+                            e.status
+                          )}`}
                         >
-                          <Eye className="h-3 w-3" /> View
-                        </button>
-                        <button
-                          onClick={() => handlePrintReceipt(e)}
-                          title="Print Official Fee Receipt"
-                          className="flex items-center gap-1 rounded-lg border border-[#1D2436] px-3 py-1.5 text-xs text-[#4DE8E0] bg-[#4DE8E010] hover:bg-[#4DE8E020] transition-all"
-                        >
-                          <Printer className="h-3 w-3" /> Print
-                        </button>
-                        <button
-                          onClick={() => handleDelete(e.id, e.studentName)}
-                          title="Delete Enrollment"
-                          className="flex items-center gap-1 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/20 hover:border-red-500/50 transition-all"
-                        >
-                          <Trash2 className="h-3 w-3" /> Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          <option value="PENDING" className="bg-[#0F1420] text-yellow-400 font-bold">
+                            PENDING
+                          </option>
+                          <option value="CONFIRMED" className="bg-[#0F1420] text-emerald-400 font-bold">
+                            CONFIRMED
+                          </option>
+                          <option value="REJECTED" className="bg-[#0F1420] text-red-400 font-bold">
+                            REJECTED
+                          </option>
+                        </select>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-[#8891A8]">
+                        {new Date(e.createdAt).toLocaleDateString("en-IN")}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setSelected(e)}
+                            className="flex items-center gap-1 rounded-lg border border-[#1D2436] px-3 py-1.5 text-xs text-[#8891A8] hover:border-[#4DE8E0] hover:text-[#4DE8E0] transition-all"
+                          >
+                            <Eye className="h-3 w-3" /> View
+                          </button>
+                          <button
+                            onClick={() => handlePrintReceipt(e)}
+                            title="Print Official Fee Receipt"
+                            className="flex items-center gap-1 rounded-lg border border-[#1D2436] px-3 py-1.5 text-xs text-[#4DE8E0] bg-[#4DE8E010] hover:bg-[#4DE8E020] transition-all"
+                          >
+                            <Printer className="h-3 w-3" /> Print
+                          </button>
+                          <button
+                            onClick={() => handleDelete(e.id, e.studentName)}
+                            title="Delete Enrollment"
+                            className="flex items-center gap-1 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/20 hover:border-red-500/50 transition-all"
+                          >
+                            <Trash2 className="h-3 w-3" /> Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -305,24 +353,37 @@ export default function EnrollmentsManagement() {
               <Detail label="Guardian Name" value={selected.guardianName || "—"} className="col-span-2" />
             </div>
 
-            <div className="mb-6 rounded-xl border border-[#1D2436] bg-[#090C14] p-4">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#8891A8]">Course & Fees</p>
-              <p className="font-bold text-[#F3F6FB] mb-3">{selected.courseTitle}</p>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-[#8891A8]">Admission Fee</span>
-                  <span className="font-semibold text-[#F3F6FB]">{selected.admissionFee}</span>
+            {(() => {
+              const details = getEnrollmentDetails(selected);
+              return (
+                <div className="mb-6 rounded-xl border border-[#1D2436] bg-[#090C14] p-4">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#8891A8]">Course & Fee Breakdown</p>
+                  <p className="font-bold text-[#F3F6FB] mb-3">{selected.courseTitle}</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-[#8891A8]">Admission Fee</span>
+                      <span className="font-semibold text-[#F3F6FB]">{selected.admissionFee || "—"}</span>
+                    </div>
+                    {details.isRobo && selected.kitPrice && (
+                      <div className="flex justify-between">
+                        <span className="text-[#8891A8]">Kit Price</span>
+                        <span className="font-semibold text-[#F3F6FB]">{selected.kitPrice}</span>
+                      </div>
+                    )}
+                    {details.gstPercent > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-[#8891A8]">GST ({details.gstPercent}%)</span>
+                        <span className="font-semibold text-amber-400">{fmtAmt(details.gstAmt)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-t border-[#1D2436] pt-2">
+                      <span className="font-bold text-[#F3F6FB]">Total Amount {details.gstPercent > 0 ? "(incl. GST)" : ""}</span>
+                      <span className="font-bold text-[#4DE8E0]">{details.totalStr}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-[#8891A8]">Kit Price</span>
-                  <span className="font-semibold text-[#F3F6FB]">{selected.kitPrice}</span>
-                </div>
-                <div className="flex justify-between border-t border-[#1D2436] pt-2">
-                  <span className="font-bold text-[#F3F6FB]">Total</span>
-                  <span className="font-bold text-[#4DE8E0]">{total(selected)}</span>
-                </div>
-              </div>
-            </div>
+              );
+            })()}
 
             {selected.message && (
               <div className="mb-6">
