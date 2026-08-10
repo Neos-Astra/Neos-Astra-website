@@ -5,15 +5,50 @@ import { prisma } from "@/superadmin/prisma/client";
 
 async function getDashboardStats() {
   try {
-    const [courseCount, teamCount, enrollmentCount, adminCount] = await Promise.all([
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const [
+      courseCount,
+      teamCount,
+      enrollmentCount,
+      todayEnrollmentCount,
+      webLeadCount,
+      todayWebLeadCount,
+      adminCount,
+    ] = await Promise.all([
       prisma.course.count(),
       prisma.teamMember.count(),
       prisma.enrollment.count(),
+      prisma.enrollment.count({
+        where: { createdAt: { gte: startOfToday } },
+      }),
+      prisma.inquiry.count(),
+      prisma.inquiry.count({
+        where: { createdAt: { gte: startOfToday } },
+      }),
       prisma.adminUser.count(),
     ]);
-    return { courseCount, teamCount, enrollmentCount, adminCount };
+
+    return {
+      courseCount,
+      teamCount,
+      enrollmentCount,
+      todayEnrollmentCount,
+      webLeadCount,
+      todayWebLeadCount,
+      adminCount,
+    };
   } catch (error) {
-    return { courseCount: 0, teamCount: 0, enrollmentCount: 0, adminCount: 0 };
+    return {
+      courseCount: 0,
+      teamCount: 0,
+      enrollmentCount: 0,
+      todayEnrollmentCount: 0,
+      webLeadCount: 0,
+      todayWebLeadCount: 0,
+      adminCount: 0,
+    };
   }
 }
 
@@ -29,14 +64,41 @@ export default async function AdminDashboardPage() {
     redirect("/admin");
   }
 
-  const { courseCount, teamCount, enrollmentCount, adminCount } = await getDashboardStats();
+  const {
+    courseCount,
+    teamCount,
+    enrollmentCount,
+    todayEnrollmentCount,
+    webLeadCount,
+    todayWebLeadCount,
+    adminCount,
+  } = await getDashboardStats();
   const isSuperAdmin = true;
   const firstName = user?.name || user?.email?.split("@")[0] || "Super Admin";
 
   const cards = [
     {
+      label: "Web Leads / Enquiries",
+      value: webLeadCount,
+      todayValue: todayWebLeadCount,
+      icon: Users,
+      color: "#38BDF8",
+      href: "/superadmin/inquiries",
+      cta: "View web leads",
+    },
+    {
+      label: "Official Enrollments",
+      value: enrollmentCount,
+      todayValue: todayEnrollmentCount,
+      icon: GraduationCap,
+      color: "#4ADE80",
+      href: "/superadmin/enrollments",
+      cta: "View enrollments",
+    },
+    {
       label: "Courses",
       value: courseCount,
+      todayValue: null,
       icon: BookOpen,
       color: "#4DE8E0",
       href: "/superadmin/course",
@@ -45,6 +107,7 @@ export default async function AdminDashboardPage() {
     {
       label: "Team Members",
       value: teamCount,
+      todayValue: null,
       icon: Users,
       color: "#8B7CFF",
       href: "/superadmin/team",
@@ -53,22 +116,16 @@ export default async function AdminDashboardPage() {
     {
       label: "Home Photos",
       value: "—",
+      todayValue: null,
       icon: ImageIcon,
       color: "#64B5F6",
       href: "/superadmin/home-media",
       cta: "Manage photos",
     },
     {
-      label: "Enrollments",
-      value: enrollmentCount,
-      icon: GraduationCap,
-      color: "#4ADE80",
-      href: "/superadmin/enrollments",
-      cta: "View enrollments",
-    },
-    {
       label: "Admin Accounts",
       value: adminCount,
+      todayValue: null,
       icon: ShieldCheck,
       color: "#F43F5E",
       href: "/superadmin/admins",
@@ -97,20 +154,27 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Stat cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
           {cards.map((card) => {
             const Icon = card.icon;
             return (
               <a
                 key={card.label}
                 href={card.href}
-                className="group rounded-2xl border border-[#1D2436] bg-[#0F1420] p-5 transition-all hover:-translate-y-1 hover:border-[#4DE8E066] hover:shadow-[0_12px_30px_rgba(77,232,224,0.08)]"
+                className="group relative rounded-2xl border border-[#1D2436] bg-[#0F1420] p-5 transition-all hover:-translate-y-1 hover:border-[#4DE8E066] hover:shadow-[0_12px_30px_rgba(77,232,224,0.08)]"
               >
-                <div
-                  className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl"
-                  style={{ backgroundColor: `${card.color}1a`, color: card.color }}
-                >
-                  <Icon className="h-5 w-5" />
+                <div className="flex items-center justify-between mb-4">
+                  <div
+                    className="flex h-11 w-11 items-center justify-center rounded-xl"
+                    style={{ backgroundColor: `${card.color}1a`, color: card.color }}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  {card.todayValue !== null && (
+                    <span className="rounded-full border border-[#4DE8E0]/30 bg-[#4DE8E0]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#4DE8E0]">
+                      Today: {card.todayValue}
+                    </span>
+                  )}
                 </div>
                 <p className="text-3xl font-bold text-[#F3F6FB]">{card.value}</p>
                 <p className="text-xs text-[#8891A8] mt-1">{card.label}</p>

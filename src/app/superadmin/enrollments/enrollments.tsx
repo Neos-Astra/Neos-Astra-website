@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Users, Search, Eye, X, RefreshCw, Printer, Trash2, Plus, Save } from "lucide-react";
+import { Users, Search, Eye, X, RefreshCw, Printer, Trash2, Plus, Save, Download, Calendar, FileSpreadsheet } from "lucide-react";
 import AdminShell from "@/app/components/AdminShell";
 import { generateOfficialFeeReceiptHTML } from "@/lib/receiptTemplate";
 
@@ -84,12 +84,24 @@ function getEnrollmentDetails(e: Enrollment) {
   };
 }
 
+const isSameDay = (d1: Date, d2: Date) => {
+  return (
+    d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate()
+  );
+};
+
 export default function EnrollmentsManagement() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [courses, setCourses] = useState<CourseItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Enrollment | null>(null);
+
+  // Date Filter State
+  const [dateFilter, setDateFilter] = useState<"ALL" | "TODAY" | "YESTERDAY" | "THIS_MONTH" | "CUSTOM">("ALL");
+  const [customDate, setCustomDate] = useState<string>("");
 
   // New Official Enrollment modal
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
@@ -280,12 +292,110 @@ export default function EnrollmentsManagement() {
     }
   };
 
-  const filtered = enrollments.filter((e) =>
-    e.studentName.toLowerCase().includes(search.toLowerCase()) ||
-    e.registrationNo.toLowerCase().includes(search.toLowerCase()) ||
-    e.studentEmail.toLowerCase().includes(search.toLowerCase()) ||
-    e.courseTitle.toLowerCase().includes(search.toLowerCase())
-  );
+  // Filter enrollments by search and date filter
+  const todayCount = enrollments.filter((e) => isSameDay(new Date(e.createdAt), new Date())).length;
+
+  const filtered = enrollments.filter((e) => {
+    const matchesSearch =
+      e.studentName.toLowerCase().includes(search.toLowerCase()) ||
+      e.registrationNo.toLowerCase().includes(search.toLowerCase()) ||
+      e.studentEmail.toLowerCase().includes(search.toLowerCase()) ||
+      e.courseTitle.toLowerCase().includes(search.toLowerCase());
+
+    if (!matchesSearch) return false;
+
+    if (dateFilter === "ALL") return true;
+
+    const itemDate = new Date(e.createdAt);
+    const now = new Date();
+
+    if (dateFilter === "TODAY") {
+      return isSameDay(itemDate, now);
+    }
+
+    if (dateFilter === "YESTERDAY") {
+      const yesterday = new Date(now);
+      yesterday.setDate(now.getDate() - 1);
+      return isSameDay(itemDate, yesterday);
+    }
+
+    if (dateFilter === "THIS_MONTH") {
+      return (
+        itemDate.getFullYear() === now.getFullYear() &&
+        itemDate.getMonth() === now.getMonth()
+      );
+    }
+
+    if (dateFilter === "CUSTOM" && customDate) {
+      const target = new Date(customDate);
+      return isSameDay(itemDate, target);
+    }
+
+    return true;
+  });
+
+  // Export filtered data to Excel (.csv format)
+  const exportToExcelCSV = () => {
+    if (filtered.length === 0) {
+      alert("No enrollment records found for the current filter to export.");
+      return;
+    }
+
+    const headers = [
+      "Registration No",
+      "Student Name",
+      "Phone",
+      "Email",
+      "Course Title",
+      "Admission Fee",
+      "Kit Price",
+      "GST %",
+      "Total Amount",
+      "Status",
+      "Registration Date",
+      "Class/Grade",
+      "School",
+      "Guardian Name",
+    ];
+
+    const escapeCSV = (val: any) => {
+      if (val === null || val === undefined) return '""';
+      const str = String(val).replace(/"/g, '""');
+      return `"${str}"`;
+    };
+
+    const rows = filtered.map((e) => {
+      const details = getEnrollmentDetails(e);
+      return [
+        escapeCSV(e.registrationNo),
+        escapeCSV(e.studentName),
+        escapeCSV(e.studentPhone),
+        escapeCSV(e.studentEmail),
+        escapeCSV(e.courseTitle),
+        escapeCSV(e.admissionFee),
+        escapeCSV(e.kitPrice),
+        escapeCSV(details.gstPercent),
+        escapeCSV(details.totalStr),
+        escapeCSV(e.status),
+        escapeCSV(new Date(e.createdAt).toLocaleDateString("en-IN")),
+        escapeCSV(e.classGrade || ""),
+        escapeCSV(e.school || ""),
+        escapeCSV(e.guardianName || ""),
+      ].join(",");
+    });
+
+    const csvString = [headers.map(escapeCSV).join(","), ...rows].join("\n");
+    const blob = new Blob(["\uFEFF" + csvString], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const todayStr = new Date().toISOString().split("T")[0];
+    const filterTag = dateFilter === "CUSTOM" && customDate ? customDate : dateFilter;
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Official_Enrollments_${filterTag}_${todayStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const statusColor = (s: string) => {
     if (s === "CONFIRMED") return "text-emerald-400 border-emerald-400/30 bg-emerald-400/10";
@@ -328,12 +438,24 @@ export default function EnrollmentsManagement() {
       {/* Header */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#F3F6FB]">Official Enrollments</h1>
-          <p className="text-sm text-[#8891A8]">
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-[#F3F6FB]">Official Enrollments</h1>
+            <span className="rounded-full border border-[#4DE8E0]/30 bg-[#4DE8E0]/10 px-3 py-0.5 text-xs font-bold text-[#4DE8E0]">
+              Today: {todayCount}
+            </span>
+          </div>
+          <p className="text-sm text-[#8891A8] mt-1">
             {enrollments.length} total verified student{enrollments.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={exportToExcelCSV}
+            className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-all"
+            title="Download currently filtered enrollments to Excel file"
+          >
+            <FileSpreadsheet className="h-4 w-4" /> Download Excel ({filtered.length})
+          </button>
           <button
             onClick={() => fetchEnrollments(true)}
             className="flex items-center gap-2 rounded-xl border border-[#1D2436] px-4 py-2.5 text-sm text-[#8891A8] hover:border-[#4DE8E0] hover:text-[#4DE8E0] transition-all"
@@ -349,16 +471,95 @@ export default function EnrollmentsManagement() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative mb-6">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8891A8]" />
-        <input
-          type="text"
-          placeholder="Search by name, email, reg no, course..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#0F1420] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] placeholder:text-[#8891A8]/60 text-sm transition-all"
-        />
+      {/* Filter and Search Bar */}
+      <div className="mb-6 space-y-3">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8891A8]" />
+          <input
+            type="text"
+            placeholder="Search by name, email, reg no, course..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#0F1420] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] placeholder:text-[#8891A8]/60 text-sm transition-all"
+          />
+        </div>
+
+        {/* Date Filter Toolbar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#1D2436] bg-[#0F1420] p-3">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-[#8891A8] font-medium mr-1 flex items-center gap-1">
+              <Calendar className="h-3.5 w-3.5 text-[#4DE8E0]" /> Filter Date:
+            </span>
+
+            <button
+              onClick={() => setDateFilter("ALL")}
+              className={`rounded-lg px-3 py-1.5 font-medium transition-all ${
+                dateFilter === "ALL"
+                  ? "bg-[#4DE8E0] text-[#090C14] font-bold"
+                  : "bg-[#090C14] border border-[#1D2436] text-[#8891A8] hover:text-[#F3F6FB]"
+              }`}
+            >
+              All Time ({enrollments.length})
+            </button>
+
+            <button
+              onClick={() => setDateFilter("TODAY")}
+              className={`rounded-lg px-3 py-1.5 font-medium transition-all ${
+                dateFilter === "TODAY"
+                  ? "bg-[#4DE8E0] text-[#090C14] font-bold"
+                  : "bg-[#090C14] border border-[#1D2436] text-[#8891A8] hover:text-[#F3F6FB]"
+              }`}
+            >
+              Today ({todayCount})
+            </button>
+
+            <button
+              onClick={() => setDateFilter("YESTERDAY")}
+              className={`rounded-lg px-3 py-1.5 font-medium transition-all ${
+                dateFilter === "YESTERDAY"
+                  ? "bg-[#4DE8E0] text-[#090C14] font-bold"
+                  : "bg-[#090C14] border border-[#1D2436] text-[#8891A8] hover:text-[#F3F6FB]"
+              }`}
+            >
+              Yesterday
+            </button>
+
+            <button
+              onClick={() => setDateFilter("THIS_MONTH")}
+              className={`rounded-lg px-3 py-1.5 font-medium transition-all ${
+                dateFilter === "THIS_MONTH"
+                  ? "bg-[#4DE8E0] text-[#090C14] font-bold"
+                  : "bg-[#090C14] border border-[#1D2436] text-[#8891A8] hover:text-[#F3F6FB]"
+              }`}
+            >
+              This Month
+            </button>
+
+            <button
+              onClick={() => setDateFilter("CUSTOM")}
+              className={`rounded-lg px-3 py-1.5 font-medium transition-all ${
+                dateFilter === "CUSTOM"
+                  ? "bg-[#4DE8E0] text-[#090C14] font-bold"
+                  : "bg-[#090C14] border border-[#1D2436] text-[#8891A8] hover:text-[#F3F6FB]"
+              }`}
+            >
+              Select Custom Date
+            </button>
+
+            {dateFilter === "CUSTOM" && (
+              <input
+                type="date"
+                value={customDate}
+                onChange={(e) => setCustomDate(e.target.value)}
+                className="ml-1 px-3 py-1 bg-[#090C14] border border-[#4DE8E0]/40 text-[#4DE8E0] text-xs rounded-lg outline-none font-mono"
+              />
+            )}
+          </div>
+
+          <div className="text-xs text-[#8891A8]">
+            Showing <span className="font-bold text-[#4DE8E0]">{filtered.length}</span> record{filtered.length !== 1 ? "s" : ""}
+          </div>
+        </div>
       </div>
 
       {/* Table */}

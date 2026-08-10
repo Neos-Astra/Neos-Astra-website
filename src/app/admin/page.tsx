@@ -6,14 +6,46 @@ import { prisma } from "@/superadmin/prisma/client";
 
 async function getDashboardStats() {
   try {
-    const [courseCount, teamCount, enrollmentCount] = await Promise.all([
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const [
+      courseCount,
+      teamCount,
+      enrollmentCount,
+      todayEnrollmentCount,
+      webLeadCount,
+      todayWebLeadCount,
+    ] = await Promise.all([
       prisma.course.count(),
       prisma.teamMember.count(),
       prisma.enrollment.count(),
+      prisma.enrollment.count({
+        where: { createdAt: { gte: startOfToday } },
+      }),
+      prisma.inquiry.count(),
+      prisma.inquiry.count({
+        where: { createdAt: { gte: startOfToday } },
+      }),
     ]);
-    return { courseCount, teamCount, enrollmentCount };
+
+    return {
+      courseCount,
+      teamCount,
+      enrollmentCount,
+      todayEnrollmentCount,
+      webLeadCount,
+      todayWebLeadCount,
+    };
   } catch (error) {
-    return { courseCount: 0, teamCount: 0, enrollmentCount: 0 };
+    return {
+      courseCount: 0,
+      teamCount: 0,
+      enrollmentCount: 0,
+      todayEnrollmentCount: 0,
+      webLeadCount: 0,
+      todayWebLeadCount: 0,
+    };
   }
 }
 
@@ -29,14 +61,40 @@ export default async function StaffAdminDashboardPage() {
     redirect("/superadmin");
   }
 
-  const { courseCount, teamCount, enrollmentCount } = await getDashboardStats();
+  const {
+    courseCount,
+    teamCount,
+    enrollmentCount,
+    todayEnrollmentCount,
+    webLeadCount,
+    todayWebLeadCount,
+  } = await getDashboardStats();
   const user = session.user;
   const firstName = user?.name || user?.email?.split("@")[0] || "Admin";
 
   const cards = [
     {
+      label: "Web Leads / Enquiries",
+      value: webLeadCount,
+      todayValue: todayWebLeadCount,
+      icon: Users,
+      color: "#38BDF8",
+      href: "/superadmin/inquiries",
+      cta: "View web leads",
+    },
+    {
+      label: "Official Enrollments",
+      value: enrollmentCount,
+      todayValue: todayEnrollmentCount,
+      icon: GraduationCap,
+      color: "#4ADE80",
+      href: "/superadmin/enrollments",
+      cta: "View enrollments",
+    },
+    {
       label: "Courses",
       value: courseCount,
+      todayValue: null,
       icon: BookOpen,
       color: "#4DE8E0",
       href: "/superadmin/course",
@@ -45,26 +103,11 @@ export default async function StaffAdminDashboardPage() {
     {
       label: "Team Members",
       value: teamCount,
+      todayValue: null,
       icon: Users,
       color: "#8B7CFF",
       href: "/superadmin/team",
       cta: "Manage team",
-    },
-    {
-      label: "Home Photos",
-      value: "—",
-      icon: ImageIcon,
-      color: "#64B5F6",
-      href: "/superadmin/home-media",
-      cta: "Manage photos",
-    },
-    {
-      label: "Enrollments",
-      value: enrollmentCount,
-      icon: GraduationCap,
-      color: "#4ADE80",
-      href: "/superadmin/enrollments",
-      cta: "View enrollments",
     },
   ];
 
@@ -92,13 +135,20 @@ export default async function StaffAdminDashboardPage() {
               <a
                 key={card.label}
                 href={card.href}
-                className="group rounded-2xl border border-[#1D2436] bg-[#0F1420] p-5 transition-all hover:-translate-y-1 hover:border-[#4DE8E066] hover:shadow-[0_12px_30px_rgba(77,232,224,0.08)]"
+                className="group relative rounded-2xl border border-[#1D2436] bg-[#0F1420] p-5 transition-all hover:-translate-y-1 hover:border-[#4DE8E066] hover:shadow-[0_12px_30px_rgba(77,232,224,0.08)]"
               >
-                <div
-                  className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl"
-                  style={{ backgroundColor: `${card.color}1a`, color: card.color }}
-                >
-                  <Icon className="h-5 w-5" />
+                <div className="flex items-center justify-between mb-4">
+                  <div
+                    className="flex h-11 w-11 items-center justify-center rounded-xl"
+                    style={{ backgroundColor: `${card.color}1a`, color: card.color }}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  {card.todayValue !== null && (
+                    <span className="rounded-full border border-[#4DE8E0]/30 bg-[#4DE8E0]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#4DE8E0]">
+                      Today: {card.todayValue}
+                    </span>
+                  )}
                 </div>
                 <p className="text-3xl font-bold text-[#F3F6FB]">{card.value}</p>
                 <p className="text-xs text-[#8891A8] mt-1">{card.label}</p>
