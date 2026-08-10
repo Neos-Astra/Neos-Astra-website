@@ -2,10 +2,7 @@
 
 import { Instagram, Facebook, Linkedin, Mail, ArrowUp } from "lucide-react";
 
-// ---------------------------------------------
-// Neos Astra — Footer
-// Palette: Deep Navy + Cyan / Violet
-// ---------------------------------------------
+
 
 const FOOTER_LINKS = {
   Explore: [

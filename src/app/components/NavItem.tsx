@@ -1,36 +1,20 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 interface NavItemProps {
   label: string;
   href: string;
-  sectionId?: string;
-  activeSection?: string;
   onClick?: () => void;
 }
 
-const NavItem = ({ label, href, sectionId, activeSection, onClick }: NavItemProps) => {
+const NavItem = ({ label, href, onClick }: NavItemProps) => {
   const pathname = usePathname();
-  const isHome = pathname === "/";
 
-  // Active state: if on Home page, match sectionId with activeSection; else match pathname
-  const isActive = isHome
-    ? Boolean(activeSection && sectionId ? activeSection === sectionId : (href === "/" && (!activeSection || activeSection === "home")))
-    : (href === "/" ? pathname === "/" : pathname?.startsWith(href));
-
+  // Active state based strictly on current page route URL
+  const isActive = href === "/" ? pathname === "/" : pathname?.startsWith(href);
   const isMobile = !!onClick;
-
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (isHome && sectionId) {
-      const targetEl = document.getElementById(sectionId);
-      if (targetEl) {
-        e.preventDefault();
-        targetEl.scrollIntoView({ behavior: "smooth" });
-      }
-    }
-    if (onClick) onClick();
-  };
 
   const linkClass = isMobile
     ? `block rounded-md px-2 py-3 text-sm font-medium transition-colors ${
@@ -44,7 +28,7 @@ const NavItem = ({ label, href, sectionId, activeSection, onClick }: NavItemProp
 
   return (
     <li key={href}>
-      <a href={href} onClick={handleClick} className={linkClass}>
+      <Link href={href} onClick={onClick} className={linkClass}>
         {label}
         {!isMobile && (
           <span
@@ -53,7 +37,7 @@ const NavItem = ({ label, href, sectionId, activeSection, onClick }: NavItemProp
             }`}
           />
         )}
-      </a>
+      </Link>
     </li>
   );
 };

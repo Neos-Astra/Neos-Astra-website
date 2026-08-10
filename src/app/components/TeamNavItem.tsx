@@ -2,8 +2,8 @@
 
 import NavItem from "./NavItem";
 
-type Props = { activeSection?: string; onClick?: () => void };
+type Props = { onClick?: () => void };
 
-export default function TeamNavItem({ activeSection, onClick }: Props) {
-  return <NavItem label="Team" href="/team" sectionId="team" activeSection={activeSection} onClick={onClick} />;
+export default function TeamNavItem({ onClick }: Props) {
+  return <NavItem label="Team" href="/team" onClick={onClick} />;
 }

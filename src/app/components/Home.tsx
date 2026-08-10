@@ -163,7 +163,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#090C14] text-[#F3F6FB] overflow-x-hidden">
       {/* Hero Section - Updated with New Interactive Block */}
-      <section id="home" className="relative flex min-h-[88vh] items-center overflow-hidden px-6 md:px-12">
+      <section className="relative flex min-h-[88vh] items-center overflow-hidden px-6 md:px-12">
         {/* Background image carousel */}
         <div className="absolute inset-0 z-0">
         {heroImages.map((src, i) => (
@@ -263,7 +263,7 @@ export default function Home() {
             className="lg:col-span-6 flex flex-col items-center justify-center"
           >
             {/* The Interaction Card */}
-            <div id="community" className="relative w-full max-w-md rounded-2xl border border-[#1D2436] bg-[#0F1420]/90 p-6 backdrop-blur-md shadow-2xl transition-all duration-500 hover:border-[#4DE8E044]">
+            <div className="relative w-full max-w-md rounded-2xl border border-[#1D2436] bg-[#0F1420]/90 p-6 backdrop-blur-md shadow-2xl transition-all duration-500 hover:border-[#4DE8E044]">
               
               {/* Floating Trust Badge (Top Right) */}
               <div className="absolute -top-4 -right-2 rounded-full bg-[#090C14] border border-[#4DE8E0] p-0.5">
@@ -325,7 +325,6 @@ export default function Home() {
 
       {/* Events & Moments Section */}
       <motion.section
-        id="events"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.1, margin: "0px 0px -150px 0px" }}
@@ -404,7 +403,6 @@ export default function Home() {
 
       {/* Tech Tracks Section with Scroll Stagger */}
       <motion.section
-        id="courses"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.1, margin: "0px 0px -150px 0px" }}
@@ -498,7 +496,6 @@ export default function Home() {
 
       {/* Why Neos Astra Section */}
       <motion.section
-        id="about"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.1, margin: "0px 0px -150px 0px" }}
