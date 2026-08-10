@@ -70,10 +70,16 @@ export default async function AdminLayout({
                   🖼️ Hero Images
                 </a>
                 <a
+                  href="/superadmin/inquiries"
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#FACC15] bg-[#FACC1510] border border-[#FACC1533] hover:bg-[#FACC1520] transition-all flex items-center gap-1.5"
+                >
+                  📩 Web Leads
+                </a>
+                <a
                   href="/superadmin/enrollments"
                   className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#4ADE80] bg-[#4ADE8010] border border-[#4ADE8033] hover:bg-[#4ADE8020] transition-all flex items-center gap-1.5"
                 >
-                  🎓 Enrollments
+                  🎓 Official Enrollments
                 </a>
                 {isSuperAdmin && (
                   <a

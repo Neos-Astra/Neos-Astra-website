@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { CheckCircle } from "lucide-react";
 import { generateOfficialFeeReceiptHTML } from "@/lib/receiptTemplate";
 
 // ---------------------------------------------------------------------------
@@ -148,17 +149,12 @@ export default function Explore() {
     setApiError("");
 
     try {
-      const res = await fetch("/api/enrollments", {
+      const res = await fetch("/api/inquiries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
           courseTitle: selectedCourse?.name || "",
-          admissionFee: selectedCourse?.admissionFee || "",
-          kitPrice: selectedCourse?.kitPrice || "",
-          hasKit: selectedCourse?.hasKit ?? false,
-          gstPercent: selectedCourse?.gstPercent ?? 0,
-          total: selectedCourse?.total || "",
         }),
       });
 
@@ -176,7 +172,7 @@ export default function Explore() {
       });
 
       setRegistration({
-        registrationNo: json.registrationNo,
+        registrationNo: json.id || "LEAD",
         submittedAt,
         data: { ...form, courseTitle: selectedCourse?.name || "" },
       });
@@ -200,15 +196,43 @@ export default function Explore() {
 
   if (registration) {
     return (
-      <RegistrationReceipt
-        registration={registration}
-        course={selectedCourse}
-        onNew={() => {
-          setForm(emptyForm);
-          setErrors({});
-          setRegistration(null);
-        }}
-      />
+      <div className="min-h-screen bg-[#030712] text-white flex items-center justify-center p-4">
+        <div className="mx-auto max-w-lg rounded-3xl border border-white/10 bg-white/[0.03] p-8 text-center shadow-2xl backdrop-blur-md">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+            <CheckCircle className="h-8 w-8" />
+          </div>
+          <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-mono text-xs text-emerald-400">
+            ✓ ENQUIRY RECEIVED
+          </span>
+          <h2 className="mt-4 text-2xl font-bold text-white">We Will Contact You Soon!</h2>
+          <p className="mt-2 text-sm text-slate-300">
+            Thank you, <strong className="text-cyan-300">{registration.data.studentName}</strong>! Your enquiry for{" "}
+            <strong className="text-white">{registration.data.courseTitle}</strong> has been successfully submitted.
+          </p>
+          <p className="mt-2 text-xs text-slate-400">
+            Our admissions counselor will reach out to you shortly via phone or email.
+          </p>
+
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <button
+              onClick={() => {
+                setForm(emptyForm);
+                setErrors({});
+                setRegistration(null);
+              }}
+              className="rounded-xl border border-white/20 bg-white/5 px-5 py-2.5 text-xs font-semibold text-white transition-all hover:bg-white/10"
+            >
+              Submit Another Enquiry
+            </button>
+            <a
+              href="/courses"
+              className="rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 px-5 py-2.5 text-xs font-bold text-slate-950 transition-all hover:brightness-110"
+            >
+              Explore More Courses
+            </a>
+          </div>
+        </div>
+      </div>
     );
   }
 
