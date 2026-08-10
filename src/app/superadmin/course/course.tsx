@@ -267,8 +267,8 @@ export default function CourseManagement() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-xl border border-[#1D2436] bg-[#0F1420] p-6 rounded-2xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm p-4 sm:p-6 flex min-h-full items-center justify-center">
+          <div className="relative w-full max-w-xl rounded-2xl border border-[#1D2436] bg-[#0F1420] p-6 shadow-2xl my-auto">
             <div className="flex justify-between items-center pb-4 mb-5 border-b border-[#1D2436]">
               <h2 className="text-[#F3F6FB] font-bold text-lg">{editingCourse ? "Edit Course" : "New Course"}</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-[#8891A8] hover:text-[#F3F6FB] transition-colors">
