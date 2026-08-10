@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 // ---------------------------------------------
 // Neos Astra — Navbar
 // Palette: Deep Navy + Cyan / Violet
@@ -21,22 +21,37 @@ import TeamNavItem from "./TeamNavItem";
 import EventsNavItem from "./EventsNavItem";
 import CommunityNavItem from "./CommunityNavItem";
 
-
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const progressBarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const onScroll = () => {
-      setScrolled(window.scrollY > 12);
+    let ticking = false;
+
+    const updateScroll = () => {
+      const scrollY = window.scrollY || document.documentElement.scrollTop;
+      setScrolled(scrollY > 12);
 
       const docHeight =
         document.documentElement.scrollHeight - window.innerHeight;
-      const progress = docHeight > 0 ? (window.scrollY / docHeight) * 100 : 0;
-      setScrollProgress(progress);
+      const progress = docHeight > 0 ? Math.min(100, Math.max(0, (scrollY / docHeight) * 100)) : 0;
+
+      if (progressBarRef.current) {
+        progressBarRef.current.style.width = `${progress}%`;
+      }
+      ticking = false;
     };
-    window.addEventListener("scroll", onScroll);
+
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(updateScroll);
+        ticking = true;
+      }
+    };
+
+    updateScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
@@ -134,11 +149,12 @@ export default function Navbar() {
         </ul>
       </div>
 
-      {/* Scroll progress bar */}
-      <div className="h-[2px] w-full bg-[#1D2436]">
+      {/* Smooth scroll progress bar */}
+      <div className="h-[2px] w-full bg-[#1D2436]/60 overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-[#4DE8E0] to-[#8B7CFF] transition-[width] duration-150 ease-out"
-          style={{ width: `${scrollProgress}%` }}
+          ref={progressBarRef}
+          className="h-full bg-gradient-to-r from-[#4DE8E0] via-[#64B5F6] to-[#8B7CFF] transition-[width] duration-75 ease-out shadow-[0_0_10px_rgba(77,232,224,0.5)]"
+          style={{ width: "0%" }}
         />
       </div>
     </header>
