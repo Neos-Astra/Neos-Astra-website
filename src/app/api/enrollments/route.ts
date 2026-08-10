@@ -25,6 +25,11 @@ export async function POST(request: Request) {
       studentEmail,
       guardianName,
       courseTitle,
+      admissionFee,
+      kitPrice,
+      hasKit,
+      gstPercent,
+      total,
       message,
     } = body;
 
@@ -49,15 +54,18 @@ export async function POST(request: Request) {
         studentEmail,
         guardianName: guardianName || null,
         courseTitle,
-        admissionFee: "₹2,000",
-        kitPrice: "₹1,100",
+        admissionFee: admissionFee || "",
+        kitPrice: kitPrice || "",
+        hasKit: hasKit ?? false,
+        gstPercent: gstPercent ?? 0,
+        total: total || "",
         message: message || null,
         status: "PENDING",
       },
     });
 
     return NextResponse.json(
-      { registrationNo: enrollment.registrationNo, id: enrollment.id },
+      { registrationNo: enrollment.registrationNo, id: enrollment.id, enrollment },
       { status: 201 }
     );
   } catch (error) {

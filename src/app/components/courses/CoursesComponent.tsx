@@ -11,9 +11,19 @@ interface Course {
   price: string;
   admissionFee?: string;
   kitPrice?: string;
+  hasKit?: boolean;
+  gstPercent?: number;
   duration: string;
   badge: string | null;
   image: string | null;
+}
+
+// Helper: parse numeric value from price string like "₹2,000" → 2000
+function parseAmt(val: string): number {
+  return parseFloat(val.replace(/[^0-9.]/g, "")) || 0;
+}
+function fmtAmt(val: number): string {
+  return `₹${val.toLocaleString("en-IN")}`;
 }
 
 export default function CoursesPage() {
@@ -58,65 +68,92 @@ export default function CoursesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {courses.map((course) => (
-              <div
-                key={course.id}
-                className="group relative flex flex-col justify-between rounded-3xl border border-[#1D2436] bg-[#0F1420] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#4DE8E066] hover:shadow-2xl hover:shadow-[#4DE8E01a]"
-              >
-                <div>
-                  {course.image ? (
-                    <div className="relative h-48 w-full overflow-hidden rounded-2xl mb-6">
-                      <img
-                        src={course.image}
-                        alt={course.title}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                      {course.badge && (
-                        <span className="absolute top-3 left-3 rounded-full bg-[#090C14cc] backdrop-blur-md border border-[#8B7CFF66] px-3 py-1 font-mono text-[10px] text-[#8B7CFF]">
-                          {course.badge}
-                        </span>
+            {courses.map((course) => {
+              const hasKit = course.hasKit ?? course.category?.toLowerCase().includes("robotics") ?? false;
+              const gstPercent = course.gstPercent ?? 0;
+              const baseAmt = parseAmt(course.admissionFee || "0") + (hasKit ? parseAmt(course.kitPrice || "0") : 0);
+              const gstAmt = Math.round(baseAmt * gstPercent / 100);
+
+              return (
+                <div
+                  key={course.id}
+                  className="group relative flex flex-col justify-between rounded-3xl border border-[#1D2436] bg-[#0F1420] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#4DE8E066] hover:shadow-2xl hover:shadow-[#4DE8E01a]"
+                >
+                  <div>
+                    {course.image ? (
+                      <div className="relative h-48 w-full overflow-hidden rounded-2xl mb-6">
+                        <img
+                          src={course.image}
+                          alt={course.title}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        {course.badge && (
+                          <span className="absolute top-3 left-3 rounded-full bg-[#090C14cc] backdrop-blur-md border border-[#8B7CFF66] px-3 py-1 font-mono text-[10px] text-[#8B7CFF]">
+                            {course.badge}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="relative h-48 w-full overflow-hidden rounded-2xl mb-6 bg-[#1D2436] flex items-center justify-center">
+                        <BookOpen className="h-12 w-12 text-[#4DE8E0] opacity-30" />
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="rounded-full bg-[#4DE8E01a] px-3 py-1 font-mono text-xs text-[#4DE8E0]">
+                        {course.category}
+                      </span>
+                    </div>
+
+                    <h3 className="text-xl font-bold text-[#F3F6FB] mb-3 group-hover:text-[#4DE8E0] transition-colors">
+                      {course.title}
+                    </h3>
+                    <p className="text-sm text-[#8891A8] line-clamp-3 mb-4">{course.description}</p>
+                  </div>
+
+                  <div>
+                    {/* DYNAMIC FEE BREAKDOWN — Kit price ONLY if hasKit=true */}
+                    <div className="rounded-xl border border-[#1D2436] bg-[#090C14] p-3 mb-4 text-xs text-[#8891A8] space-y-1.5">
+                      {course.admissionFee && (
+                        <div className="flex justify-between">
+                          <span>Admission Fee:</span>
+                          <span className="text-[#F3F6FB] font-medium">{course.admissionFee}</span>
+                        </div>
                       )}
+                      {hasKit && course.kitPrice && (
+                        <div className="flex justify-between">
+                          <span>Kit Price:</span>
+                          <span className="text-[#F3F6FB] font-medium">{course.kitPrice}</span>
+                        </div>
+                      )}
+                      {gstPercent > 0 && (
+                        <div className="flex justify-between">
+                          <span>GST ({gstPercent}%):</span>
+                          <span className="text-amber-400 font-medium">{fmtAmt(gstAmt)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between border-t border-[#1D2436] pt-1.5 mt-1 font-bold text-[#4DE8E0]">
+                        <span>Total:</span>
+                        <span>{course.price}</span>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="relative h-48 w-full overflow-hidden rounded-2xl mb-6 bg-[#1D2436] flex items-center justify-center">
-                      <BookOpen className="h-12 w-12 text-[#4DE8E0] opacity-30" />
+
+                    <div className="flex items-center justify-between pt-2 mb-6 text-xs text-[#C7CCDA]">
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="h-4 w-4 text-[#4DE8E0]" /> {course.duration}
+                      </span>
                     </div>
-                  )}
 
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="rounded-full bg-[#4DE8E01a] px-3 py-1 font-mono text-xs text-[#4DE8E0]">
-                      {course.category}
-                    </span>
+                    <a
+                      href={`/courses/explore?course=${encodeURIComponent(course.title)}`}
+                      className="w-full py-3 rounded-xl bg-[#1D2436] text-[#F3F6FB] font-semibold text-sm hover:bg-gradient-to-r hover:from-[#4DE8E0] hover:to-[#8B7CFF] hover:text-[#090C14] transition-all flex items-center justify-center gap-2"
+                    >
+                      Enroll Now <ArrowRight className="h-4 w-4" />
+                    </a>
                   </div>
-
-                  <h3 className="text-xl font-bold text-[#F3F6FB] mb-3 group-hover:text-[#4DE8E0] transition-colors">
-                    {course.title}
-                  </h3>
-                  <p className="text-sm text-[#8891A8] line-clamp-3 mb-4">{course.description}</p>
                 </div>
-
-                <div>
-                  <div className="rounded-xl border border-[#1D2436] bg-[#090C14] p-3 mb-4 text-xs text-[#8891A8] space-y-1">
-                    <div className="flex justify-between"><span>Admission Fee:</span> <span className="text-[#F3F6FB] font-medium">{course.admissionFee || "₹2,000"}</span></div>
-                    <div className="flex justify-between"><span>Kit Price:</span> <span className="text-[#F3F6FB] font-medium">{course.kitPrice || "₹1,100"}</span></div>
-                    <div className="flex justify-between border-t border-[#1D2436] pt-1 mt-1 font-bold text-[#4DE8E0]"><span>Total:</span> <span>{course.price || "₹3,100"}</span></div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2 mb-6 text-xs text-[#C7CCDA]">
-                    <span className="flex items-center gap-1.5">
-                      <Clock className="h-4 w-4 text-[#4DE8E0]" /> {course.duration}
-                    </span>
-                  </div>
-
-                  <a
-                    href={`/courses/explore?course=${encodeURIComponent(course.title)}`}
-                    className="w-full py-3 rounded-xl bg-[#1D2436] text-[#F3F6FB] font-semibold text-sm hover:bg-gradient-to-r hover:from-[#4DE8E0] hover:to-[#8B7CFF] hover:text-[#090C14] transition-all flex items-center justify-center gap-2"
-                  >
-                    Enroll Now <ArrowRight className="h-4 w-4" />
-                  </a>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

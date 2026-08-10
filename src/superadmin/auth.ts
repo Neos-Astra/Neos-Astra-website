@@ -1,7 +1,6 @@
 import NextAuth, { type DefaultSession } from "next-auth";
 import "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
 
 // Ensure NextAuth v5 environment variables are populated on Vercel deployments
 if (!process.env.AUTH_SECRET) {
@@ -76,6 +75,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const password = String(credentials.password);
 
         const { prisma } = await import("@/superadmin/prisma/client");
+        const bcrypt = await import("bcryptjs");
+        const compareFn = bcrypt.compare || (bcrypt as any).default?.compare;
 
         let user;
         try {
@@ -104,7 +105,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           );
         }
 
-        const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+        const isValidPassword = await compareFn(password, user.passwordHash);
 
         if (!isValidPassword) {
           const newFailedCount = user.failedLoginCount + 1;

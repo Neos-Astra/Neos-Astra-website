@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-// receiptTemplate is dynamically imported inside printReceipt to avoid webpack crash with large logoBase64
+import { generateOfficialFeeReceiptHTML } from "@/lib/receiptTemplate";
 
 // ---------------------------------------------------------------------------
 // Neos Astra — Course Enrollment Form (FINAL VERSION)
@@ -90,16 +90,19 @@ export default function Explore() {
               .map((s: string) => s.trim())
               .filter((s: string) => s.length > 5)
               .slice(0, 4);
+            const isRobo = Boolean(c.category?.toLowerCase().includes("robotics") || c.track?.toLowerCase().includes("robotics") || c.title?.toLowerCase().includes("robotics"));
+            const hasKit = Boolean(c.hasKit === true || (isRobo && parseAmt(c.kitPrice || "") > 0));
+
             return {
               id: c.id,
               name: c.title || "Untitled Course",
               subtitle: c.track || c.category || "Engineering Program",
               duration: c.duration || "4 Weeks",
-              admissionFee: c.admissionFee || "₹2,000",
-              kitPrice: c.kitPrice || "₹1,100",
-              hasKit: c.hasKit ?? c.category?.toLowerCase().includes("robotics") ?? false,
+              admissionFee: c.admissionFee || "",
+              kitPrice: hasKit ? (c.kitPrice || "") : "",
+              hasKit,
               gstPercent: c.gstPercent ?? 0,
-              total: c.price || "₹3,100",
+              total: c.price || "",
               highlights: highlights.length > 0 ? highlights : [rawDesc.slice(0, 80)],
               badge: c.badge || "Popular",
             };
@@ -148,7 +151,15 @@ export default function Explore() {
       const res = await fetch("/api/enrollments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, courseTitle: selectedCourse?.name || "" }),
+        body: JSON.stringify({
+          ...form,
+          courseTitle: selectedCourse?.name || "",
+          admissionFee: selectedCourse?.admissionFee || "",
+          kitPrice: selectedCourse?.kitPrice || "",
+          hasKit: selectedCourse?.hasKit ?? false,
+          gstPercent: selectedCourse?.gstPercent ?? 0,
+          total: selectedCourse?.total || "",
+        }),
       });
 
       const json = await res.json();
@@ -228,121 +239,40 @@ export default function Explore() {
             </p>
           </div>
 
-          {/* ===== 2-COLUMN LAYOUT ===== */}
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_480px] lg:items-start">
-            {/* LEFT: Only render the currently selected course card */}
-            <div className="lg:sticky lg:top-6 space-y-4">
-              {/* Optional Course Switcher Tabs if there are multiple courses */}
-              {coursesList.length > 1 && (
-                <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Select Course
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {coursesList.map((c) => {
-                      const isSel = selectedCourse.id === c.id;
-                      return (
-                        <button
-                          key={c.id}
-                          type="button"
-                          onClick={() => { setSelectedCourse(c); update("courseTitle", c.name); }}
-                          className={`rounded-xl px-3.5 py-2 text-xs font-medium transition-all ${
-                            isSel
-                              ? "bg-cyan-400 text-slate-950 font-bold shadow-[0_0_15px_rgba(34,211,238,0.3)]"
-                              : "bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10"
-                          }`}
-                        >
-                          {c.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Single Selected Course Card */}
-              <div className="rounded-2xl border border-cyan-400/60 bg-cyan-400/5 shadow-[0_0_30px_rgba(34,211,238,0.08)] p-6 space-y-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-3">
-                      <span className="rounded-full bg-cyan-400/15 px-2.5 py-0.5 text-xs font-semibold text-cyan-300">
-                        {selectedCourse.badge}
-                      </span>
-                      <span className="text-xs text-slate-500">• {selectedCourse.duration}</span>
-                    </div>
-                    <h2 className="mt-2 text-2xl font-bold text-white sm:text-3xl">{selectedCourse.name}</h2>
-                    <p className="text-sm text-slate-400 mt-0.5">{selectedCourse.subtitle}</p>
-                  </div>
-                </div>
-
-                {/* Highlights */}
-                {selectedCourse.highlights.length > 0 && (
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                      Key Highlights
-                    </p>
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {selectedCourse.highlights.map((h) => (
-                        <li key={h} className="flex items-center gap-2 text-sm text-slate-300">
-                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-400" />
-                          {h}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Fee Breakdown */}
-                <div className="rounded-xl border border-white/10 bg-black/30 p-4 text-sm space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Admission Fee</span>
-                    <span className="font-bold text-white">{selectedCourse.admissionFee}</span>
-                  </div>
-                  {selectedCourse.hasKit && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Kit Price</span>
-                      <span className="font-bold text-white">{selectedCourse.kitPrice}</span>
-                    </div>
-                  )}
-                  {selectedCourse.gstPercent > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">GST ({selectedCourse.gstPercent}%)</span>
-                      <span className="font-bold text-amber-400">
-                        {fmtAmt(Math.round((parseAmt(selectedCourse.admissionFee) + (selectedCourse.hasKit ? parseAmt(selectedCourse.kitPrice) : 0)) * selectedCourse.gstPercent / 100))}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex justify-between border-t border-white/10 pt-2.5">
-                    <span className="text-xs text-slate-400">Total Amount {selectedCourse.gstPercent > 0 ? "(incl. GST)" : ""}</span>
-                    <span className="text-2xl font-black text-cyan-400">{selectedCourse.total}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 text-xs text-cyan-400 font-semibold pt-1">
-                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
-                  </svg>
-                  Selected Course for Enrollment
-                </div>
-              </div>
-            </div>
-
-            {/* RIGHT: Form */}
+          {/* ===== SINGLE CENTERED ENROLLMENT FORM LAYOUT ===== */}
+          <div className="mx-auto max-w-2xl">
             <form
               onSubmit={handleSubmit}
               noValidate
-              className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-5 shadow-2xl shadow-black/40 backdrop-blur-md"
+              className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:p-8 shadow-2xl shadow-black/40 backdrop-blur-md"
             >
-              <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                <h2 className="text-base font-semibold text-white">Student Details</h2>
+              <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-2">
+                <div>
+                  <h2 className="text-lg font-bold text-white">Enrollment Form</h2>
+                  <p className="text-xs text-slate-400">Fill your details to complete registration</p>
+                </div>
                 <span className="text-xs text-slate-500">* Required</span>
               </div>
 
               {apiError && (
-                <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+                <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-sm text-red-400">
                   {apiError}
                 </div>
               )}
+
+              {/* LOCKED SELECTED COURSE BANNER (NO DROPDOWN) */}
+              <div className="flex items-center justify-between rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-cyan-300">Enrolling For Course</p>
+                  <h3 className="text-base font-bold text-white sm:text-lg mt-0.5">{selectedCourse.name}</h3>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="rounded-full bg-cyan-400/20 px-3 py-1 text-xs sm:text-sm font-bold text-cyan-300">
+                    {selectedCourse.total}
+                  </span>
+                </div>
+              </div>
+
 
               {/* ROW 1: Full Name (full width) */}
               <Field label="Student Full Name" required error={errors.studentName}>
@@ -653,30 +583,38 @@ function RegistrationReceipt({
                 <p className="text-xs text-slate-500">{course.subtitle} · {course.duration}</p>
               </div>
             </div>
-            <div className="mt-4 space-y-1.5 border-t border-white/10 pt-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Admission Fee</span>
-                <span className="font-semibold text-white">{course.admissionFee}</span>
-              </div>
-              {course.hasKit && (
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Kit Price</span>
-                  <span className="font-semibold text-white">{course.kitPrice}</span>
+            {(() => {
+              const isRobo = Boolean(course.name?.toLowerCase().includes("robotics"));
+              const showKit = Boolean(course.hasKit === true || (isRobo && parseAmt(course.kitPrice) > 0));
+              const base = parseAmt(course.admissionFee) + (showKit ? parseAmt(course.kitPrice) : 0);
+              const gstAmt = Math.round(base * course.gstPercent / 100);
+              return (
+                <div className="mt-4 space-y-1.5 border-t border-white/10 pt-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Admission Fee</span>
+                    <span className="font-semibold text-white">{course.admissionFee}</span>
+                  </div>
+                  {showKit && course.kitPrice && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Kit Price</span>
+                      <span className="font-semibold text-white">{course.kitPrice}</span>
+                    </div>
+                  )}
+                  {course.gstPercent > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">GST ({course.gstPercent}%)</span>
+                      <span className="font-semibold text-amber-400">
+                        {fmtAmt(gstAmt)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between border-t border-white/10 pt-2">
+                    <span className="font-bold text-white">Total Amount {course.gstPercent > 0 ? "(incl. GST)" : ""}</span>
+                    <span className="text-lg font-bold text-cyan-400">{course.total}</span>
+                  </div>
                 </div>
-              )}
-              {course.gstPercent > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-slate-400">GST ({course.gstPercent}%)</span>
-                  <span className="font-semibold text-amber-400">
-                    {fmtAmt(Math.round((parseAmt(course.admissionFee) + (course.hasKit ? parseAmt(course.kitPrice) : 0)) * course.gstPercent / 100))}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between border-t border-white/10 pt-2">
-                <span className="font-bold text-white">Total Amount {course.gstPercent > 0 ? "(incl. GST)" : ""}</span>
-                <span className="text-lg font-bold text-cyan-400">{course.total}</span>
-              </div>
-            </div>
+              );
+            })()}
           </div>
 
           {data.message && (
@@ -698,7 +636,7 @@ function RegistrationReceipt({
   );
 }
 
-async function printReceipt({
+function printReceipt({
   registrationNo, submittedAt, data, course,
 }: {
   registrationNo: string;
@@ -706,7 +644,6 @@ async function printReceipt({
   data: FormData;
   course: CourseItem;
 }) {
-  const { generateOfficialFeeReceiptHTML } = await import("@/lib/receiptTemplate");
   const html = generateOfficialFeeReceiptHTML({
     registrationNo,
     studentName: data.studentName,

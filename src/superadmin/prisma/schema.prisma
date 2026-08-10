@@ -108,11 +108,15 @@ model Enrollment {
   courseTitle    String
   admissionFee   String   @default("₹2,000")
   kitPrice       String   @default("₹1,100")
+  hasKit         Boolean  @default(false)
+  gstPercent     Float    @default(0)
+  total          String   @default("₹3,100")
   message        String?
   status         String   @default("CONFIRMED")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
+
 
 model HomeMedia {
   id        String   @id @default(cuid())

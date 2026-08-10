@@ -1,5 +1,4 @@
 // src/lib/receiptTemplate.ts
-import { LOGO_BASE64 } from "./logoBase64";
 
 export interface ReceiptData {
   registrationNo: string;
@@ -30,7 +29,11 @@ export function generateOfficialFeeReceiptHTML(data: ReceiptData): string {
   });
 
   const receiptNo = data.registrationNo;
-  const hasKit = data.hasKit ?? false;
+
+  // Kit is ONLY enabled for Robotics or explicitly flag hasKit = true
+  const isRobotics = Boolean(data.courseTitle?.toLowerCase().includes("robotics"));
+  const hasKit = Boolean(data.hasKit === true || (isRobotics && parseAmt(data.kitPrice) > 0));
+
   const gstPercent = data.gstPercent ?? 0;
   const baseAmt = parseAmt(data.admissionFee) + (hasKit ? parseAmt(data.kitPrice) : 0);
   const gstAmt = Math.round(baseAmt * gstPercent / 100);
@@ -43,11 +46,11 @@ export function generateOfficialFeeReceiptHTML(data: ReceiptData): string {
       </tr>`
     : "";
 
-  // ---- Kit row (only if hasKit) ----
-  const kitRow = hasKit
+  // ---- Kit row (only if hasKit is TRUE and kitPrice is non-empty) ----
+  const kitRow = hasKit && data.kitPrice && parseAmt(data.kitPrice) > 0
     ? `<tr>
         <td>Innovators Starter Kit Fee</td>
-        <td style="text-align: right;">${data.kitPrice || "₹ 1,100.00"}</td>
+        <td style="text-align: right;">${data.kitPrice}</td>
       </tr>`
     : "";
 
@@ -63,7 +66,7 @@ export function generateOfficialFeeReceiptHTML(data: ReceiptData): string {
           <div class="brand-web">www.neosastra.com | +91 9348059284</div>
         </div>
         <div class="header-center">
-          <img src="${LOGO_BASE64}" alt="Neos Astra Logo" style="height: 60px; max-width: 120px; object-fit: contain;" />
+          <img src="/logo.png" alt="Neos Astra Logo" style="height: 60px; max-width: 120px; object-fit: contain;" />
         </div>
         <div class="header-right">
           <div class="receipt-badge">FEE RECEIPT</div>
@@ -93,8 +96,8 @@ export function generateOfficialFeeReceiptHTML(data: ReceiptData): string {
         </thead>
         <tbody>
           <tr>
-            <td>Course Admission Fee</td>
-            <td style="text-align: right;">${data.admissionFee || "₹ 2,000.00"}</td>
+            <td>${data.courseTitle} — Course Admission Fee</td>
+            <td style="text-align: right;">${data.admissionFee || "₹ 0.00"}</td>
           </tr>
           ${kitRow}
           ${gstRow}

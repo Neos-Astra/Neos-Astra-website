@@ -130,7 +130,13 @@ export default function CourseManagement() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = { ...formData, price: autoTotal };
+    const isRobo = isRoboticsCourse(formData.category);
+    const payload = {
+      ...formData,
+      hasKit: isRobo,
+      kitPrice: isRobo ? formData.kitPrice : "",
+      price: autoTotal,
+    };
     try {
       if (editingCourse) {
         await fetch(`/api/courses/${editingCourse.id}`, {
