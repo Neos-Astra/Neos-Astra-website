@@ -27,7 +27,7 @@ const FOOTER_LINKS = {
 const SOCIALS = [
   { label: "Instagram", href: "https://instagram.com", icon: Instagram },
   { label: "Facebook", href: "https://facebook.com", icon: Facebook },
-  { label: "LinkedIn", href: "https://linkedin.com", icon: Linkedin },
+  { label: "LinkedIn", href: "https://www.linkedin.com/company/neos-astra/posts/", icon: Linkedin },
   { label: "Email", href: "mailto:neos.astra.india@gmail.com", icon: Mail },
 ];
 
