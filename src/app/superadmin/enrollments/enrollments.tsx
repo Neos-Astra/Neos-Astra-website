@@ -103,6 +103,9 @@ export default function EnrollmentsManagement() {
   const [dateFilter, setDateFilter] = useState<"ALL" | "TODAY" | "YESTERDAY" | "THIS_MONTH" | "CUSTOM">("ALL");
   const [customDate, setCustomDate] = useState<string>("");
 
+  // Course Filter State
+  const [courseFilter, setCourseFilter] = useState<string>("ALL");
+
   // New Official Enrollment modal
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [newForm, setNewForm] = useState({
@@ -292,8 +295,11 @@ export default function EnrollmentsManagement() {
     }
   };
 
-  // Filter enrollments by search and date filter
+  // Filter enrollments by search, date filter, and course filter
   const todayCount = enrollments.filter((e) => isSameDay(new Date(e.createdAt), new Date())).length;
+
+  // Unique course titles for the course filter dropdown
+  const uniqueCourseTitles = Array.from(new Set(enrollments.map((e) => e.courseTitle))).sort();
 
   const filtered = enrollments.filter((e) => {
     const matchesSearch =
@@ -303,6 +309,9 @@ export default function EnrollmentsManagement() {
       e.courseTitle.toLowerCase().includes(search.toLowerCase());
 
     if (!matchesSearch) return false;
+
+    // Course filter
+    if (courseFilter !== "ALL" && e.courseTitle !== courseFilter) return false;
 
     if (dateFilter === "ALL") return true;
 
@@ -390,8 +399,9 @@ export default function EnrollmentsManagement() {
     const link = document.createElement("a");
     const todayStr = new Date().toISOString().split("T")[0];
     const filterTag = dateFilter === "CUSTOM" && customDate ? customDate : dateFilter;
+    const courseTag = courseFilter !== "ALL" ? `_${courseFilter.replace(/[^a-zA-Z0-9]/g, "-").substring(0, 30)}` : "";
     link.setAttribute("href", url);
-    link.setAttribute("download", `Official_Enrollments_${filterTag}_${todayStr}.csv`);
+    link.setAttribute("download", `Official_Enrollments${courseTag}_${filterTag}_${todayStr}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -473,15 +483,31 @@ export default function EnrollmentsManagement() {
 
       {/* Filter and Search Bar */}
       <div className="mb-6 space-y-3">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8891A8]" />
-          <input
-            type="text"
-            placeholder="Search by name, email, reg no, course..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#0F1420] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] placeholder:text-[#8891A8]/60 text-sm transition-all"
-          />
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8891A8]" />
+            <input
+              type="text"
+              placeholder="Search by name, email, reg no, course..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#0F1420] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] placeholder:text-[#8891A8]/60 text-sm transition-all"
+            />
+          </div>
+          {/* Course Filter Dropdown */}
+          <div className="relative">
+            <select
+              value={courseFilter}
+              onChange={(e) => setCourseFilter(e.target.value)}
+              className="w-full sm:w-auto pl-4 pr-10 py-3 rounded-xl bg-[#0F1420] border border-[#4DE8E0]/30 text-[#4DE8E0] font-semibold text-sm focus:outline-none focus:border-[#4DE8E0] transition-all appearance-none cursor-pointer"
+            >
+              <option value="ALL" className="bg-[#0F1420] text-[#F3F6FB]">🎓 All Courses</option>
+              {uniqueCourseTitles.map((title) => (
+                <option key={title} value={title} className="bg-[#0F1420] text-[#F3F6FB]">{title}</option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#4DE8E0] text-xs">▼</span>
+          </div>
         </div>
 
         {/* Date Filter Toolbar */}

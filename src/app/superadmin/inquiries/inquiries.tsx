@@ -61,6 +61,9 @@ export default function InquiriesManagement() {
   const [dateFilter, setDateFilter] = useState<"ALL" | "TODAY" | "YESTERDAY" | "THIS_MONTH" | "CUSTOM">("ALL");
   const [customDate, setCustomDate] = useState<string>("");
 
+  // Course Filter State
+  const [courseFilter, setCourseFilter] = useState<string>("ALL");
+
   // Conversion Modal state
   const [convertingInquiry, setConvertingInquiry] = useState<Inquiry | null>(null);
   const [convertForm, setConvertForm] = useState({
@@ -96,6 +99,14 @@ export default function InquiriesManagement() {
   }, []);
 
   const updateStatus = async (id: string, newStatus: string) => {
+    if (newStatus === "CONVERTED") {
+      const inq = inquiries.find((item) => item.id === id);
+      if (inq) {
+        startConversion(inq);
+        return;
+      }
+    }
+
     setInquiries((prev) =>
       prev.map((item) => (item.id === id ? { ...item, status: newStatus } : item))
     );
@@ -194,12 +205,21 @@ export default function InquiriesManagement() {
         return;
       }
 
-      // 2. Mark inquiry status as CONVERTED
-      await updateStatus(convertingInquiry.id, "CONVERTED");
+      // 2. Remove/Delete the converted inquiry from Web Leads so count decreases and moves to Official Enrollments
+      try {
+        await fetch(`/api/inquiries/${convertingInquiry.id}`, { method: "DELETE" });
+      } catch (delErr) {
+        console.error("Error removing converted inquiry from web leads:", delErr);
+      }
+
+      // 3. Remove from local web leads state
+      setInquiries((prev) => prev.filter((item) => item.id !== convertingInquiry.id));
 
       setConvertingInquiry(null);
-      alert(`Success! Student converted to official enrollment with Reg No: ${json.registrationNo}`);
-      fetchInquiries();
+      alert(`Success! "${convertingInquiry.studentName}" converted to official enrollment (Reg No: ${json.registrationNo}) and moved to Official Enrollments.`);
+      
+      // 4. Directly switch view to Official Enrollments page
+      router.push("/superadmin/enrollments");
     } catch (err) {
       console.error(err);
       alert("Error converting inquiry to enrollment.");
@@ -208,8 +228,11 @@ export default function InquiriesManagement() {
     }
   };
 
-  // Filter inquiries by search and date filter
+  // Filter inquiries by search, date filter, and course filter
   const todayCount = inquiries.filter((i) => isSameDay(new Date(i.createdAt), new Date())).length;
+
+  // Unique course titles for the course filter dropdown
+  const uniqueCourseTitles = Array.from(new Set(inquiries.map((i) => i.courseTitle))).sort();
 
   const filtered = inquiries.filter((i) => {
     const matchesSearch =
@@ -219,6 +242,9 @@ export default function InquiriesManagement() {
       i.courseTitle.toLowerCase().includes(search.toLowerCase());
 
     if (!matchesSearch) return false;
+
+    // Course filter
+    if (courseFilter !== "ALL" && i.courseTitle !== courseFilter) return false;
 
     if (dateFilter === "ALL") return true;
 
@@ -297,8 +323,9 @@ export default function InquiriesManagement() {
     const link = document.createElement("a");
     const todayStr = new Date().toISOString().split("T")[0];
     const filterTag = dateFilter === "CUSTOM" && customDate ? customDate : dateFilter;
+    const courseTag = courseFilter !== "ALL" ? `_${courseFilter.replace(/[^a-zA-Z0-9]/g, "-").substring(0, 30)}` : "";
     link.setAttribute("href", url);
-    link.setAttribute("download", `Web_Leads_${filterTag}_${todayStr}.csv`);
+    link.setAttribute("download", `Web_Leads${courseTag}_${filterTag}_${todayStr}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -345,15 +372,31 @@ export default function InquiriesManagement() {
 
       {/* Filter and Search Bar */}
       <div className="mb-6 space-y-3">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8891A8]" />
-          <input
-            type="text"
-            placeholder="Search by student name, email, phone, course..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#0F1420] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] placeholder:text-[#8891A8]/60 text-sm transition-all"
-          />
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8891A8]" />
+            <input
+              type="text"
+              placeholder="Search by student name, email, phone, course..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#0F1420] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] placeholder:text-[#8891A8]/60 text-sm transition-all"
+            />
+          </div>
+          {/* Course Filter Dropdown */}
+          <div className="relative">
+            <select
+              value={courseFilter}
+              onChange={(e) => setCourseFilter(e.target.value)}
+              className="w-full sm:w-auto pl-4 pr-10 py-3 rounded-xl bg-[#0F1420] border border-[#38BDF8]/30 text-[#38BDF8] font-semibold text-sm focus:outline-none focus:border-[#38BDF8] transition-all appearance-none cursor-pointer"
+            >
+              <option value="ALL" className="bg-[#0F1420] text-[#F3F6FB]">🎓 All Courses</option>
+              {uniqueCourseTitles.map((title) => (
+                <option key={title} value={title} className="bg-[#0F1420] text-[#F3F6FB]">{title}</option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#38BDF8] text-xs">▼</span>
+          </div>
         </div>
 
         {/* Date Filter Toolbar */}
@@ -506,9 +549,13 @@ export default function InquiriesManagement() {
                         <Eye className="h-3 w-3" /> View
                       </button>
                       {inq.status === "CONVERTED" ? (
-                        <span className="flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/20 px-3 py-1.5 text-xs font-bold text-emerald-400">
-                          <CheckCircle className="h-3 w-3" /> Converted
-                        </span>
+                        <button
+                          onClick={() => router.push("/superadmin/enrollments")}
+                          className="flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/20 px-3 py-1.5 text-xs font-bold text-emerald-400 hover:bg-emerald-500/30 transition-all cursor-pointer"
+                          title="Switch to Official Enrollments"
+                        >
+                          <CheckCircle className="h-3 w-3" /> Switch to Official →
+                        </button>
                       ) : (
                         <button
                           onClick={() => startConversion(inq)}
@@ -571,9 +618,15 @@ export default function InquiriesManagement() {
 
               <div className="flex justify-between items-center border-t border-[#1D2436] pt-4">
                 {selectedInquiry.status === "CONVERTED" ? (
-                  <span className="flex items-center gap-2 rounded-xl bg-emerald-500/20 border border-emerald-500/30 px-4 py-2 text-xs font-bold text-emerald-400">
-                    <CheckCircle className="h-4 w-4" /> Already Converted
-                  </span>
+                  <button
+                    onClick={() => {
+                      setSelectedInquiry(null);
+                      router.push("/superadmin/enrollments");
+                    }}
+                    className="flex items-center gap-2 rounded-xl bg-emerald-500/20 border border-emerald-500/30 px-4 py-2 text-xs font-bold text-emerald-400 hover:bg-emerald-500/30 transition-all cursor-pointer"
+                  >
+                    <CheckCircle className="h-4 w-4" /> Switch to Official Enrollments →
+                  </button>
                 ) : (
                   <button
                     onClick={() => {
