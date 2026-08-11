@@ -9,11 +9,33 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Neos Astra | School of Innovation",
-  description: "Neos Astra - School of Innovation. Empowers students with STEM, Coding, and cutting-edge learning.",
+  description: "Neos Astra - School of Innovation. Empowers students with STEM, Coding, Robotics, AI, and cutting-edge learning.",
+  manifest: "/site.webmanifest",
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/logo.jpg",
-    apple: "/icon.png",
+    icon: [
+      { url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/icon.png", sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  openGraph: {
+    title: "Neos Astra | School of Innovation",
+    description: "Empowers students with STEM, Coding, Robotics, AI, and cutting-edge learning.",
+    url: "https://neosastra.com",
+    siteName: "Neos Astra",
+    images: [
+      {
+        url: "/icon.png",
+        width: 512,
+        height: 512,
+        alt: "Neos Astra Logo",
+      },
+    ],
+    locale: "en_IN",
+    type: "website",
   },
 };
 
