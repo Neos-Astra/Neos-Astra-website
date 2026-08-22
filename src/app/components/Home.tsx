@@ -135,17 +135,25 @@ const staggerContainer = {
 };
 
 export default function Home() {
-  console.log("Home component rendered");
   const [activeImage, setActiveImage] = useState(0);
   const [heroImages, setHeroImages] = useState<string[]>(FALLBACK_HERO_IMAGES);
+  const [eventHighlights, setEventHighlights] = useState(RECENT_EVENTS);
 
-  // Fetch hero images from DB; fall back to hardcoded ones
+  // Fetch hero & highlight images from DB; fall back to hardcoded ones
   useEffect(() => {
     fetch("/api/home-media")
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          setHeroImages(data.map((m: { imageUrl: string }) => m.imageUrl));
+          const urls = data.map((m: { imageUrl: string }) => m.imageUrl);
+          setHeroImages(urls);
+          setEventHighlights(
+            data.map((m: { imageUrl: string }, idx: number) => ({
+              img: m.imageUrl,
+              title: RECENT_EVENTS[idx % RECENT_EVENTS.length]?.title || `STEM Innovation Moment ${idx + 1}`,
+              date: "2026",
+            }))
+          );
         }
       })
       .catch(() => {
@@ -363,7 +371,7 @@ export default function Home() {
           >
             <div className="event-marquee flex w-max gap-4">
               {/* Render the list twice back-to-back for a seamless infinite loop */}
-              {[...RECENT_EVENTS, ...RECENT_EVENTS].map((ev, i) => (
+              {[...eventHighlights, ...eventHighlights].map((ev, i) => (
                 <div
                   key={i}
                   className="group relative w-56 sm:w-64 shrink-0 aspect-[3/4] rounded-xl overflow-hidden border border-[#1D2436]"
