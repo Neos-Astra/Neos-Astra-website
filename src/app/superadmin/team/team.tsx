@@ -23,6 +23,7 @@ interface TeamMember {
 export default function TeamManagement() {
   const { data: session } = useSession();
   const isSuperAdmin = session?.user?.role === "SUPER_ADMIN";
+  const canManage = session?.user?.role === "SUPER_ADMIN" || session?.user?.role === "ADMIN";
 
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,7 +130,7 @@ export default function TeamManagement() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isSuperAdmin) return;
+    if (!canManage) return;
     try {
       if (editingMember) {
         await fetch(`/api/team/${editingMember.id}`, {
@@ -152,7 +153,7 @@ export default function TeamManagement() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!isSuperAdmin) return;
+    if (!canManage) return;
     if (!confirm("Delete this team member? This cannot be undone.")) return;
     setMembers((prev) => prev.filter((m) => m.id !== id));
     try {
@@ -176,9 +177,9 @@ export default function TeamManagement() {
 
   return (
     <AdminShell title="Team">
-      {!isSuperAdmin && (
+      {!canManage && (
         <div className="mb-6 rounded-xl border border-[#8B7CFF33] bg-[#8B7CFF0d] px-4 py-3 text-xs text-[#8B7CFF]">
-          You're viewing in read-only mode. Only Super Admins can add or remove team members.
+          You're viewing in read-only mode. Only Admins and Super Admins can manage team members.
         </div>
       )}
 
@@ -194,7 +195,7 @@ export default function TeamManagement() {
             className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0F1420] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] placeholder:text-[#8891A8]/60 text-sm transition-colors"
           />
         </div>
-        {isSuperAdmin && (
+        {canManage && (
           <button
             onClick={() => handleOpenModal()}
             className="px-4 py-2.5 bg-[#4DE8E0] text-[#090C14] font-semibold text-sm rounded-xl hover:bg-[#5FF0E8] transition-colors flex items-center justify-center gap-2"
@@ -249,7 +250,7 @@ export default function TeamManagement() {
                 </span>
               )}
               <p className="text-xs text-[#8891A8] line-clamp-3 mb-4 flex-1 leading-relaxed">{m.bio}</p>
-              {isSuperAdmin && (
+              {canManage && (
                 <div className="flex items-center gap-2 pt-3 border-t border-[#1D2436]">
                   <button
                     onClick={() => handleOpenModal(m)}
@@ -271,7 +272,7 @@ export default function TeamManagement() {
       )}
 
       {/* Team Member Edit / Add Modal */}
-      {isModalOpen && isSuperAdmin && (
+      {isModalOpen && canManage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="w-full max-w-xl border border-[#1D2436] bg-[#0F1420] p-6 rounded-2xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center pb-4 mb-5 border-b border-[#1D2436]">
