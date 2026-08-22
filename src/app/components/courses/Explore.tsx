@@ -278,6 +278,18 @@ export default function Explore() {
                 <span className="text-xs text-slate-500">* Required</span>
               </div>
 
+              {/* Honeypot anti-spam protection (invisible to humans) */}
+              <div style={{ position: "absolute", left: "-9999px", opacity: 0, height: 0, overflow: "hidden" }} aria-hidden="true">
+                <input
+                  type="text"
+                  name="hp_field"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={(form as any).hp_field || ""}
+                  onChange={(e) => update("hp_field" as any, e.target.value)}
+                />
+              </div>
+
               {apiError && (
                 <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-sm text-red-400">
                   {apiError}

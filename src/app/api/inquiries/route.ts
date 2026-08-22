@@ -21,27 +21,47 @@ export async function POST(request: Request) {
       guardianName,
       courseTitle,
       message,
+      hp_field, // Anti-spam Honeypot field (hidden from real users)
+      website,  // Secondary bot trap
     } = body;
 
-    if (!studentName || !studentPhone || !studentEmail || !courseTitle) {
+    // Honeypot trap: Bots automatically fill all fields. If filled, return fake success without saving
+    if (hp_field || website) {
       return NextResponse.json(
-        { error: "Name, phone, email and course are required" },
+        {
+          success: true,
+          id: "OK",
+          message: "Enquiry submitted successfully. Our team will contact you soon.",
+        },
+        { status: 201 }
+      );
+    }
+
+    const cleanName = String(studentName || "").trim().slice(0, 100);
+    const cleanPhone = String(studentPhone || "").trim().slice(0, 20);
+    const cleanEmail = String(studentEmail || "").trim().toLowerCase().slice(0, 100);
+    const cleanCourse = String(courseTitle || "").trim().slice(0, 150);
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!cleanName || !cleanPhone || !cleanEmail || !cleanCourse || !emailRegex.test(cleanEmail)) {
+      return NextResponse.json(
+        { error: "Valid name, phone, email, and course are required." },
         { status: 400 }
       );
     }
 
     const inquiry = await prisma.inquiry.create({
       data: {
-        studentName,
-        dob: dob || null,
-        gender: gender || null,
-        classGrade: classGrade || null,
-        school: school || null,
-        studentPhone,
-        studentEmail,
-        guardianName: guardianName || null,
-        courseTitle,
-        message: message || null,
+        studentName: cleanName,
+        dob: dob ? String(dob).trim().slice(0, 30) : null,
+        gender: gender ? String(gender).trim().slice(0, 20) : null,
+        classGrade: classGrade ? String(classGrade).trim().slice(0, 50) : null,
+        school: school ? String(school).trim().slice(0, 150) : null,
+        studentPhone: cleanPhone,
+        studentEmail: cleanEmail,
+        guardianName: guardianName ? String(guardianName).trim().slice(0, 100) : null,
+        courseTitle: cleanCourse,
+        message: message ? String(message).trim().slice(0, 1000) : null,
         status: "NEW",
       },
     });

@@ -31,11 +31,27 @@ export async function POST(request: Request) {
       gstPercent,
       total,
       message,
+      hp_field, // Anti-spam Honeypot
+      website,
     } = body;
 
-    if (!studentName || !studentPhone || !studentEmail || !courseTitle) {
+    // Honeypot bot trap
+    if (hp_field || website) {
       return NextResponse.json(
-        { error: "Name, phone, email and course are required" },
+        { registrationNo: "NA-2026-CONFIRMED", id: "OK", success: true },
+        { status: 201 }
+      );
+    }
+
+    const cleanName = String(studentName || "").trim().slice(0, 100);
+    const cleanPhone = String(studentPhone || "").trim().slice(0, 20);
+    const cleanEmail = String(studentEmail || "").trim().toLowerCase().slice(0, 100);
+    const cleanCourse = String(courseTitle || "").trim().slice(0, 150);
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!cleanName || !cleanPhone || !cleanEmail || !cleanCourse || !emailRegex.test(cleanEmail)) {
+      return NextResponse.json(
+        { error: "Valid name, phone, email and course are required." },
         { status: 400 }
       );
     }
@@ -45,21 +61,21 @@ export async function POST(request: Request) {
     const enrollment = await prisma.enrollment.create({
       data: {
         registrationNo,
-        studentName,
-        dob: dob || null,
-        gender: gender || null,
-        classGrade: classGrade || null,
-        school: school || null,
-        studentPhone,
-        studentEmail,
-        guardianName: guardianName || null,
-        courseTitle,
-        admissionFee: admissionFee || "",
-        kitPrice: kitPrice || "",
-        hasKit: hasKit ?? false,
-        gstPercent: gstPercent ?? 0,
-        total: total || "",
-        message: message || null,
+        studentName: cleanName,
+        dob: dob ? String(dob).trim().slice(0, 30) : null,
+        gender: gender ? String(gender).trim().slice(0, 20) : null,
+        classGrade: classGrade ? String(classGrade).trim().slice(0, 50) : null,
+        school: school ? String(school).trim().slice(0, 150) : null,
+        studentPhone: cleanPhone,
+        studentEmail: cleanEmail,
+        guardianName: guardianName ? String(guardianName).trim().slice(0, 100) : null,
+        courseTitle: cleanCourse,
+        admissionFee: admissionFee ? String(admissionFee).trim().slice(0, 50) : "",
+        kitPrice: kitPrice ? String(kitPrice).trim().slice(0, 50) : "",
+        hasKit: Boolean(hasKit),
+        gstPercent: Number(gstPercent) || 0,
+        total: total ? String(total).trim().slice(0, 50) : "",
+        message: message ? String(message).trim().slice(0, 1000) : null,
         status: "PENDING",
       },
     });
@@ -71,7 +87,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Enrollment error:", error);
     return NextResponse.json(
-      { error: "Failed to save enrollment" },
+      { error: "Failed to save enrollment. Please try again." },
       { status: 500 }
     );
   }

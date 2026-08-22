@@ -2,13 +2,11 @@ import NextAuth, { type DefaultSession } from "next-auth";
 import "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-// Ensure NextAuth v5 environment variables are populated on Vercel deployments
-if (!process.env.AUTH_SECRET) {
-  process.env.AUTH_SECRET = "neos-astra-secret-key-production-2026-v1-super-key";
+const authSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+if (!authSecret && process.env.NODE_ENV === "production") {
+  console.warn("⚠️ [SECURITY WARNING]: AUTH_SECRET or NEXTAUTH_SECRET is not set in environment variables.");
 }
-if (!process.env.NEXTAUTH_SECRET) {
-  process.env.NEXTAUTH_SECRET = "neos-astra-secret-key-production-2026-v1-super-key";
-}
+
 process.env.AUTH_TRUST_HOST = "true";
 
 export type AdminRole = "SUPER_ADMIN" | "ADMIN";
@@ -51,7 +49,7 @@ declare module "next-auth/jwt" {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "fallback-secret-for-neos-astra-2026-production",
+  secret: authSecret || (process.env.NODE_ENV !== "production" ? "local-development-secret-key-neos-astra" : undefined),
   session: {
     strategy: "jwt",
     maxAge: 8 * 60 * 60, // 8 hours — persists across browser restarts
