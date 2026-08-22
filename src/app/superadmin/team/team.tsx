@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, Search, Users, X, Save } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Users, X, Save, Upload, Crop, RefreshCw } from "lucide-react";
 import { useSession } from "next-auth/react";
 import AdminShell from "@/app/components/AdminShell";
+import ImageCropperModal from "./ImageCropperModal";
 
 interface TeamMember {
   id: string;
@@ -28,6 +29,11 @@ export default function TeamManagement() {
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+
+  // Photo Cropper States
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
+  const [cropTargetImage, setCropTargetImage] = useState("");
+  const [imageInputMode, setImageInputMode] = useState<"device" | "url">("device");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -59,6 +65,33 @@ export default function TeamManagement() {
     fetchMembers(true);
   }, []);
 
+  const handleDeviceFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image file (JPG, PNG, WebP).");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setCropTargetImage(dataUrl);
+      setIsCropperOpen(true);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const handleRecrop = () => {
+    if (!formData.image) return;
+    setCropTargetImage(formData.image);
+    setIsCropperOpen(true);
+  };
+
+  const handleCropComplete = (croppedDataUrl: string) => {
+    setFormData((prev) => ({ ...prev, image: croppedDataUrl }));
+  };
+
   const handleOpenModal = (member?: TeamMember) => {
     if (member) {
       setEditingMember(member);
@@ -74,6 +107,7 @@ export default function TeamManagement() {
         email: member.email || "",
         order: member.order || 0,
       });
+      setImageInputMode(member.image?.startsWith("http") ? "url" : "device");
     } else {
       setEditingMember(null);
       setFormData({
@@ -88,6 +122,7 @@ export default function TeamManagement() {
         email: "",
         order: 0,
       });
+      setImageInputMode("device");
     }
     setIsModalOpen(true);
   };
@@ -119,7 +154,6 @@ export default function TeamManagement() {
   const handleDelete = async (id: string) => {
     if (!isSuperAdmin) return;
     if (!confirm("Delete this team member? This cannot be undone.")) return;
-    // Instant UI removal (0ms)
     setMembers((prev) => prev.filter((m) => m.id !== id));
     try {
       const res = await fetch(`/api/team/${id}`, { method: "DELETE" });
@@ -163,37 +197,41 @@ export default function TeamManagement() {
         {isSuperAdmin && (
           <button
             onClick={() => handleOpenModal()}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#4DE8E0] text-[#090C14] text-sm font-semibold rounded-xl hover:bg-[#5FF0E8] transition-colors shrink-0"
+            className="px-4 py-2.5 bg-[#4DE8E0] text-[#090C14] font-semibold text-sm rounded-xl hover:bg-[#5FF0E8] transition-colors flex items-center justify-center gap-2"
           >
-            <Plus className="h-4 w-4" /> Add Member
+            <Plus className="h-4 w-4" /> Add Team Member
           </button>
         )}
       </div>
 
-      {/* Grid */}
+      {/* Members Grid */}
       {loading ? (
-        <div className="text-center py-16 text-[#8891A8] text-sm">Loading team...</div>
+        <div className="flex justify-center py-20">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#1D2436] border-t-[#4DE8E0]" />
+        </div>
       ) : filteredMembers.length === 0 ? (
-        <div className="text-center py-16 bg-[#0F1420] border border-[#1D2436] rounded-2xl">
-          <Users className="h-10 w-10 text-[#8891A8] mx-auto mb-3 opacity-50" />
-          <p className="text-[#F3F6FB] font-medium">No team members yet</p>
-          {isSuperAdmin && (
-            <p className="text-xs text-[#8891A8] mt-1">Click "Add Member" to create the first profile.</p>
-          )}
+        <div className="rounded-2xl border border-[#1D2436] bg-[#0F1420] p-12 text-center text-[#8891A8]">
+          <Users className="mx-auto h-12 w-12 text-[#1D2436] mb-3" />
+          <p className="text-sm font-medium text-[#F3F6FB]">No team members found</p>
+          <p className="text-xs mt-1">Get started by adding your first team member.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredMembers.map((m) => (
             <div
               key={m.id}
-              className="rounded-2xl border border-[#1D2436] bg-[#0F1420] p-5 flex flex-col hover:border-[#8B7CFF66] hover:-translate-y-1 transition-all duration-300"
+              className="rounded-2xl border border-[#1D2436] bg-[#0F1420] p-5 flex flex-col justify-between hover:border-[#4DE8E033] transition-colors"
             >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="h-12 w-12 rounded-full overflow-hidden bg-[#090C14] shrink-0 border border-[#1D2436]">
+              <div className="flex items-center gap-3.5 mb-4">
+                <div className="relative">
                   {m.image ? (
-                    <img src={m.image} alt={m.name} className="h-full w-full object-cover" />
+                    <img
+                      src={m.image}
+                      alt={m.name}
+                      className="h-12 w-12 rounded-xl object-cover shrink-0 border border-[#1D2436]"
+                    />
                   ) : (
-                    <div className="h-full w-full flex items-center justify-center font-bold text-base text-[#4DE8E0]">
+                    <div className="h-12 w-12 rounded-xl bg-[#1D2436] flex items-center justify-center font-bold text-[#4DE8E0] text-sm shrink-0">
                       {m.name.charAt(0)}
                     </div>
                   )}
@@ -232,7 +270,7 @@ export default function TeamManagement() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Team Member Edit / Add Modal */}
       {isModalOpen && isSuperAdmin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="w-full max-w-xl border border-[#1D2436] bg-[#0F1420] p-6 rounded-2xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -315,16 +353,122 @@ export default function TeamManagement() {
                   placeholder="Short bio..."
                 />
               </div>
+
+              {/* Photo Input with Device Selection + Cropping */}
               <div>
-                <label className="block text-xs text-[#8891A8] mb-1.5">Photo — choose from gallery / paste URL</label>
-                <input
-                  type="text"
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-[#090C14] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] text-sm rounded-xl transition-colors"
-                  placeholder="https://..."
-                />
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs text-[#8891A8] font-medium">
+                    Photo (1:1 Square Card Ratio)
+                  </label>
+                  <div className="flex gap-1.5 bg-[#090C14] p-0.5 rounded-lg border border-[#1D2436]">
+                    <button
+                      type="button"
+                      onClick={() => setImageInputMode("device")}
+                      className={`px-2 py-0.5 text-[10px] rounded-md transition-colors ${
+                        imageInputMode === "device"
+                          ? "bg-[#4DE8E0]/15 text-[#4DE8E0] font-semibold"
+                          : "text-[#8891A8] hover:text-white"
+                      }`}
+                    >
+                      Device File
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setImageInputMode("url")}
+                      className={`px-2 py-0.5 text-[10px] rounded-md transition-colors ${
+                        imageInputMode === "url"
+                          ? "bg-[#4DE8E0]/15 text-[#4DE8E0] font-semibold"
+                          : "text-[#8891A8] hover:text-white"
+                      }`}
+                    >
+                      Image URL
+                    </button>
+                  </div>
+                </div>
+
+                {formData.image ? (
+                  <div className="flex items-center gap-3.5 p-3 bg-[#090C14] border border-[#1D2436] rounded-xl">
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-[#4DE8E0]/40 bg-[#1D2436]">
+                      <img
+                        src={formData.image}
+                        alt="Preview"
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-[#F3F6FB] flex items-center gap-1">
+                        <span className="text-emerald-400">✓</span> Photo ready & framed
+                      </p>
+                      <p className="text-[10px] text-[#8891A8]">Exact 1:1 square card fit</p>
+                      <div className="flex items-center gap-3 mt-1.5">
+                        <button
+                          type="button"
+                          onClick={handleRecrop}
+                          className="flex items-center gap-1 text-xs font-medium text-[#4DE8E0] hover:underline"
+                        >
+                          <Crop className="h-3 w-3" /> Adjust Crop / Zoom
+                        </button>
+                        <label className="flex items-center gap-1 text-xs text-[#8891A8] hover:text-white cursor-pointer">
+                          <RefreshCw className="h-3 w-3" /> Change
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleDeviceFileSelect}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, image: "" })}
+                          className="text-xs text-red-400 hover:underline"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : imageInputMode === "device" ? (
+                  <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-[#1D2436] hover:border-[#4DE8E0] bg-[#090C14]/70 hover:bg-[#090C14] rounded-2xl cursor-pointer transition-all group">
+                    <div className="h-11 w-11 rounded-2xl bg-[#4DE8E0]/10 flex items-center justify-center text-[#4DE8E0] group-hover:scale-110 transition-transform mb-2">
+                      <Upload className="h-5 w-5" />
+                    </div>
+                    <span className="text-xs font-semibold text-[#F3F6FB]">
+                      Select photo from device
+                    </span>
+                    <span className="text-[10px] text-[#8891A8] mt-0.5">
+                      JPG, PNG, WebP · Auto-opens 1:1 square cropper
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleDeviceFileSelect}
+                    />
+                  </label>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={formData.image}
+                        onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                        className="flex-1 px-4 py-2.5 bg-[#090C14] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] text-sm rounded-xl transition-colors"
+                        placeholder="https://..."
+                      />
+                      {formData.image && (
+                        <button
+                          type="button"
+                          onClick={handleRecrop}
+                          className="px-3 py-2.5 bg-[#1D2436] hover:bg-[#4DE8E0] hover:text-[#090C14] text-xs font-semibold rounded-xl text-[#F3F6FB] transition-colors flex items-center gap-1.5"
+                        >
+                          <Crop className="h-3.5 w-3.5" /> Crop
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs text-[#8891A8] mb-1.5">LinkedIn</label>
@@ -365,6 +509,17 @@ export default function TeamManagement() {
           </div>
         </div>
       )}
+
+      {/* 1:1 Image Cropper Modal */}
+      <ImageCropperModal
+        isOpen={isCropperOpen}
+        onClose={() => setIsCropperOpen(false)}
+        imageSrc={cropTargetImage}
+        onCropComplete={handleCropComplete}
+        memberName={formData.name || "Member Preview"}
+        memberRole={formData.role || "Role"}
+        memberBadge={formData.badge || "Innovator"}
+      />
     </AdminShell>
   );
 }
