@@ -367,62 +367,42 @@ export default function Home() {
             </h3>
           </motion.div>
 
-          {/* Recent Events Gallery (Single non-duplicated display for few items, smooth marquee for many) */}
-          {eventHighlights.length <= 4 ? (
-            <motion.div variants={fadeInUp} className="flex flex-wrap justify-center gap-5">
-              {eventHighlights.map((ev, i) => (
+          {/* Recent Events — Continuous Auto-Scrolling Gallery */}
+          <motion.div
+            variants={fadeInUp}
+            className="relative w-full overflow-hidden"
+            style={{
+              maskImage:
+                "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
+              WebkitMaskImage:
+                "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
+            }}
+          >
+            <div className="event-marquee flex w-max gap-5 py-2">
+              {/* Build seamless looping marquee items */}
+              {(eventHighlights.length < 5
+                ? [...eventHighlights, ...eventHighlights, ...eventHighlights, ...eventHighlights]
+                : [...eventHighlights, ...eventHighlights]
+              ).map((ev, i) => (
                 <div
-                  key={ev.id || i}
-                  className="group relative w-56 sm:w-64 shrink-0 aspect-[3/4] rounded-2xl overflow-hidden border border-[#1D2436] bg-[#090C14] hover:border-[#4DE8E066] transition-all hover:scale-105 shadow-xl"
+                  key={`${ev.id || i}-${i}`}
+                  className="group relative w-56 sm:w-64 shrink-0 aspect-[3/4] rounded-2xl overflow-hidden border border-[#1D2436] bg-[#090C14] hover:border-[#4DE8E066] transition-all hover:scale-105 shadow-xl cursor-pointer"
                 >
                   <img
                     src={ev.img}
                     alt={ev.title}
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#090C14ee] via-[#090C1433] to-transparent" />
-                  <div className="absolute bottom-0 inset-x-0 p-4">
-                    <p className="text-sm font-semibold text-[#F3F6FB] leading-snug drop-shadow">
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#090C14ee] via-[#090C1433] to-transparent pointer-events-none" />
+                  <div className="absolute bottom-0 inset-x-0 p-4 pointer-events-none">
+                    <p className="text-sm font-semibold text-[#F3F6FB] leading-snug line-clamp-2 drop-shadow">
                       {ev.title}
                     </p>
                   </div>
                 </div>
               ))}
-            </motion.div>
-          ) : (
-            <motion.div
-              variants={fadeInUp}
-              className="relative w-full overflow-hidden"
-              style={{
-                maskImage:
-                  "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
-                WebkitMaskImage:
-                  "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
-              }}
-            >
-              <div className="event-marquee flex w-max gap-4">
-                {/* Render the list twice back-to-back for seamless infinite loop */}
-                {[...eventHighlights, ...eventHighlights].map((ev, i) => (
-                  <div
-                    key={`${ev.id || i}-${i}`}
-                    className="group relative w-56 sm:w-64 shrink-0 aspect-[3/4] rounded-xl overflow-hidden border border-[#1D2436] bg-[#090C14]"
-                  >
-                    <img
-                      src={ev.img}
-                      alt={ev.title}
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#090C14ee] via-[#090C1433] to-transparent" />
-                    <div className="absolute bottom-0 inset-x-0 p-3">
-                      <p className="text-xs font-semibold text-[#F3F6FB] leading-tight line-clamp-2 drop-shadow">
-                        {ev.title}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
+            </div>
+          </motion.div>
         </div>
 
         <style jsx>{`
