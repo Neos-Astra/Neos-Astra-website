@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Trash2, ImageIcon, X, UploadCloud, Crop, CheckCircle, AlertCircle, Eye } from "lucide-react";
+import { Trash2, ImageIcon, X, UploadCloud, Crop, CheckCircle, AlertCircle, Eye, Tag } from "lucide-react";
 import AdminShell from "@/app/components/AdminShell";
 import HeroImageCropper from "@/app/components/HeroImageCropper";
 
 interface HomeMedia {
   id: string;
   imageUrl: string;
+  title?: string;
   position: number;
 }
 
@@ -20,9 +21,10 @@ export default function HomeMediaManagement() {
   const [isCropping, setIsCropping] = useState(false);
   const [croppedBlob, setCroppedBlob] = useState<Blob | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
   const [position, setPosition] = useState(0);
   const [toastMessage, setToastMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [viewingImage, setViewingImage] = useState<{ url: string; title?: string } | null>(null);
 
   const showToast = (text: string, type: "success" | "error" = "success") => {
     setToastMessage({ type, text });
@@ -50,6 +52,7 @@ export default function HomeMediaManagement() {
     setRawImageSrc(null);
     setCroppedBlob(null);
     setPreview(null);
+    setTitle("");
     setIsCropping(false);
     setPosition(mediaList.length);
     setIsModalOpen(true);
@@ -89,6 +92,7 @@ export default function HomeMediaManagement() {
         const formData = new FormData();
         const file = new File([croppedBlob], `highlight-${Date.now()}.webp`, { type: "image/webp" });
         formData.append("file", file);
+        formData.append("title", title.trim());
         formData.append("position", position.toString());
 
         res = await fetch("/api/home-media", {
@@ -101,6 +105,7 @@ export default function HomeMediaManagement() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             imageUrl: preview,
+            title: title.trim(),
             position,
           }),
         });
@@ -111,6 +116,7 @@ export default function HomeMediaManagement() {
         setRawImageSrc(null);
         setCroppedBlob(null);
         setPreview(null);
+        setTitle("");
         showToast("Photo successfully uploaded!");
         fetchMedia(false);
       } else {
@@ -168,10 +174,10 @@ export default function HomeMediaManagement() {
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <p className="text-sm text-[#8891A8]">
-            Manage hero background and event highlight photos displayed on your homepage.
+            Manage recent highlights and hero background photos displayed on your homepage.
           </p>
           <p className="text-xs text-[#4DE8E0] mt-1 font-mono">
-            ✦ Precision 3:4 portrait crop & 16:9 widescreen formats supported
+            ✦ Distortion-free 3:4 portrait crop with custom title / captions
           </p>
         </div>
         <button
@@ -200,19 +206,26 @@ export default function HomeMediaManagement() {
                 key={m.id}
                 className="group relative rounded-2xl border border-[#1D2436] bg-[#0F1420] overflow-hidden hover:border-[#4DE8E066] transition-all flex flex-col"
               >
-                {/* 3:4 Card Preview Aspect Ratio matching homepage highlights */}
+                {/* 3:4 Card Preview Aspect Ratio */}
                 <div className="aspect-[3/4] relative overflow-hidden bg-[#090C14]">
                   <img
                     src={m.imageUrl}
-                    alt="Home media"
+                    alt={m.title || "Home media"}
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#090C14ee] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  {/* Subtle gradient with caption */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#090C14ee] via-[#090C1433] to-transparent" />
                   
+                  <div className="absolute bottom-0 inset-x-0 p-3 pointer-events-none">
+                    <p className="text-xs font-semibold text-[#F3F6FB] leading-tight line-clamp-2 drop-shadow">
+                      {m.title || "Untitled Moment"}
+                    </p>
+                  </div>
+
                   {/* Action overlay buttons */}
                   <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
-                      onClick={() => setViewingImage(m.imageUrl)}
+                      onClick={() => setViewingImage({ url: m.imageUrl, title: m.title })}
                       className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#090C14]/80 backdrop-blur-sm text-[#4DE8E0] hover:bg-[#4DE8E0]/20 transition-all"
                       title="View Full Image"
                     >
@@ -246,7 +259,7 @@ export default function HomeMediaManagement() {
             <div className="flex justify-between items-center pb-4 mb-5 border-b border-[#1D2436]">
               <div>
                 <h2 className="text-[#F3F6FB] font-bold text-lg">Upload Photo</h2>
-                <p className="text-xs text-[#8891A8]">Select and crop photo for website</p>
+                <p className="text-xs text-[#8891A8]">Crop and set caption for website highlight</p>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -259,13 +272,13 @@ export default function HomeMediaManagement() {
             <form onSubmit={handleUpload} className="space-y-4">
               {preview ? (
                 <div className="flex flex-col items-center gap-3">
-                  <div className="relative w-48 aspect-[3/4] rounded-xl overflow-hidden border-2 border-[#4DE8E0] shadow-lg shadow-[#4DE8E026]">
+                  <div className="relative w-44 aspect-[3/4] rounded-xl overflow-hidden border-2 border-[#4DE8E0] shadow-lg shadow-[#4DE8E026]">
                     <img src={preview} alt="Cropped Preview" className="absolute inset-0 h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#090C14cc] via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#090C14ee] via-transparent to-transparent pointer-events-none" />
                     <div className="absolute bottom-2 left-2 right-2 text-center pointer-events-none">
-                      <span className="text-[10px] font-mono text-[#4DE8E0] bg-[#090C14]/90 px-2 py-0.5 rounded-full border border-[#4DE8E0]/30">
-                        Cropped (3:4)
-                      </span>
+                      <p className="text-[11px] font-semibold text-[#F3F6FB] leading-tight line-clamp-1">
+                        {title || "Highlight Moment"}
+                      </p>
                     </div>
                   </div>
 
@@ -276,7 +289,7 @@ export default function HomeMediaManagement() {
                         onClick={() => setIsCropping(true)}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#151C2C] border border-[#4DE8E066] text-xs font-semibold text-[#4DE8E0] hover:bg-[#4DE8E01a] transition-colors"
                       >
-                        <Crop className="h-3.5 w-3.5" /> Re-Crop
+                        <Crop className="h-3.5 w-3.5" /> Re-Crop / Adjust Frame
                       </button>
                     )}
                     <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#151C2C] border border-[#1D2436] text-xs font-semibold text-[#8891A8] hover:text-[#F3F6FB] hover:border-[#F3F6FB44] cursor-pointer transition-colors">
@@ -295,6 +308,20 @@ export default function HomeMediaManagement() {
                   <input type="file" required accept="image/*" onChange={handleFileChange} className="hidden" />
                 </label>
               )}
+
+              {/* Title / Caption Field */}
+              <div>
+                <label className="block text-xs text-[#8891A8] mb-1.5 font-mono uppercase tracking-wider flex items-center gap-1.5">
+                  <Tag className="h-3.5 w-3.5 text-[#4DE8E0]" /> Photo Title / Caption
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g. Robotics Car Demonstration"
+                  className="w-full px-4 py-2.5 bg-[#090C14] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] text-sm rounded-xl transition-colors placeholder:text-[#8891A8]/50"
+                />
+              </div>
 
               <div>
                 <label className="block text-xs text-[#8891A8] mb-1.5 font-mono uppercase tracking-wider">
@@ -335,6 +362,7 @@ export default function HomeMediaManagement() {
         <HeroImageCropper
           imageSrc={rawImageSrc}
           title="Crop Photo for Highlights / Hero"
+          cardTitle={title || "Highlight Moment"}
           defaultAspectRatio={3 / 4}
           onCropComplete={handleCropComplete}
           onCancel={() => {
@@ -352,8 +380,13 @@ export default function HomeMediaManagement() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4"
           onClick={() => setViewingImage(null)}
         >
-          <div className="relative max-w-3xl max-h-[85vh] rounded-2xl overflow-hidden border border-[#1D2436] shadow-2xl">
-            <img src={viewingImage} alt="Full view" className="max-h-[85vh] w-auto object-contain" />
+          <div className="relative max-w-3xl max-h-[85vh] rounded-2xl overflow-hidden border border-[#1D2436] shadow-2xl bg-[#090C14] flex flex-col items-center">
+            <img src={viewingImage.url} alt={viewingImage.title || "Full view"} className="max-h-[75vh] w-auto object-contain" />
+            {viewingImage.title && (
+              <div className="p-3 w-full text-center bg-[#0F1420] border-t border-[#1D2436] text-sm font-medium text-[#F3F6FB]">
+                {viewingImage.title}
+              </div>
+            )}
             <button
               onClick={() => setViewingImage(null)}
               className="absolute top-3 right-3 p-2 rounded-full bg-[#090C14]/80 text-[#F3F6FB] hover:bg-[#090C14] transition-colors"
@@ -365,4 +398,4 @@ export default function HomeMediaManagement() {
       )}
     </AdminShell>
   );
-}
+}

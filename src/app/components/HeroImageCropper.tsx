@@ -10,10 +10,10 @@ interface AspectRatioOption {
 }
 
 const ASPECT_RATIOS: AspectRatioOption[] = [
-  { label: "3:4 (Card / Highlights)", value: 3 / 4, desc: "Website Card Size (Recommended)" },
+  { label: "3:4 (Website Card)", value: 3 / 4, desc: "Recent Highlights (Recommended)" },
   { label: "16:9 (Hero Banner)", value: 16 / 9, desc: "Widescreen Hero Banner" },
   { label: "4:3 (Standard)", value: 4 / 3, desc: "Standard Photo" },
-  { label: "1:1 (Square)", value: 1, desc: "Square Thumbnail" },
+  { label: "1:1 (Square)", value: 1, desc: "Square" },
   { label: "Original / Free", value: null, desc: "Keep Natural Ratio" },
 ];
 
@@ -22,6 +22,7 @@ interface HeroImageCropperProps {
   onCropComplete: (croppedBlob: Blob, croppedDataUrl: string) => void;
   onCancel: () => void;
   title?: string;
+  cardTitle?: string;
   defaultAspectRatio?: number | null;
 }
 
@@ -30,6 +31,7 @@ export default function HeroImageCropper({
   onCropComplete,
   onCancel,
   title = "Crop Photo for Neos Astra",
+  cardTitle = "Highlight Moment",
   defaultAspectRatio = 3 / 4,
 }: HeroImageCropperProps) {
   const [selectedRatio, setSelectedRatio] = useState<number | null>(defaultAspectRatio);
@@ -39,7 +41,6 @@ export default function HeroImageCropper({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
-  const [previewCardTitle, setPreviewCardTitle] = useState("Highlight Moment");
 
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
@@ -109,13 +110,12 @@ export default function HeroImageCropper({
     setRotation(0);
   };
 
-  // Compute crop box display dimensions
+  // Compute crop box display dimensions in the UI
   const getCropBoxDimensions = () => {
     const maxBoxWidth = 320;
     const maxBoxHeight = 420;
 
     if (!selectedRatio) {
-      // Natural ratio or 3:4 default
       if (imageSize.width && imageSize.height) {
         const natRatio = imageSize.width / imageSize.height;
         if (natRatio > 1) {
@@ -124,16 +124,14 @@ export default function HeroImageCropper({
           return { width: maxBoxHeight * natRatio, height: maxBoxHeight };
         }
       }
-      return { width: 280, height: 373 }; // 3:4
+      return { width: 280, height: 373 }; // 3:4 default
     }
 
     if (selectedRatio >= 1) {
-      // Widescreen / Landscape / Square
       const width = maxBoxWidth;
       const height = width / selectedRatio;
       return { width, height };
     } else {
-      // Portrait (like 3:4)
       const height = maxBoxHeight;
       const width = height * selectedRatio;
       return { width, height };
@@ -142,7 +140,22 @@ export default function HeroImageCropper({
 
   const cropBox = getCropBoxDimensions();
 
-  // Generate cropped image from canvas
+  // Natural image aspect ratio
+  const imgRatio = imageSize.width && imageSize.height ? imageSize.width / imageSize.height : 1;
+  const boxAspect = cropBox.width / (cropBox.height || 1);
+
+  // Compute proportional base display size in UI box (covering the crop box without stretching)
+  let uiBaseW = cropBox.width;
+  let uiBaseH = cropBox.height;
+  if (imgRatio > boxAspect) {
+    uiBaseH = cropBox.height;
+    uiBaseW = cropBox.height * imgRatio;
+  } else {
+    uiBaseW = cropBox.width;
+    uiBaseH = cropBox.width / (imgRatio || 1);
+  }
+
+  // Generate cropped image on offscreen canvas
   const handleCropAndApply = useCallback(async () => {
     if (!imgRef.current || !containerRef.current) return;
 
@@ -150,7 +163,7 @@ export default function HeroImageCropper({
     const targetWidth = selectedRatio ? (selectedRatio < 1 ? 1200 : 1920) : Math.min(img.naturalWidth, 1920);
     const targetHeight = selectedRatio
       ? Math.round(targetWidth / selectedRatio)
-      : Math.round(targetWidth / (img.naturalWidth / img.naturalHeight || 1));
+      : Math.round(targetWidth / (imgRatio || 1));
 
     const canvas = document.createElement("canvas");
     canvas.width = targetWidth;
@@ -161,7 +174,7 @@ export default function HeroImageCropper({
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
 
-    // Fill dark background in case of empty space
+    // Fill dark background
     ctx.fillStyle = "#090C14";
     ctx.fillRect(0, 0, targetWidth, targetHeight);
 
@@ -172,14 +185,23 @@ export default function HeroImageCropper({
     // Apply rotation
     ctx.rotate((rotation * Math.PI) / 180);
 
-    // Compute scaling factor between UI cropBox and target canvas
+    // Canvas scaling to match exact proportional geometry
+    const canvasAspect = targetWidth / (targetHeight || 1);
+    let canvasBaseW = targetWidth;
+    let canvasBaseH = targetHeight;
+
+    if (imgRatio > canvasAspect) {
+      canvasBaseH = targetHeight;
+      canvasBaseW = targetHeight * imgRatio;
+    } else {
+      canvasBaseW = targetWidth;
+      canvasBaseH = targetWidth / (imgRatio || 1);
+    }
+
+    const drawWidth = canvasBaseW * zoom;
+    const drawHeight = canvasBaseH * zoom;
+
     const scaleFactor = targetWidth / cropBox.width;
-
-    // Apply user pan & zoom
-    const drawWidth = (img.naturalWidth / (img.naturalWidth / cropBox.width)) * zoom * scaleFactor;
-    const drawHeight = (img.naturalHeight / (img.naturalHeight / cropBox.height)) * zoom * scaleFactor;
-
-    // Center image + pan
     const isRotated90or270 = rotation === 90 || rotation === 270;
     const panX = (isRotated90or270 ? pan.y : pan.x) * scaleFactor;
     const panY = (isRotated90or270 ? -pan.x : pan.y) * scaleFactor;
@@ -194,7 +216,7 @@ export default function HeroImageCropper({
 
     ctx.restore();
 
-    // Export as WebP or JPEG
+    // Export as WebP
     canvas.toBlob(
       (blob) => {
         if (blob) {
@@ -205,7 +227,7 @@ export default function HeroImageCropper({
       "image/webp",
       0.92
     );
-  }, [selectedRatio, zoom, rotation, pan, cropBox, onCropComplete]);
+  }, [selectedRatio, imgRatio, zoom, rotation, pan, cropBox, onCropComplete]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-6 overflow-y-auto">
@@ -220,7 +242,7 @@ export default function HeroImageCropper({
             <div>
               <h2 className="text-base sm:text-lg font-bold text-[#F3F6FB]">{title}</h2>
               <p className="text-xs text-[#8891A8]">
-                Crop & position your image to fit perfectly on the website
+                Crop & position your image without distortion
               </p>
             </div>
           </div>
@@ -257,7 +279,7 @@ export default function HeroImageCropper({
                   {item.label}
                   {item.value === 3 / 4 && (
                     <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#090C14]/20 font-mono">
-                      Website Card
+                      Card (3:4)
                     </span>
                   )}
                 </button>
@@ -293,11 +315,11 @@ export default function HeroImageCropper({
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
-              {/* Image with transforms */}
+              {/* Image with transforms - 100% distortion free */}
               <div
                 className="absolute inset-0 flex items-center justify-center pointer-events-none"
                 style={{
-                  transform: `translate(${pan.x}px, ${pan.y}px) rotate(${rotation}deg) scale(${zoom})`,
+                  transform: `translate(${pan.x}px, ${pan.y}px) rotate(${rotation}deg)`,
                   transformOrigin: "center center",
                   transition: isDragging ? "none" : "transform 0.1s ease-out",
                 }}
@@ -305,13 +327,15 @@ export default function HeroImageCropper({
                 <img
                   src={imageSrc}
                   alt="Crop Target"
-                  className="max-w-none max-h-none pointer-events-none"
+                  className="max-w-none max-h-none pointer-events-none select-none"
                   style={{
-                    width: cropBox.width > cropBox.height ? `${cropBox.width}px` : "auto",
-                    height: cropBox.height >= cropBox.width ? `${cropBox.height}px` : "auto",
-                    minWidth: "100%",
-                    minHeight: "100%",
-                    objectFit: "cover",
+                    width: `${uiBaseW * zoom}px`,
+                    height: `${uiBaseH * zoom}px`,
+                    minWidth: `${uiBaseW * zoom}px`,
+                    minHeight: `${uiBaseH * zoom}px`,
+                    maxWidth: "none",
+                    maxHeight: "none",
+                    objectFit: "fill",
                   }}
                   draggable={false}
                 />
@@ -325,8 +349,8 @@ export default function HeroImageCropper({
                 <div className="border-r border-b border-[#4DE8E0]/30" />
                 <div className="border-r border-b border-[#4DE8E0]/30" />
                 <div className="border-b border-[#4DE8E0]/30" />
-                <div className="border-r border-[#4DE8E0]/30" />
-                <div className="border-r border-[#4DE8E0]/30" />
+                <div className="border-r border-b border-[#4DE8E0]/30" />
+                <div className="border-r border-b border-[#4DE8E0]/30" />
                 <div />
               </div>
             </div>
@@ -365,7 +389,7 @@ export default function HeroImageCropper({
                   <input
                     type="range"
                     min="1"
-                    max="3"
+                    max="3.5"
                     step="0.05"
                     value={zoom}
                     onChange={(e) => setZoom(parseFloat(e.target.value))}
@@ -373,7 +397,7 @@ export default function HeroImageCropper({
                   />
                   <button
                     type="button"
-                    onClick={() => setZoom((z) => Math.min(3, +(z + 0.1).toFixed(1)))}
+                    onClick={() => setZoom((z) => Math.min(3.5, +(z + 0.1).toFixed(1)))}
                     className="p-1 rounded-lg bg-[#1D2436] text-[#8891A8] hover:text-[#F3F6FB]"
                   >
                     <ZoomIn className="h-4 w-4" />
@@ -414,22 +438,29 @@ export default function HeroImageCropper({
                 <div
                   className="absolute inset-0 flex items-center justify-center"
                   style={{
-                    transform: `translate(${pan.x * 0.4}px, ${pan.y * 0.4}px) rotate(${rotation}deg) scale(${zoom})`,
+                    transform: `translate(${pan.x * 0.4}px, ${pan.y * 0.4}px) rotate(${rotation}deg)`,
                     transformOrigin: "center center",
                   }}
                 >
                   <img
                     src={imageSrc}
                     alt="Preview"
-                    className="h-full w-full object-cover"
+                    className="max-w-none max-h-none"
+                    style={{
+                      width: `${uiBaseW * 0.4 * zoom}px`,
+                      height: `${uiBaseH * 0.4 * zoom}px`,
+                      minWidth: `${uiBaseW * 0.4 * zoom}px`,
+                      minHeight: `${uiBaseH * 0.4 * zoom}px`,
+                      objectFit: "fill",
+                    }}
                     draggable={false}
                   />
                 </div>
                 {/* Gradient & title overlay matching Home.tsx */}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#090C14ee] via-[#090C1440] to-transparent pointer-events-none" />
                 <div className="absolute bottom-0 p-2 pointer-events-none">
-                  <p className="text-[10px] font-semibold text-[#F3F6FB] leading-tight">
-                    {previewCardTitle || "Highlights Moment"}
+                  <p className="text-[10px] font-semibold text-[#F3F6FB] leading-tight line-clamp-2">
+                    {cardTitle || "Highlight Moment"}
                   </p>
                 </div>
               </div>
@@ -462,3 +493,4 @@ export default function HeroImageCropper({
     </div>
   );
 }
+

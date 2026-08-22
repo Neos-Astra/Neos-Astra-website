@@ -36,11 +36,13 @@ export async function POST(request: Request) {
 
     const contentType = request.headers.get("content-type") || "";
     let position = 0;
+    let title = "";
     let imageUrl = "";
 
     if (contentType.includes("application/json")) {
       const body = await request.json();
       position = Number(body.position || 0);
+      title = String(body.title || "").trim();
       imageUrl = body.imageUrl || body.imageBase64 || "";
 
       if (!imageUrl) {
@@ -79,6 +81,7 @@ export async function POST(request: Request) {
       const file = formData.get("file") as File | null;
       const positionStr = formData.get("position")?.toString() || "0";
       position = parseInt(positionStr, 10) || 0;
+      title = (formData.get("title")?.toString() || "").trim();
 
       if (!file) {
         return NextResponse.json({ error: "No file uploaded." }, { status: 400 });
@@ -115,6 +118,7 @@ export async function POST(request: Request) {
     const media = await prisma.homeMedia.create({
       data: {
         imageUrl,
+        title,
         position,
         updatedBy: session.user.id || session.user.email || "admin",
       },

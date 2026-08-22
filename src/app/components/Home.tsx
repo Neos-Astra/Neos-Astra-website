@@ -108,13 +108,20 @@ const FEATURES = [
   },
 ];
 
+interface EventHighlight {
+  id?: string;
+  img: string;
+  title: string;
+  date?: string;
+}
+
 // Recent events — update image paths / titles / dates as new events happen
-const RECENT_EVENTS = [
-  { img: "/event1.jpg", title: "Classroom & Tech Session", date: "Jul 2026" },
-  { img: "/event2.jpg", title: "Robotics Car Demonstration", date: "Jul 2026" },
-  { img: "/event3.jpg", title: "Microscope & Science Experimentation", date: "Jun 2026" },
-  { img: "/event4.jpg", title: "Robotics Practical Hands-on", date: "Jun 2026" },
-  { img: "/event5.jpg", title: "Lab Learning & Microscopy", date: "May 2026" },
+const RECENT_EVENTS: EventHighlight[] = [
+  { id: "ev-1", img: "/event1.jpg", title: "Classroom & Tech Session", date: "Jul 2026" },
+  { id: "ev-2", img: "/event2.jpg", title: "Robotics Car Demonstration", date: "Jul 2026" },
+  { id: "ev-3", img: "/event3.jpg", title: "Microscope & Science Experimentation", date: "Jun 2026" },
+  { id: "ev-4", img: "/event4.jpg", title: "Robotics Practical Hands-on", date: "Jun 2026" },
+  { id: "ev-5", img: "/event5.jpg", title: "Lab Learning & Microscopy", date: "May 2026" },
 ];
 
 // Motion Animation Variants
@@ -137,7 +144,7 @@ const staggerContainer = {
 export default function Home() {
   const [activeImage, setActiveImage] = useState(0);
   const [heroImages, setHeroImages] = useState<string[]>(FALLBACK_HERO_IMAGES);
-  const [eventHighlights, setEventHighlights] = useState(RECENT_EVENTS);
+  const [eventHighlights, setEventHighlights] = useState<EventHighlight[]>(RECENT_EVENTS);
 
   // Fetch hero & highlight images from DB; fall back to hardcoded ones
   useEffect(() => {
@@ -148,9 +155,10 @@ export default function Home() {
           const urls = data.map((m: { imageUrl: string }) => m.imageUrl);
           setHeroImages(urls);
           setEventHighlights(
-            data.map((m: { imageUrl: string }, idx: number) => ({
+            data.map((m: { id?: string; imageUrl: string; title?: string }, idx: number) => ({
+              id: m.id || `ev-${idx}`,
               img: m.imageUrl,
-              title: RECENT_EVENTS[idx % RECENT_EVENTS.length]?.title || `STEM Innovation Moment ${idx + 1}`,
+              title: m.title?.trim() || `STEM Innovation Moment ${idx + 1}`,
               date: "2026",
             }))
           );
@@ -359,36 +367,62 @@ export default function Home() {
             </h3>
           </motion.div>
 
-          <motion.div
-            variants={fadeInUp}
-            className="relative w-full overflow-hidden"
-            style={{
-              maskImage:
-                "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
-              WebkitMaskImage:
-                "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
-            }}
-          >
-            <div className="event-marquee flex w-max gap-4">
-              {/* Render the list twice back-to-back for a seamless infinite loop */}
-              {[...eventHighlights, ...eventHighlights].map((ev, i) => (
+          {/* Recent Events Gallery (Single non-duplicated display for few items, smooth marquee for many) */}
+          {eventHighlights.length <= 4 ? (
+            <motion.div variants={fadeInUp} className="flex flex-wrap justify-center gap-5">
+              {eventHighlights.map((ev, i) => (
                 <div
-                  key={i}
-                  className="group relative w-56 sm:w-64 shrink-0 aspect-[3/4] rounded-xl overflow-hidden border border-[#1D2436]"
+                  key={ev.id || i}
+                  className="group relative w-56 sm:w-64 shrink-0 aspect-[3/4] rounded-2xl overflow-hidden border border-[#1D2436] bg-[#090C14] hover:border-[#4DE8E066] transition-all hover:scale-105 shadow-xl"
                 >
                   <img
                     src={ev.img}
                     alt={ev.title}
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#090C14ee] via-[#090C1440] to-transparent" />
-                  <div className="absolute bottom-0 p-3">
-                    <p className="text-xs font-semibold text-[#F3F6FB] leading-tight">{ev.title}</p>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#090C14ee] via-[#090C1433] to-transparent" />
+                  <div className="absolute bottom-0 inset-x-0 p-4">
+                    <p className="text-sm font-semibold text-[#F3F6FB] leading-snug drop-shadow">
+                      {ev.title}
+                    </p>
                   </div>
                 </div>
               ))}
-            </div>
-          </motion.div>
+            </motion.div>
+          ) : (
+            <motion.div
+              variants={fadeInUp}
+              className="relative w-full overflow-hidden"
+              style={{
+                maskImage:
+                  "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
+                WebkitMaskImage:
+                  "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
+              }}
+            >
+              <div className="event-marquee flex w-max gap-4">
+                {/* Render the list twice back-to-back for seamless infinite loop */}
+                {[...eventHighlights, ...eventHighlights].map((ev, i) => (
+                  <div
+                    key={`${ev.id || i}-${i}`}
+                    className="group relative w-56 sm:w-64 shrink-0 aspect-[3/4] rounded-xl overflow-hidden border border-[#1D2436] bg-[#090C14]"
+                  >
+                    <img
+                      src={ev.img}
+                      alt={ev.title}
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#090C14ee] via-[#090C1433] to-transparent" />
+                    <div className="absolute bottom-0 inset-x-0 p-3">
+                      <p className="text-xs font-semibold text-[#F3F6FB] leading-tight line-clamp-2 drop-shadow">
+                        {ev.title}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
         </div>
 
         <style jsx>{`
