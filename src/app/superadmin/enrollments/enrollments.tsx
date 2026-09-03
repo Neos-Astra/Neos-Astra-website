@@ -140,18 +140,19 @@ export default function EnrollmentsManagement() {
       if (Array.isArray(enrData)) setEnrollments(enrData);
       if (Array.isArray(crsData)) {
         setCourses(crsData);
-        if (crsData.length > 0 && !newForm.courseTitle) {
+        // Always re-initialize with the first course so pricing is always up-to-date
+        if (crsData.length > 0) {
           const first = crsData[0];
           const isRobo = Boolean(first.hasKit || first.category.toLowerCase().includes("robotics"));
           const base = parseAmt(first.admissionFee) + (isRobo ? parseAmt(first.kitPrice) : 0);
-          const gstAmt = Math.round((base * (first.gstPercent || 18)) / 100);
+          const gstAmt = Math.round((base * (first.gstPercent || 0)) / 100);
           setNewForm((prev) => ({
             ...prev,
             courseTitle: first.title,
             admissionFee: first.admissionFee || "₹3,000",
             kitPrice: isRobo ? first.kitPrice : "",
             hasKit: isRobo,
-            gstPercent: first.gstPercent ?? 18,
+            gstPercent: first.gstPercent ?? 0,
             total: first.price || fmtAmt(base + gstAmt),
           }));
         }

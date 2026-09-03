@@ -108,13 +108,20 @@ const FEATURES = [
   },
 ];
 
+interface EventHighlight {
+  id?: string;
+  img: string;
+  title: string;
+  date?: string;
+}
+
 // Recent events — update image paths / titles / dates as new events happen
-const RECENT_EVENTS = [
-  { img: "/event1.jpg", title: "Classroom & Tech Session", date: "Jul 2026" },
-  { img: "/event2.jpg", title: "Robotics Car Demonstration", date: "Jul 2026" },
-  { img: "/event3.jpg", title: "Microscope & Science Experimentation", date: "Jun 2026" },
-  { img: "/event4.jpg", title: "Robotics Practical Hands-on", date: "Jun 2026" },
-  { img: "/event5.jpg", title: "Lab Learning & Microscopy", date: "May 2026" },
+const RECENT_EVENTS: EventHighlight[] = [
+  { id: "ev-1", img: "/event1.jpg", title: "Classroom & Tech Session", date: "Jul 2026" },
+  { id: "ev-2", img: "/event2.jpg", title: "Robotics Car Demonstration", date: "Jul 2026" },
+  { id: "ev-3", img: "/event3.jpg", title: "Microscope & Science Experimentation", date: "Jun 2026" },
+  { id: "ev-4", img: "/event4.jpg", title: "Robotics Practical Hands-on", date: "Jun 2026" },
+  { id: "ev-5", img: "/event5.jpg", title: "Lab Learning & Microscopy", date: "May 2026" },
 ];
 
 // Motion Animation Variants
@@ -135,17 +142,26 @@ const staggerContainer = {
 };
 
 export default function Home() {
-  console.log("Home component rendered");
   const [activeImage, setActiveImage] = useState(0);
   const [heroImages, setHeroImages] = useState<string[]>(FALLBACK_HERO_IMAGES);
+  const [eventHighlights, setEventHighlights] = useState<EventHighlight[]>(RECENT_EVENTS);
 
-  // Fetch hero images from DB; fall back to hardcoded ones
+  // Fetch hero & highlight images from DB; fall back to hardcoded ones
   useEffect(() => {
     fetch("/api/home-media")
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          setHeroImages(data.map((m: { imageUrl: string }) => m.imageUrl));
+          const urls = data.map((m: { imageUrl: string }) => m.imageUrl);
+          setHeroImages(urls);
+          setEventHighlights(
+            data.map((m: { id?: string; imageUrl: string; title?: string }, idx: number) => ({
+              id: m.id || `ev-${idx}`,
+              img: m.imageUrl,
+              title: m.title?.trim() || `STEM Innovation Moment ${idx + 1}`,
+              date: "2026",
+            }))
+          );
         }
       })
       .catch(() => {
@@ -351,6 +367,7 @@ export default function Home() {
             </h3>
           </motion.div>
 
+          {/* Recent Events — Continuous Auto-Scrolling Gallery */}
           <motion.div
             variants={fadeInUp}
             className="relative w-full overflow-hidden"
@@ -361,21 +378,26 @@ export default function Home() {
                 "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
             }}
           >
-            <div className="event-marquee flex w-max gap-4">
-              {/* Render the list twice back-to-back for a seamless infinite loop */}
-              {[...RECENT_EVENTS, ...RECENT_EVENTS].map((ev, i) => (
+            <div className="event-marquee flex w-max gap-5 py-2">
+              {/* Build seamless looping marquee items */}
+              {(eventHighlights.length < 5
+                ? [...eventHighlights, ...eventHighlights, ...eventHighlights, ...eventHighlights]
+                : [...eventHighlights, ...eventHighlights]
+              ).map((ev, i) => (
                 <div
-                  key={i}
-                  className="group relative w-56 sm:w-64 shrink-0 aspect-[3/4] rounded-xl overflow-hidden border border-[#1D2436]"
+                  key={`${ev.id || i}-${i}`}
+                  className="group relative w-56 sm:w-64 shrink-0 aspect-[3/4] rounded-2xl overflow-hidden border border-[#1D2436] bg-[#090C14] hover:border-[#4DE8E066] transition-all hover:scale-105 shadow-xl cursor-pointer"
                 >
                   <img
                     src={ev.img}
                     alt={ev.title}
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#090C14ee] via-[#090C1440] to-transparent" />
-                  <div className="absolute bottom-0 p-3">
-                    <p className="text-xs font-semibold text-[#F3F6FB] leading-tight">{ev.title}</p>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#090C14ee] via-[#090C1433] to-transparent pointer-events-none" />
+                  <div className="absolute bottom-0 inset-x-0 p-4 pointer-events-none">
+                    <p className="text-sm font-semibold text-[#F3F6FB] leading-snug line-clamp-2 drop-shadow">
+                      {ev.title}
+                    </p>
                   </div>
                 </div>
               ))}
