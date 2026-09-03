@@ -83,6 +83,14 @@ export default async function AdminLayout({
                 </a>
                 {isSuperAdmin && (
                   <a
+                    href="/superadmin/carrier"
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#EC4899] bg-[#EC489910] border border-[#EC489933] hover:bg-[#EC489920] transition-all flex items-center gap-1.5"
+                  >
+                    💼 Careers
+                  </a>
+                )}
+                {isSuperAdmin && (
+                  <a
                     href="/superadmin/admins"
                     className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#F43F5E] bg-[#F43F5E10] border border-[#F43F5E33] hover:bg-[#F43F5E20] transition-all flex items-center gap-1.5"
                   >
