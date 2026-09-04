@@ -1,5 +1,3 @@
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
 import CarrierClient from "./carrier-client";
 import { prisma } from "@/superadmin/prisma/client";
 
@@ -25,12 +23,8 @@ export default async function CarrierPage() {
   const initialJobs = await getJobOpenings();
 
   return (
-    <div className="min-h-screen bg-[#090C14] text-[#F3F6FB] flex flex-col font-sans">
-      <Navbar />
-      <main className="flex-grow">
-        <CarrierClient initialJobs={initialJobs} />
-      </main>
-      <Footer />
-    </div>
+    <main>
+      <CarrierClient initialJobs={initialJobs} />
+    </main>
   );
 }
