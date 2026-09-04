@@ -15,6 +15,7 @@ interface SurveyResponse {
 }
 
 const QUESTION_MAP: Record<string, string> = {
+  ngo: "NGO Name (PREM / ISARA / LIPICA / ARUNA)",
   A1: "A1. Age",
   A2: "A2. Gender",
   A3: "A3. Highest educational qualification",
@@ -205,7 +206,7 @@ export default function SurveyManagement() {
     const headers = [
       "Response ID",
       "Submission Timestamp",
-      "Date Field",
+      "NGO Name",
       "Primary Role",
       "Org Size",
       ...answerKeys,
@@ -224,7 +225,7 @@ export default function SurveyManagement() {
       return [
         escapeCSV(r.id),
         escapeCSV(new Date(r.createdAt).toLocaleString("en-IN")),
-        escapeCSV(r.date || ""),
+        escapeCSV(ans.ngo || ""),
         escapeCSV(r.participantRole || ans.A4 || ""),
         escapeCSV(r.orgSize || ans.A6 || ""),
         ...rowAns,
@@ -384,10 +385,9 @@ export default function SurveyManagement() {
           <table className="w-full min-w-[700px] text-sm">
             <thead>
               <tr className="border-b border-[#1D2436] bg-[#0F1420]">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#8891A8]">NGO</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#8891A8]">Participant Role</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#8891A8]">Org Size</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#8891A8]">Form Date</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#8891A8]">Consent</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#8891A8]">Submitted At</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#8891A8]">Action</th>
               </tr>
@@ -395,19 +395,16 @@ export default function SurveyManagement() {
             <tbody>
               {filtered.map((res) => (
                 <tr key={res.id} className="border-b border-[#1D2436] bg-[#090C14] hover:bg-[#0F1420] transition-colors">
+                  <td className="px-4 py-3 font-extrabold text-[#38BDF8]">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[#38BDF8]/10 border border-[#38BDF8]/30 text-xs font-bold tracking-wide">
+                      {res.answers?.ngo || "—"}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 font-semibold text-[#4DE8E0]">
                     {res.participantRole || res.answers?.A4 || "Participant"}
                   </td>
                   <td className="px-4 py-3 text-[#F3F6FB]">
                     {res.orgSize || res.answers?.A6 || "—"}
-                  </td>
-                  <td className="px-4 py-3 text-[#8891A8] font-mono text-xs">
-                    {res.date || "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5 text-xs font-bold text-emerald-400">
-                      {res.answers?.R1 || "Agreed"}
-                    </span>
                   </td>
                   <td className="px-4 py-3 text-xs text-[#8891A8]">
                     {new Date(res.createdAt).toLocaleString("en-IN")}

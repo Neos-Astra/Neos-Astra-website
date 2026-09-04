@@ -138,12 +138,9 @@ export default function NgoSurveyPage() {
     e.preventDefault();
     setErrorMsg("");
 
-    if (!answers.R1) {
-      setErrorMsg("Please answer the research consent question (Section R).");
-      return;
-    }
-    if (answers.R1 !== "I agree") {
-      setErrorMsg("Research participation consent was not provided.");
+    if (!answers.ngo) {
+      setErrorMsg("Please select your NGO at the top (PREM, ISARA, LIPICA, or ARUNA).");
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
@@ -409,6 +406,55 @@ export default function NgoSurveyPage() {
           </div>
 
           <form onSubmit={handleSubmit}>
+            {/* NGO SELECTION AT THE TOP */}
+            <div className="survey-section bg-gradient-to-b from-[#0E1424] to-[#0B0F19] border-b border-[#1D2436]">
+              <div className="max-w-2xl mx-auto">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 text-center sm:text-left">
+                  <div>
+                    <label className="text-sm font-extrabold uppercase tracking-wider text-[#38BDF8] flex items-center justify-center sm:justify-start gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#4DE8E0] animate-pulse"></span>
+                      Select NGO Name <span className="text-[#F43F5E]">*</span>
+                    </label>
+                    <p className="text-xs text-[#8891A8] mt-0.5">
+                      Please select the NGO / organisation you represent
+                    </p>
+                  </div>
+                  {answers.ngo && (
+                    <span className="self-center sm:self-auto inline-flex items-center gap-1.5 text-xs font-bold text-[#4DE8E0] bg-[#4DE8E0]/10 px-3 py-1 rounded-full border border-[#4DE8E0]/30 shadow-[0_0_12px_rgba(77,232,224,0.2)]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#4DE8E0]"></span>
+                      Selected: {answers.ngo}
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
+                  {["PREM", "ISARA", "LIPICA", "ARUNA"].map((ngo) => {
+                    const isChecked = answers.ngo === ngo;
+                    return (
+                      <label
+                        key={ngo}
+                        className={`relative flex items-center justify-center gap-2.5 p-3.5 sm:p-4 rounded-xl border cursor-pointer font-bold text-sm sm:text-base tracking-wide transition-all duration-200 select-none ${
+                          isChecked
+                            ? "bg-gradient-to-r from-[#4DE8E0]/15 via-[#38BDF8]/15 to-[#8B7CFF]/15 border-[#4DE8E0] text-[#4DE8E0] shadow-[0_0_20px_rgba(77,232,224,0.25)] ring-1 ring-[#4DE8E0] scale-[1.02]"
+                            : "bg-[#090C14] border-[#1D2436] text-[#94A3B8] hover:border-[#38BDF8]/50 hover:text-[#F3F6FB] hover:bg-[#121829]"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="ngo"
+                          value={ngo}
+                          checked={isChecked}
+                          onChange={() => handleRadioChange("ngo", ngo)}
+                          className="w-4 h-4 accent-[#4DE8E0] cursor-pointer"
+                        />
+                        <span>{ngo}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
             {/* SECTION A */}
             <div className="survey-section">
               <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mb-4">
