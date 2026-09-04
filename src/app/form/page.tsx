@@ -633,13 +633,22 @@ export default function NgoSurveyPage() {
               <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mb-1">
                 C. RETROSPECTIVE CHANGE FROM BEFORE THE COURSE
               </h2>
-              <p className="text-sm text-[#8891A8] mb-4">
-                Compared with your ability before the programme: 1 Much worse · 2 Slightly worse · 3 Same · 4 Slightly better · 5 Much better
-              </p>
-              <MatrixQuestion
+              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-[#4DE8E0]/10 via-[#38BDF8]/5 to-transparent border border-[#4DE8E0]/25 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
+                <div className="text-xs sm:text-sm text-[#F3F6FB] font-semibold">
+                  Compared with your ability before the programme:
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-[#8891A8] font-medium">
+                  <span>1 = Much worse</span>
+                  <span>•</span>
+                  <span>5 = Much better</span>
+                </div>
+              </div>
+              <CompactRatingGroup
                 id="C"
                 rows={SECTION_C_ROWS}
                 labels={["1 Much worse", "2 Slightly worse", "3 Same", "4 Slightly better", "5 Much better"]}
+                minLabel="Much worse"
+                maxLabel="Much better"
                 answers={answers}
                 onSelect={handleRadioChange}
               />
@@ -647,13 +656,22 @@ export default function NgoSurveyPage() {
               <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mt-8 mb-1">
                 D. CURRENT AI LITERACY
               </h2>
-              <p className="text-sm text-[#8891A8] mb-4">
-                Rate: 1 Strongly disagree · 2 Disagree · 3 Neither · 4 Agree · 5 Strongly agree
-              </p>
-              <MatrixQuestion
+              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-[#4DE8E0]/10 via-[#38BDF8]/5 to-transparent border border-[#4DE8E0]/25 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
+                <div className="text-xs sm:text-sm text-[#F3F6FB] font-semibold">
+                  Rate your current AI literacy statements:
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-[#8891A8] font-medium">
+                  <span>1 = Strongly Disagree</span>
+                  <span>•</span>
+                  <span>5 = Strongly Agree</span>
+                </div>
+              </div>
+              <CompactRatingGroup
                 id="D"
                 rows={SECTION_D_ROWS}
                 labels={["1 Strongly disagree", "2 Disagree", "3 Neither", "4 Agree", "5 Strongly agree"]}
+                minLabel="Strongly disagree"
+                maxLabel="Strongly agree"
                 answers={answers}
                 onSelect={handleRadioChange}
               />
@@ -664,13 +682,22 @@ export default function NgoSurveyPage() {
               <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mb-1">
                 E. AI SELF-EFFICACY &amp; AGENCY
               </h2>
-              <p className="text-sm text-[#8891A8] mb-4">
-                Rate 1–5: Strongly disagree → Strongly agree.
-              </p>
-              <MatrixQuestion
+              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-[#4DE8E0]/10 via-[#38BDF8]/5 to-transparent border border-[#4DE8E0]/25 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
+                <div className="text-xs sm:text-sm text-[#F3F6FB] font-semibold">
+                  Rate your confidence and agency with AI:
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-[#8891A8] font-medium">
+                  <span>1 = Strongly Disagree</span>
+                  <span>•</span>
+                  <span>5 = Strongly Agree</span>
+                </div>
+              </div>
+              <CompactRatingGroup
                 id="E"
                 rows={SECTION_E_ROWS}
                 labels={["1 Strongly disagree", "2 Disagree", "3 Neither", "4 Agree", "5 Strongly agree"]}
+                minLabel="Strongly disagree"
+                maxLabel="Strongly agree"
                 answers={answers}
                 onSelect={handleRadioChange}
               />
@@ -776,10 +803,21 @@ export default function NgoSurveyPage() {
               <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mb-4">
                 G. PRIVACY &amp; DATA GOVERNANCE
               </h2>
-              <MatrixQuestion
+              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-[#4DE8E0]/10 via-[#38BDF8]/5 to-transparent border border-[#4DE8E0]/25 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
+                <div className="text-xs sm:text-sm text-[#F3F6FB] font-semibold">
+                  Rate your understanding of privacy &amp; data governance:
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-[#8891A8] font-medium">
+                  <span>1 = Strongly Disagree</span>
+                  <span>•</span>
+                  <span>5 = Strongly Agree</span>
+                </div>
+              </div>
+              <CompactRatingGroup
                 id="G"
                 rows={SECTION_G_ROWS}
-                labels={["1", "2", "3", "4", "5"]}
+                minLabel="Strongly disagree"
+                maxLabel="Strongly agree"
                 answers={answers}
                 onSelect={handleRadioChange}
               />
@@ -1002,13 +1040,20 @@ export default function NgoSurveyPage() {
               <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mb-1">
                 J. ETHICS, HUMAN RIGHTS &amp; VULNERABILITY
               </h2>
-              <p className="text-sm text-[#8891A8] mb-4">
-                Rate 1–5: Strongly disagree → Strongly agree.
-              </p>
-              <MatrixQuestion
+              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-[#4DE8E0]/10 via-[#38BDF8]/5 to-transparent border border-[#4DE8E0]/25 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
+                <div className="text-xs sm:text-sm text-[#F3F6FB] font-semibold">
+                  Rate each statement from <strong className="text-[#4DE8E0]">1</strong> (Strongly Disagree) to <strong className="text-[#4DE8E0]">5</strong> (Strongly Agree):
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-[#8891A8] font-medium">
+                  <span>1 = Strongly Disagree</span>
+                  <span>•</span>
+                  <span>5 = Strongly Agree</span>
+                </div>
+              </div>
+
+              <CompactRatingGroup
                 id="J"
                 rows={SECTION_J_ROWS}
-                labels={["1", "2", "3", "4", "5"]}
                 answers={answers}
                 onSelect={handleRadioChange}
               />
@@ -1114,13 +1159,22 @@ export default function NgoSurveyPage() {
                 onSelect={handleRadioChange}
               />
 
-              <p className="text-sm text-[#8891A8] mt-6 mb-3 font-semibold">
-                Statement 1 2 3 4 5
-              </p>
-              <MatrixQuestion
+              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-[#4DE8E0]/10 via-[#38BDF8]/5 to-transparent border border-[#4DE8E0]/25 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-8">
+                <div className="text-xs sm:text-sm text-[#F3F6FB] font-semibold">
+                  Rate your organisation&apos;s AI readiness statements:
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-[#8891A8] font-medium">
+                  <span>1 = Strongly Disagree</span>
+                  <span>•</span>
+                  <span>5 = Strongly Agree</span>
+                </div>
+              </div>
+
+              <CompactRatingGroup
                 id="L"
                 rows={SECTION_L_ROWS}
-                labels={["1", "2", "3", "4", "5"]}
+                minLabel="Strongly disagree"
+                maxLabel="Strongly agree"
                 answers={answers}
                 onSelect={handleRadioChange}
               />
@@ -1177,82 +1231,102 @@ export default function NgoSurveyPage() {
               <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mb-1">
                 N. TOOL-LEVEL ADOPTION
               </h2>
-              <p className="text-sm text-[#8891A8] mb-4">
-                For each tool, tick one box in each column. Use the final two columns to rate usefulness and confidence: 1 low → 5 high.
-              </p>
+              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-[#4DE8E0]/10 via-[#38BDF8]/5 to-transparent border border-[#4DE8E0]/25 mt-2">
+                <p className="text-xs sm:text-sm text-[#F3F6FB] font-semibold mb-2">For each tool, answer Yes/No for each column, and rate Usefulness &amp; Confidence (1 = Low → 5 = High):</p>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-[#8891A8]">
+                  <span>📋 Used before? · Learned here? · Use independently? · Used at work? · Continue?</span>
+                </div>
+              </div>
 
-              <div className="matrix-wrap">
-                <table className="matrix-table tool-table">
-                  <thead>
-                    <tr>
-                      <th>Tool</th>
-                      <th>Used before?</th>
-                      <th>Learned here?</th>
-                      <th>Use independently?</th>
-                      <th>Used at work?</th>
-                      <th>Continue?</th>
-                      <th>Useful 1–5</th>
-                      <th>Conf. 1–5</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {TOOLS_LIST.map((tool, i) => (
-                      <tr key={tool}>
-                        <td className="font-semibold text-white">{tool}</td>
-                        {[0, 1, 2, 3, 4].map((j) => (
-                          <td key={j}>
-                            <div className="yn-group">
-                              {["Y", "N"].map((v) => (
-                                <label key={v} className="opt-label">
-                                  <input
-                                    type="radio"
-                                    name={`N_${i}_${j}`}
-                                    value={v}
-                                    checked={answers[`N_${i}_${j}`] === v}
-                                    onChange={() => handleToolChange(i, j, v)}
-                                  />
-                                  <span>{v}</span>
-                                </label>
-                              ))}
+              <div className="space-y-4">
+                {TOOLS_LIST.map((tool, i) => {
+                  const cols = [
+                    { label: "Used before?", key: `N_${i}_0` },
+                    { label: "Learned here?", key: `N_${i}_1` },
+                    { label: "Use independently?", key: `N_${i}_2` },
+                    { label: "Used at work?", key: `N_${i}_3` },
+                    { label: "Continue?", key: `N_${i}_4` },
+                  ];
+
+                  return (
+                    <div
+                      key={tool}
+                      className="p-4 sm:p-5 rounded-2xl border border-[#1D2436] bg-[#090C14] hover:border-[#38BDF8]/30 transition-all duration-200"
+                    >
+                      {/* Tool Name */}
+                      <div className="flex items-center gap-2 mb-4">
+                        <span className="w-2 h-2 rounded-full bg-[#4DE8E0] shadow-[0_0_8px_#4DE8E0]"></span>
+                        <span className="text-sm sm:text-base font-extrabold text-white">{tool}</span>
+                      </div>
+
+                      {/* Yes / No toggles */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
+                        {cols.map((col) => {
+                          const val = answers[col.key];
+                          return (
+                            <div key={col.key} className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-[#0B0F19] border border-[#1D2436]">
+                              <span className="text-[11px] sm:text-xs text-[#94A3B8] font-medium flex-1">{col.label}</span>
+                              <div className="flex gap-1.5">
+                                {["Y", "N"].map((v) => (
+                                  <button
+                                    key={v}
+                                    type="button"
+                                    onClick={() => handleToolChange(i, Number(col.key.split("_")[2]), v)}
+                                    className={`px-3 py-1 rounded-lg text-xs font-extrabold transition-all duration-150 ${
+                                      val === v
+                                        ? v === "Y"
+                                          ? "bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] text-[#090C14] shadow-[0_0_10px_rgba(77,232,224,0.35)]"
+                                          : "bg-[#8B7CFF]/80 text-white shadow-[0_0_10px_rgba(139,124,255,0.35)]"
+                                        : "bg-[#0F1420] text-[#8891A8] border border-[#1D2436] hover:text-white hover:border-[#38BDF8]/40"
+                                    }`}
+                                  >
+                                    {v === "Y" ? "Yes" : "No"}
+                                  </button>
+                                ))}
+                              </div>
                             </div>
-                          </td>
-                        ))}
-                        <td>
-                          <div className="scale5-group">
-                            {[1, 2, 3, 4, 5].map((v) => (
-                              <label key={v} className="opt-label">
-                                <input
-                                  type="radio"
-                                  name={`N_${i}_5`}
-                                  value={String(v)}
-                                  checked={answers[`N_${i}_5`] === String(v)}
-                                  onChange={() => handleToolChange(i, 5, String(v))}
-                                />
-                                <span>{v}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </td>
-                        <td>
-                          <div className="scale5-group">
-                            {[1, 2, 3, 4, 5].map((v) => (
-                              <label key={v} className="opt-label">
-                                <input
-                                  type="radio"
-                                  name={`N_${i}_6`}
-                                  value={String(v)}
-                                  checked={answers[`N_${i}_6`] === String(v)}
-                                  onChange={() => handleToolChange(i, 6, String(v))}
-                                />
-                                <span>{v}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          );
+                        })}
+                      </div>
+
+                      {/* Rating rows: Useful & Conf */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {[
+                          { label: "Usefulness (1–5)", colIdx: 5 },
+                          { label: "Confidence (1–5)", colIdx: 6 },
+                        ].map(({ label, colIdx }) => {
+                          const rKey = `N_${i}_${colIdx}`;
+                          const rVal = answers[rKey];
+                          return (
+                            <div key={rKey} className="px-3 py-2.5 rounded-xl bg-[#0B0F19] border border-[#1D2436]">
+                              <p className="text-[11px] sm:text-xs text-[#94A3B8] font-medium mb-2">{label}</p>
+                              <div className="flex items-center bg-[#090C14] border border-[#1D2436] rounded-lg p-0.5 gap-0.5">
+                                {[1, 2, 3, 4, 5].map((v) => {
+                                  const isActive = rVal === String(v);
+                                  return (
+                                    <button
+                                      key={v}
+                                      type="button"
+                                      onClick={() => handleToolChange(i, colIdx, String(v))}
+                                      className={`flex-1 py-1.5 rounded-md text-xs font-black transition-all duration-150 ${
+                                        isActive
+                                          ? "bg-gradient-to-r from-[#4DE8E0] via-[#38BDF8] to-[#8B7CFF] text-[#090C14] shadow-[0_0_12px_rgba(77,232,224,0.35)]"
+                                          : "text-[#8891A8] hover:text-white hover:bg-[#151C2C]"
+                                      }`}
+                                    >
+                                      {v}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              {rVal && <p className="text-[10px] text-[#4DE8E0] font-bold mt-1 text-right">✓ {rVal}/5</p>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -1500,56 +1574,94 @@ function CheckboxQuestion({
   );
 }
 
-function MatrixQuestion({
+
+
+function CompactRatingGroup({
   id,
   rows,
   labels,
+  minLabel = "Strongly disagree",
+  maxLabel = "Strongly agree",
   answers,
   onSelect,
 }: {
   id: string;
   rows: string[];
-  labels: string[];
+  labels?: string[];
+  minLabel?: string;
+  maxLabel?: string;
   answers: Record<string, any>;
   onSelect: (id: string, val: string) => void;
 }) {
   return (
-    <div className="matrix-wrap mb-6">
-      <table className="matrix-table">
-        <thead>
-          <tr>
-            <th>Statement</th>
-            {labels.map((lbl) => (
-              <th key={lbl}>{lbl}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((rowText, idx) => {
-            const key = `${id}_${idx}`;
-            const val = answers[key];
-            return (
-              <tr key={idx}>
-                <td>{rowText}</td>
-                {labels.map((lbl) => (
-                  <td key={lbl}>
-                    <input
-                      type="radio"
-                      name={key}
-                      value={lbl}
-                      checked={val === lbl}
-                      onChange={() => onSelect(key, lbl)}
-                    />
-                  </td>
-                ))}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+    <div className="space-y-3 mb-6">
+      {rows.map((rowText, idx) => {
+        const key = `${id}_${idx}`;
+        const selectedVal = answers[key];
+
+        return (
+          <div
+            key={key}
+            className="p-3.5 sm:p-4 rounded-2xl border border-[#1D2436] bg-[#090C14] hover:border-[#38BDF8]/40 transition-all duration-200 shadow-sm"
+          >
+            {/* Statement Header */}
+            <div className="flex items-start gap-2.5 mb-2.5">
+              <span className="flex-shrink-0 w-5 h-5 rounded-md bg-[#4DE8E0]/15 border border-[#4DE8E0]/30 text-[#4DE8E0] text-[11px] font-extrabold flex items-center justify-center mt-0.5">
+                {idx + 1}
+              </span>
+              <p className="text-xs sm:text-sm text-[#F3F6FB] font-semibold leading-relaxed">
+                {rowText}
+              </p>
+            </div>
+
+            {/* Segmented 1-5 Rating Bar */}
+            <div className="mt-2.5">
+              <div className="flex items-center bg-[#0B0F19] border border-[#1D2436] rounded-xl p-1 gap-1 w-full sm:max-w-md">
+                {[1, 2, 3, 4, 5].map((num, optIdx) => {
+                  const valStr = labels && labels[optIdx] ? labels[optIdx] : String(num);
+                  const isChecked = selectedVal === valStr || selectedVal === String(num);
+
+                  return (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => onSelect(key, valStr)}
+                      className={`flex-1 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-black transition-all duration-150 flex items-center justify-center cursor-pointer ${
+                        isChecked
+                          ? "bg-gradient-to-r from-[#4DE8E0] via-[#38BDF8] to-[#8B7CFF] text-[#090C14] shadow-[0_0_15px_rgba(77,232,224,0.4)] scale-[1.03]"
+                          : "text-[#8891A8] hover:text-[#F3F6FB] hover:bg-[#151C2C]"
+                      }`}
+                    >
+                      {num}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Sub-label indicators */}
+              <div className="flex items-center justify-between w-full sm:max-w-md px-1 mt-1.5 text-[10px] sm:text-[11px] text-[#64748B]">
+                <span className="flex items-center gap-1">
+                  <span className="text-[#8891A8] font-bold">1</span> ({minLabel})
+                </span>
+                {selectedVal && (
+                  <span className="text-[#4DE8E0] font-bold text-[10px] sm:text-[11px]">
+                    ✓ Rated: {selectedVal}
+                  </span>
+                )}
+                <span className="flex items-center gap-1">
+                  <span className="text-[#8891A8] font-bold">5</span> ({maxLabel})
+                </span>
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
+
+
+
 
 function TextareaQuestion({
   id,
