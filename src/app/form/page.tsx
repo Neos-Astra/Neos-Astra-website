@@ -1373,29 +1373,6 @@ export default function NgoSurveyPage() {
               />
             </div>
 
-            {/* SECTION R */}
-            <div className="survey-section">
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mb-3">
-                R. RESEARCH CONSENT
-              </h2>
-              <div className="bg-[#090C14] border border-[#1D2436] rounded-xl p-4 text-sm text-[#8891A8] mb-4">
-                I understand that my responses may be analysed in aggregate for academic research concerning AI literacy, AI adoption, digital inclusion and responsible AI use in NGOs.
-              </div>
-              <RadioQuestion
-                id="R1"
-                title="I understand that my responses may be analysed in aggregate for academic research concerning AI literacy, AI adoption, digital inclusion and responsible AI use in NGOs."
-                options={["I agree", "I do not agree"]}
-                answers={answers}
-                onSelect={handleRadioChange}
-              />
-              <RadioQuestion
-                id="R2"
-                title="Optional follow-up interview:"
-                options={["Yes", "No"]}
-                answers={answers}
-                onSelect={handleRadioChange}
-              />
-            </div>
 
             {errorMsg && (
               <div className="mx-6 my-4 p-4 bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-xl font-semibold">

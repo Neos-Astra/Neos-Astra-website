@@ -14,13 +14,6 @@ export async function POST(request: Request) {
       );
     }
 
-    if (answers.R1 !== "I agree") {
-      return NextResponse.json(
-        { error: "Research consent must be accepted." },
-        { status: 400 }
-      );
-    }
-
     const participantRole = answers.A4 || "";
     const orgSize = answers.A6 || "";
 
