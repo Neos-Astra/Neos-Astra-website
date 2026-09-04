@@ -145,6 +145,22 @@ model HomeMedia {
   updatedBy String?
 }
 
+model JobOpening {
+  id           String   @id @default(cuid())
+  title        String
+  department   String
+  location     String   @default("Remote / On-site")
+  type         String   @default("Full-time")
+  description  String
+  requirements String?
+  salary       String?
+  applyLink    String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  createdBy    String?  @default("system")
+  updatedAt    DateTime @updatedAt
+}
+
 model NgoSurveyResponse {
   id              String   @id @default(cuid())
   researchId      String?  @default("")

@@ -475,7 +475,7 @@ export default function Explore() {
                 <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Team</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Events</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Community</a></li>
+                <li><a href="/carrier" className="hover:text-white transition-colors">Carrier</a></li>
               </ul>
             </div>
 
