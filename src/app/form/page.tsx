@@ -397,30 +397,15 @@ export default function NgoSurveyPage() {
               NGO 24 DAYS – 24 TOOLS AI PROGRAMME
             </h1>
             <div className="text-[#38BDF8] text-base sm:text-lg font-semibold mt-2">
-              Research &amp; Impact Assessment Questionnaire
+              Impact assessment &amp; course recalibration feedback questionnaire
             </div>
-            <p className="max-w-3xl mx-auto mt-3 text-[#8891A8] text-sm sm:text-base leading-relaxed">
-              Purpose: To study AI literacy, AI agency, workplace adoption, privacy awareness, responsible AI behaviour, inclusion and organisational readiness among NGO professionals.
-            </p>
+            
             <div className="mt-3">
               <span className="inline-block bg-[#4DE8E0]/10 border border-[#4DE8E0]/20 text-[#4DE8E0] px-4 py-1.5 rounded-full text-xs font-semibold">
                 Estimated time: 20–25 minutes &nbsp;|&nbsp; Please answer based on your actual experience.
               </span>
             </div>
 
-            <div className="max-w-xs mx-auto mt-6 text-left">
-              <div>
-                <label className="block text-sm font-semibold mb-1.5 text-[#F3F6FB]">
-                  Date:
-                </label>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="w-full border border-[#1D2436] rounded-xl px-4 py-2.5 text-sm bg-[#090C14] text-[#F3F6FB] outline-none focus:border-[#4DE8E0] transition-all"
-                />
-              </div>
-            </div>
           </div>
 
           <form onSubmit={handleSubmit}>
