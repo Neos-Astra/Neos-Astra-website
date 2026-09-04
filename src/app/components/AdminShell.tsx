@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   GraduationCap,
   FileText,
+  ClipboardList,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
   { label: "Dashboard", href: "/superadmin", icon: LayoutDashboard },
   { label: "Web Leads", href: "/superadmin/inquiries", icon: FileText },
   { label: "Official Enrollments", href: "/superadmin/enrollments", icon: GraduationCap },
+  { label: "NGO Survey Responses", href: "/superadmin/survey", icon: ClipboardList },
   { label: "Courses", href: "/superadmin/course", icon: BookOpen },
   { label: "Team", href: "/superadmin/team", icon: Users },
   { label: "Home Photos", href: "/superadmin/home-media", icon: ImageIcon },
