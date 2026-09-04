@@ -16,10 +16,11 @@ export async function POST(request: Request) {
 
     const participantRole = answers.A4 || "";
     const orgSize = answers.A6 || "";
+    const ngoName = answers.ngo || "";
 
     const response = await prisma.ngoSurveyResponse.create({
       data: {
-        researchId: String(researchId || "").trim(),
+        researchId: String(ngoName || researchId || "").trim(),
         date: String(date || "").trim(),
         participantRole: String(participantRole),
         orgSize: String(orgSize),

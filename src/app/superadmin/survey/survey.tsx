@@ -111,6 +111,7 @@ export default function SurveyManagement() {
   // Date Filter State
   const [dateFilter, setDateFilter] = useState<"ALL" | "TODAY" | "YESTERDAY" | "THIS_MONTH" | "CUSTOM">("ALL");
   const [customDate, setCustomDate] = useState<string>("");
+  const [ngoFilter, setNgoFilter] = useState<string>("ALL");
 
   const fetchResponses = async (showSpinner = false) => {
     if (showSpinner) setLoading(true);
@@ -148,9 +149,15 @@ export default function SurveyManagement() {
   const filtered = responses.filter((r) => {
     const role = r.participantRole || r.answers?.A4 || "";
     const org = r.orgSize || r.answers?.A6 || "";
+    const ngo = r.answers?.ngo || r.researchId || "";
     const dateVal = r.date || "";
 
+    if (ngoFilter !== "ALL" && ngo.toUpperCase() !== ngoFilter.toUpperCase()) {
+      return false;
+    }
+
     const matchesSearch =
+      ngo.toLowerCase().includes(search.toLowerCase()) ||
       role.toLowerCase().includes(search.toLowerCase()) ||
       org.toLowerCase().includes(search.toLowerCase()) ||
       dateVal.toLowerCase().includes(search.toLowerCase());
@@ -287,6 +294,32 @@ export default function SurveyManagement() {
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#0F1420] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] placeholder:text-[#8891A8]/60 text-sm transition-all"
           />
+        </div>
+
+        {/* NGO Filter Toolbar */}
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 rounded-xl border border-[#1D2436] bg-[#0F1420] p-3 text-xs">
+          <span className="text-[#8891A8] font-semibold mr-1 flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#38BDF8]"></span> Filter by NGO:
+          </span>
+          {["ALL", "PREM", "ISARA", "LIPICA", "ARUNA"].map((ngo) => {
+            const isSelected = ngoFilter === ngo;
+            const count = ngo === "ALL" 
+              ? responses.length 
+              : responses.filter(r => (r.answers?.ngo || r.researchId || "").toUpperCase() === ngo).length;
+            return (
+              <button
+                key={ngo}
+                onClick={() => setNgoFilter(ngo)}
+                className={`rounded-lg px-3 py-1.5 font-bold transition-all ${
+                  isSelected
+                    ? "bg-[#38BDF8] text-[#090C14] shadow-[0_0_12px_rgba(56,189,248,0.4)]"
+                    : "bg-[#090C14] border border-[#1D2436] text-[#8891A8] hover:text-[#F3F6FB] hover:border-[#38BDF8]/40"
+                }`}
+              >
+                {ngo === "ALL" ? "All NGOs" : ngo} ({count})
+              </button>
+            );
+          })}
         </div>
 
         {/* Date Filter Toolbar */}
@@ -443,6 +476,11 @@ export default function SurveyManagement() {
             <div className="relative w-full max-w-4xl rounded-2xl border border-[#1D2436] bg-[#0F1420] p-6 shadow-2xl">
               <div className="mb-6 flex items-center justify-between border-b border-[#1D2436] pb-4">
                 <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="px-3 py-1 rounded-lg bg-[#38BDF8]/20 border border-[#38BDF8]/50 text-[#38BDF8] text-xs font-black tracking-wide uppercase">
+                      NGO: {selectedResponse.answers?.ngo || selectedResponse.researchId || "Not specified"}
+                    </span>
+                  </div>
                   <h2 className="font-bold text-[#F3F6FB] text-xl">
                     Questionnaire Response ({selectedResponse.participantRole || selectedResponse.answers?.A4 || "Participant"})
                   </h2>
@@ -458,8 +496,8 @@ export default function SurveyManagement() {
               {/* Summary Bar */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl border border-[#1D2436] bg-[#090C14] mb-6">
                 <div>
-                  <p className="text-[11px] text-[#8891A8] uppercase font-mono">Date Field</p>
-                  <p className="font-bold text-white text-sm">{selectedResponse.date || "—"}</p>
+                  <p className="text-[11px] text-[#38BDF8] uppercase font-mono font-bold">Selected NGO</p>
+                  <p className="font-black text-[#38BDF8] text-base">{selectedResponse.answers?.ngo || selectedResponse.researchId || "—"}</p>
                 </div>
                 <div>
                   <p className="text-[11px] text-[#8891A8] uppercase font-mono">Role (A4)</p>
@@ -470,8 +508,8 @@ export default function SurveyManagement() {
                   <p className="font-bold text-white text-sm">{selectedResponse.orgSize || selectedResponse.answers?.A6 || "—"}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] text-[#8891A8] uppercase font-mono">Consent (R1)</p>
-                  <p className="font-bold text-emerald-400 text-sm">{selectedResponse.answers?.R1 || "Agreed"}</p>
+                  <p className="text-[11px] text-[#8891A8] uppercase font-mono">Submitted At</p>
+                  <p className="font-bold text-slate-300 text-xs">{new Date(selectedResponse.createdAt).toLocaleDateString("en-IN")}</p>
                 </div>
               </div>
 

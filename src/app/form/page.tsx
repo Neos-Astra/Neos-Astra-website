@@ -172,17 +172,17 @@ export default function NgoSurveyPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-[#090C14] py-16 px-4 flex items-center justify-center font-sans">
-        <div className="max-w-xl w-full bg-[#0B0F19] border border-[#1D2436] rounded-3xl p-8 sm:p-12 text-center shadow-[0_20px_50px_rgba(0,0,0,0.7)]">
-          <div className="w-16 h-16 bg-[#4DE8E0]/15 text-[#4DE8E0] border border-[#4DE8E0]/30 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-[0_0_20px_rgba(77,232,224,0.2)]">
+      <div className="min-h-screen bg-[#F8FAFC] py-16 px-4 flex items-center justify-center font-sans">
+        <div className="max-w-xl w-full bg-white border border-[#E2E8F0] rounded-3xl p-8 sm:p-12 text-center shadow-xl">
+          <div className="w-16 h-16 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] via-[#38BDF8] to-[#8B7CFF] mb-3">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] mb-3">
             Thank you for completing the questionnaire.
           </h2>
-          <p className="text-[#8891A8] text-base leading-relaxed mb-6">
+          <p className="text-[#475569] text-base leading-relaxed mb-6">
             Your response has been recorded successfully in our database.
           </p>
           <button
@@ -191,7 +191,7 @@ export default function NgoSurveyPage() {
               setAnswers({});
               setDate("");
             }}
-            className="inline-flex items-center justify-center px-8 py-3.5 bg-gradient-to-r from-[#4DE8E0] to-[#8B7CFF] text-[#090C14] font-extrabold rounded-xl hover:shadow-[0_0_25px_rgba(77,232,224,0.4)] transition-all transform hover:scale-105"
+            className="inline-flex items-center justify-center px-8 py-3.5 bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] text-white font-extrabold rounded-xl hover:shadow-lg transition-all transform hover:scale-105"
           >
             Submit Another Response
           </button>
@@ -201,10 +201,7 @@ export default function NgoSurveyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#090C14] text-[#F3F6FB] font-sans relative overflow-hidden py-6 sm:py-10">
-      {/* Background Glow Accents */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-[#4DE8E0]/10 via-[#8B7CFF]/5 to-transparent blur-3xl pointer-events-none" />
-
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans relative py-6 sm:py-10">
       <style jsx global>{`
         .survey-container {
           max-width: 1080px;
@@ -214,27 +211,26 @@ export default function NgoSurveyPage() {
           z-index: 10;
         }
         .survey-card {
-          background: rgba(11, 15, 25, 0.95);
-          backdrop-filter: blur(16px);
-          border: 1px solid #1D2436;
+          background: #FFFFFF;
+          border: 1px solid #E2E8F0;
           border-radius: 24px;
-          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+          box-shadow: 0 20px 45px -15px rgba(15, 23, 42, 0.08), 0 0 0 1px #F1F5F9;
           overflow: hidden;
         }
         .survey-hero {
           padding: 36px 30px 28px;
-          background: linear-gradient(135deg, rgba(15, 20, 32, 0.95), rgba(11, 15, 25, 0.98));
-          border-bottom: 1px solid #1D2436;
+          background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+          border-bottom: 1px solid #E2E8F0;
         }
         .survey-section {
           padding: 32px 30px;
-          border-top: 1px solid #1D2436;
+          border-top: 1px solid #E2E8F0;
         }
         .q-title {
-          font-weight: 650;
+          font-weight: 700;
           line-height: 1.45;
           margin-bottom: 12px;
-          color: #F3F6FB;
+          color: #0F172A;
           font-size: 15px;
         }
         .opts-grid {
@@ -256,149 +252,70 @@ export default function NgoSurveyPage() {
         }
         .opt-label span {
           display: block;
-          border: 1px solid #1D2436;
+          border: 1.5px solid #CBD5E1;
           border-radius: 12px;
           padding: 12px 14px;
-          background: #090C14;
+          background: #FFFFFF;
           transition: all 0.2s ease;
           line-height: 1.35;
           font-size: 14px;
-          color: #94A3B8;
+          color: #334155;
+          font-weight: 500;
           text-align: center;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
         }
         .opt-label:hover span {
-          border-color: rgba(56, 189, 248, 0.4);
-          color: #F3F6FB;
-          background: #0F1420;
+          border-color: #2563EB;
+          color: #0F172A;
+          background: #F8FAFC;
         }
         .opt-label input:checked + span {
-          border-color: #4DE8E0;
-          background: rgba(77, 232, 224, 0.12);
-          color: #4DE8E0;
+          border-color: #2563EB;
+          background: #EFF6FF;
+          color: #1D4ED8;
           font-weight: 700;
-          box-shadow: 0 0 16px rgba(77, 232, 224, 0.2);
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
         }
         .other-input {
           margin-top: 10px;
           width: 100%;
-          border: 1px solid #1D2436;
+          border: 1.5px solid #CBD5E1;
           border-radius: 12px;
           padding: 11px 14px;
           font-size: 14px;
           outline: none;
-          background: #090C14;
-          color: #F3F6FB;
+          background: #FFFFFF;
+          color: #0F172A;
           transition: all 0.2s ease;
         }
         .other-input:focus {
-          border-color: #4DE8E0;
-          box-shadow: 0 0 12px rgba(77, 232, 224, 0.2);
-        }
-        .matrix-wrap {
-          overflow-x: auto;
-          border: 1px solid #1D2436;
-          border-radius: 14px;
-          background: #090C14;
-        }
-        .matrix-table {
-          width: 100%;
-          border-collapse: collapse;
-          min-width: 800px;
-        }
-        .matrix-table th,
-        .matrix-table td {
-          border-bottom: 1px solid #1D2436;
-          padding: 12px 10px;
-          text-align: center;
-        }
-        .matrix-table th {
-          background: #0F1420;
-          color: #38BDF8;
-          font-size: 13px;
-          font-weight: 700;
-        }
-        .matrix-table th:first-child,
-        .matrix-table td:first-child {
-          text-align: left;
-          min-width: 470px;
-          font-size: 14px;
-          color: #E2E8F0;
-        }
-        .matrix-table tr:hover td {
-          background: #0E1321;
-        }
-        .matrix-table tr:last-child td {
-          border-bottom: 0;
-        }
-        .matrix-table input[type="radio"] {
-          width: 18px;
-          height: 18px;
-          accent-color: #4DE8E0;
-          cursor: pointer;
-        }
-        .tool-table {
-          min-width: 1120px;
-        }
-        .tool-table th:first-child,
-        .tool-table td:first-child {
-          min-width: 145px;
-        }
-        .yn-group {
-          display: flex;
-          gap: 6px;
-          justify-content: center;
-        }
-        .yn-group .opt-label {
-          min-width: 38px;
-          flex: 0 0 auto;
-        }
-        .yn-group .opt-label span {
-          text-align: center;
-          padding: 6px;
-          font-size: 13px;
-        }
-        .scale5-group {
-          display: flex;
-          gap: 5px;
-          justify-content: center;
-        }
-        .scale5-group .opt-label {
-          min-width: 28px;
-          flex: 0 0 auto;
-        }
-        .scale5-group .opt-label span {
-          text-align: center;
-          padding: 6px 5px;
-          font-size: 13px;
+          border-color: #2563EB;
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
         }
         @media (max-width: 700px) {
           .survey-hero,
           .survey-section {
             padding: 22px 16px;
           }
-          .matrix-table th:first-child,
-          .matrix-table td:first-child {
-            min-width: 310px;
-          }
         }
       `}</style>
 
       <div className="survey-container">
         <div className="survey-card">
-          {/* Top subtle cyan line */}
-          <div className="h-1 bg-gradient-to-r from-[#4DE8E0] via-[#38BDF8] to-[#8B7CFF]" />
+          {/* Top subtle gradient line */}
+          <div className="h-1.5 bg-gradient-to-r from-[#0284C7] via-[#2563EB] to-[#7C3AED]" />
 
           {/* Hero Section */}
           <div className="survey-hero text-center">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] via-[#38BDF8] to-[#8B7CFF] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-black text-[#0F172A] tracking-tight">
               NGO 24 DAYS – 24 TOOLS AI PROGRAMME
             </h1>
-            <div className="text-[#38BDF8] text-base sm:text-lg font-semibold mt-2">
+            <div className="text-[#2563EB] text-base sm:text-lg font-bold mt-2">
               Impact assessment &amp; course recalibration feedback questionnaire
             </div>
             
             <div className="mt-3">
-              <span className="inline-block bg-[#4DE8E0]/10 border border-[#4DE8E0]/20 text-[#4DE8E0] px-4 py-1.5 rounded-full text-xs font-semibold">
+              <span className="inline-block bg-[#EFF6FF] border border-[#BFDBFE] text-[#1D4ED8] px-4 py-1.5 rounded-full text-xs font-semibold">
                 Estimated time: 20–25 minutes &nbsp;|&nbsp; Please answer based on your actual experience.
               </span>
             </div>
@@ -407,21 +324,21 @@ export default function NgoSurveyPage() {
 
           <form onSubmit={handleSubmit}>
             {/* NGO SELECTION AT THE TOP */}
-            <div className="survey-section bg-gradient-to-b from-[#0E1424] to-[#0B0F19] border-b border-[#1D2436]">
+            <div className="survey-section bg-[#F8FAFC] border-b border-[#E2E8F0]">
               <div className="max-w-2xl mx-auto">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 text-center sm:text-left">
                   <div>
-                    <label className="text-sm font-extrabold uppercase tracking-wider text-[#38BDF8] flex items-center justify-center sm:justify-start gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#4DE8E0] animate-pulse"></span>
-                      Select NGO Name <span className="text-[#F43F5E]">*</span>
+                    <label className="text-sm font-extrabold uppercase tracking-wider text-[#1E40AF] flex items-center justify-center sm:justify-start gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB] animate-pulse"></span>
+                      Select NGO Name <span className="text-[#DC2626]">*</span>
                     </label>
-                    <p className="text-xs text-[#8891A8] mt-0.5">
+                    <p className="text-xs text-[#64748B] mt-0.5">
                       Please select the NGO / organisation you represent
                     </p>
                   </div>
                   {answers.ngo && (
-                    <span className="self-center sm:self-auto inline-flex items-center gap-1.5 text-xs font-bold text-[#4DE8E0] bg-[#4DE8E0]/10 px-3 py-1 rounded-full border border-[#4DE8E0]/30 shadow-[0_0_12px_rgba(77,232,224,0.2)]">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#4DE8E0]"></span>
+                    <span className="self-center sm:self-auto inline-flex items-center gap-1.5 text-xs font-bold text-[#1D4ED8] bg-[#EFF6FF] px-3 py-1 rounded-full border border-[#BFDBFE] shadow-sm">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB]"></span>
                       Selected: {answers.ngo}
                     </span>
                   )}
@@ -435,8 +352,8 @@ export default function NgoSurveyPage() {
                         key={ngo}
                         className={`relative flex items-center justify-center gap-2.5 p-3.5 sm:p-4 rounded-xl border cursor-pointer font-bold text-sm sm:text-base tracking-wide transition-all duration-200 select-none ${
                           isChecked
-                            ? "bg-gradient-to-r from-[#4DE8E0]/15 via-[#38BDF8]/15 to-[#8B7CFF]/15 border-[#4DE8E0] text-[#4DE8E0] shadow-[0_0_20px_rgba(77,232,224,0.25)] ring-1 ring-[#4DE8E0] scale-[1.02]"
-                            : "bg-[#090C14] border-[#1D2436] text-[#94A3B8] hover:border-[#38BDF8]/50 hover:text-[#F3F6FB] hover:bg-[#121829]"
+                            ? "bg-[#EFF6FF] border-2 border-[#2563EB] text-[#1D4ED8] shadow-[0_0_15px_rgba(37,99,235,0.15)] ring-1 ring-[#2563EB] scale-[1.02]"
+                            : "bg-white border-[#CBD5E1] text-[#334155] hover:border-[#2563EB] hover:text-[#0F172A] hover:bg-[#F8FAFC] shadow-sm"
                         }`}
                       >
                         <input
@@ -445,7 +362,7 @@ export default function NgoSurveyPage() {
                           value={ngo}
                           checked={isChecked}
                           onChange={() => handleRadioChange("ngo", ngo)}
-                          className="w-4 h-4 accent-[#4DE8E0] cursor-pointer"
+                          className="w-4 h-4 accent-[#2563EB] cursor-pointer"
                         />
                         <span>{ngo}</span>
                       </label>
@@ -457,7 +374,7 @@ export default function NgoSurveyPage() {
 
             {/* SECTION A */}
             <div className="survey-section">
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mb-4">
+              <h2 className="text-xl font-extrabold text-[#0F172A] mb-4">
                 A. PARTICIPANT &amp; ORGANISATIONAL PROFILE
               </h2>
 
@@ -577,7 +494,7 @@ export default function NgoSurveyPage() {
 
             {/* SECTION B */}
             <div className="survey-section">
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mb-4">
+              <h2 className="text-xl font-extrabold text-[#0F172A] mb-4">
                 B. BASELINE AI USAGE &amp; LITERACY
               </h2>
 
@@ -676,14 +593,14 @@ export default function NgoSurveyPage() {
 
             {/* SECTION C */}
             <div className="survey-section">
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mb-1">
+              <h2 className="text-xl font-extrabold text-[#0F172A] mb-1">
                 C. RETROSPECTIVE CHANGE FROM BEFORE THE COURSE
               </h2>
-              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-[#4DE8E0]/10 via-[#38BDF8]/5 to-transparent border border-[#4DE8E0]/25 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
-                <div className="text-xs sm:text-sm text-[#F3F6FB] font-semibold">
+              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
+                <div className="text-xs sm:text-sm text-[#1E3A8A] font-bold">
                   Compared with your ability before the programme:
                 </div>
-                <div className="flex items-center gap-2 text-[11px] text-[#8891A8] font-medium">
+                <div className="flex items-center gap-2 text-[11px] text-[#2563EB] font-semibold">
                   <span>1 = Much worse</span>
                   <span>•</span>
                   <span>5 = Much better</span>
@@ -699,14 +616,14 @@ export default function NgoSurveyPage() {
                 onSelect={handleRadioChange}
               />
 
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mt-8 mb-1">
+              <h2 className="text-xl font-extrabold text-[#0F172A] mt-8 mb-1">
                 D. CURRENT AI LITERACY
               </h2>
-              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-[#4DE8E0]/10 via-[#38BDF8]/5 to-transparent border border-[#4DE8E0]/25 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
-                <div className="text-xs sm:text-sm text-[#F3F6FB] font-semibold">
+              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
+                <div className="text-xs sm:text-sm text-[#1E3A8A] font-bold">
                   Rate your current AI literacy statements:
                 </div>
-                <div className="flex items-center gap-2 text-[11px] text-[#8891A8] font-medium">
+                <div className="flex items-center gap-2 text-[11px] text-[#2563EB] font-semibold">
                   <span>1 = Strongly Disagree</span>
                   <span>•</span>
                   <span>5 = Strongly Agree</span>
@@ -725,14 +642,14 @@ export default function NgoSurveyPage() {
 
             {/* SECTION E & F */}
             <div className="survey-section">
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mb-1">
+              <h2 className="text-xl font-extrabold text-[#0F172A] mb-1">
                 E. AI SELF-EFFICACY &amp; AGENCY
               </h2>
-              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-[#4DE8E0]/10 via-[#38BDF8]/5 to-transparent border border-[#4DE8E0]/25 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
-                <div className="text-xs sm:text-sm text-[#F3F6FB] font-semibold">
+              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
+                <div className="text-xs sm:text-sm text-[#1E3A8A] font-bold">
                   Rate your confidence and agency with AI:
                 </div>
-                <div className="flex items-center gap-2 text-[11px] text-[#8891A8] font-medium">
+                <div className="flex items-center gap-2 text-[11px] text-[#2563EB] font-semibold">
                   <span>1 = Strongly Disagree</span>
                   <span>•</span>
                   <span>5 = Strongly Agree</span>
@@ -748,7 +665,7 @@ export default function NgoSurveyPage() {
                 onSelect={handleRadioChange}
               />
 
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mt-8 mb-4">
+              <h2 className="text-xl font-extrabold text-[#0F172A] mt-8 mb-4">
                 F. ACTUAL USE &amp; WORKPLACE IMPACT
               </h2>
 
@@ -839,21 +756,21 @@ export default function NgoSurveyPage() {
                 <textarea
                   value={answers["F7_description"] || ""}
                   onChange={(e) => handleTextChange("F7_description", e.target.value)}
-                  className="w-full border border-[#1D2436] rounded-xl p-3 min-h-[110px] text-sm bg-[#090C14] text-[#F3F6FB] outline-none focus:border-[#4DE8E0] transition-all"
+                  className="w-full border 1.5px border-[#CBD5E1] rounded-xl p-3.5 min-h-[110px] text-sm bg-white text-[#0F172A] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all placeholder:text-[#94A3B8]"
                 />
               </div>
             </div>
 
             {/* SECTION G & H */}
             <div className="survey-section">
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mb-4">
+              <h2 className="text-xl font-extrabold text-[#0F172A] mb-4">
                 G. PRIVACY &amp; DATA GOVERNANCE
               </h2>
-              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-[#4DE8E0]/10 via-[#38BDF8]/5 to-transparent border border-[#4DE8E0]/25 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
-                <div className="text-xs sm:text-sm text-[#F3F6FB] font-semibold">
+              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
+                <div className="text-xs sm:text-sm text-[#1E3A8A] font-bold">
                   Rate your understanding of privacy &amp; data governance:
                 </div>
-                <div className="flex items-center gap-2 text-[11px] text-[#8891A8] font-medium">
+                <div className="flex items-center gap-2 text-[11px] text-[#2563EB] font-semibold">
                   <span>1 = Strongly Disagree</span>
                   <span>•</span>
                   <span>5 = Strongly Agree</span>
@@ -905,7 +822,7 @@ export default function NgoSurveyPage() {
                 />
               </div>
 
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mt-8 mb-4">
+              <h2 className="text-xl font-extrabold text-[#0F172A] mt-8 mb-4">
                 H. TRUST, VERIFICATION &amp; HALLUCINATION
               </h2>
               <RadioQuestion
@@ -952,10 +869,10 @@ export default function NgoSurveyPage() {
 
             {/* SECTION I */}
             <div className="survey-section">
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mb-1">
+              <h2 className="text-xl font-extrabold text-[#0F172A] mb-1">
                 I. OBJECTIVE AI LITERACY — MULTIPLE CHOICE
               </h2>
-              <p className="text-sm text-[#8891A8] mb-4">
+              <p className="text-sm text-[#64748B] mb-4">
                 Select one answer for each. These questions test practical judgement, not memory.
               </p>
 
@@ -1083,14 +1000,14 @@ export default function NgoSurveyPage() {
 
             {/* SECTION J & K */}
             <div className="survey-section">
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mb-1">
+              <h2 className="text-xl font-extrabold text-[#0F172A] mb-1">
                 J. ETHICS, HUMAN RIGHTS &amp; VULNERABILITY
               </h2>
-              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-[#4DE8E0]/10 via-[#38BDF8]/5 to-transparent border border-[#4DE8E0]/25 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
-                <div className="text-xs sm:text-sm text-[#F3F6FB] font-semibold">
-                  Rate each statement from <strong className="text-[#4DE8E0]">1</strong> (Strongly Disagree) to <strong className="text-[#4DE8E0]">5</strong> (Strongly Agree):
+              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
+                <div className="text-xs sm:text-sm text-[#1E3A8A] font-bold">
+                  Rate each statement from <strong className="text-[#2563EB] font-black">1</strong> (Strongly Disagree) to <strong className="text-[#2563EB] font-black">5</strong> (Strongly Agree):
                 </div>
-                <div className="flex items-center gap-2 text-[11px] text-[#8891A8] font-medium">
+                <div className="flex items-center gap-2 text-[11px] text-[#2563EB] font-semibold">
                   <span>1 = Strongly Disagree</span>
                   <span>•</span>
                   <span>5 = Strongly Agree</span>
@@ -1104,7 +1021,7 @@ export default function NgoSurveyPage() {
                 onSelect={handleRadioChange}
               />
 
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mt-8 mb-4">
+              <h2 className="text-xl font-extrabold text-[#0F172A] mt-8 mb-4">
                 K. ACCESSIBILITY &amp; INCLUSION
               </h2>
               <RadioQuestion
@@ -1173,7 +1090,7 @@ export default function NgoSurveyPage() {
 
             {/* SECTION L */}
             <div className="survey-section">
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mb-4">
+              <h2 className="text-xl font-extrabold text-[#0F172A] mb-4">
                 L. ORGANISATIONAL AI READINESS
               </h2>
               <RadioQuestion
@@ -1205,11 +1122,11 @@ export default function NgoSurveyPage() {
                 onSelect={handleRadioChange}
               />
 
-              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-[#4DE8E0]/10 via-[#38BDF8]/5 to-transparent border border-[#4DE8E0]/25 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-8">
-                <div className="text-xs sm:text-sm text-[#F3F6FB] font-semibold">
+              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-8">
+                <div className="text-xs sm:text-sm text-[#1E3A8A] font-bold">
                   Rate your organisation&apos;s AI readiness statements:
                 </div>
-                <div className="flex items-center gap-2 text-[11px] text-[#8891A8] font-medium">
+                <div className="flex items-center gap-2 text-[11px] text-[#2563EB] font-semibold">
                   <span>1 = Strongly Disagree</span>
                   <span>•</span>
                   <span>5 = Strongly Agree</span>
@@ -1228,7 +1145,7 @@ export default function NgoSurveyPage() {
 
             {/* SECTION M */}
             <div className="survey-section">
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mb-4">
+              <h2 className="text-xl font-extrabold text-[#0F172A] mb-4">
                 M. IMPACT OF THE 24-DAY PROGRAMME
               </h2>
               <div className="mb-6">
@@ -1274,12 +1191,12 @@ export default function NgoSurveyPage() {
 
             {/* SECTION N */}
             <div className="survey-section">
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mb-1">
+              <h2 className="text-xl font-extrabold text-[#0F172A] mb-1">
                 N. TOOL-LEVEL ADOPTION
               </h2>
-              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-[#4DE8E0]/10 via-[#38BDF8]/5 to-transparent border border-[#4DE8E0]/25 mt-2">
-                <p className="text-xs sm:text-sm text-[#F3F6FB] font-semibold mb-2">For each tool, answer Yes/No for each column, and rate Usefulness &amp; Confidence (1 = Low → 5 = High):</p>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-[#8891A8]">
+              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] mt-2">
+                <p className="text-xs sm:text-sm text-[#1E3A8A] font-bold mb-2">For each tool, answer Yes/No for each column, and rate Usefulness &amp; Confidence (1 = Low → 5 = High):</p>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-[#2563EB] font-medium">
                   <span>📋 Used before? · Learned here? · Use independently? · Used at work? · Continue?</span>
                 </div>
               </div>
@@ -1297,12 +1214,12 @@ export default function NgoSurveyPage() {
                   return (
                     <div
                       key={tool}
-                      className="p-4 sm:p-5 rounded-2xl border border-[#1D2436] bg-[#090C14] hover:border-[#38BDF8]/30 transition-all duration-200"
+                      className="p-4 sm:p-5 rounded-2xl border border-[#E2E8F0] bg-white hover:border-[#93C5FD] shadow-sm transition-all duration-200"
                     >
                       {/* Tool Name */}
-                      <div className="flex items-center gap-2 mb-4">
-                        <span className="w-2 h-2 rounded-full bg-[#4DE8E0] shadow-[0_0_8px_#4DE8E0]"></span>
-                        <span className="text-sm sm:text-base font-extrabold text-white">{tool}</span>
+                      <div className="flex items-center gap-2.5 mb-4">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB]"></span>
+                        <span className="text-sm sm:text-base font-extrabold text-[#0F172A]">{tool}</span>
                       </div>
 
                       {/* Yes / No toggles */}
@@ -1310,8 +1227,8 @@ export default function NgoSurveyPage() {
                         {cols.map((col) => {
                           const val = answers[col.key];
                           return (
-                            <div key={col.key} className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-[#0B0F19] border border-[#1D2436]">
-                              <span className="text-[11px] sm:text-xs text-[#94A3B8] font-medium flex-1">{col.label}</span>
+                            <div key={col.key} className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
+                              <span className="text-[11px] sm:text-xs text-[#475569] font-medium flex-1">{col.label}</span>
                               <div className="flex gap-1.5">
                                 {["Y", "N"].map((v) => (
                                   <button
@@ -1321,9 +1238,9 @@ export default function NgoSurveyPage() {
                                     className={`px-3 py-1 rounded-lg text-xs font-extrabold transition-all duration-150 ${
                                       val === v
                                         ? v === "Y"
-                                          ? "bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] text-[#090C14] shadow-[0_0_10px_rgba(77,232,224,0.35)]"
-                                          : "bg-[#8B7CFF]/80 text-white shadow-[0_0_10px_rgba(139,124,255,0.35)]"
-                                        : "bg-[#0F1420] text-[#8891A8] border border-[#1D2436] hover:text-white hover:border-[#38BDF8]/40"
+                                          ? "bg-[#10B981] text-white shadow-sm"
+                                          : "bg-[#64748B] text-white shadow-sm"
+                                        : "bg-white text-[#64748B] border border-[#CBD5E1] hover:bg-[#F1F5F9] hover:text-[#0F172A]"
                                     }`}
                                   >
                                     {v === "Y" ? "Yes" : "No"}
@@ -1344,9 +1261,9 @@ export default function NgoSurveyPage() {
                           const rKey = `N_${i}_${colIdx}`;
                           const rVal = answers[rKey];
                           return (
-                            <div key={rKey} className="px-3 py-2.5 rounded-xl bg-[#0B0F19] border border-[#1D2436]">
-                              <p className="text-[11px] sm:text-xs text-[#94A3B8] font-medium mb-2">{label}</p>
-                              <div className="flex items-center bg-[#090C14] border border-[#1D2436] rounded-lg p-0.5 gap-0.5">
+                            <div key={rKey} className="px-3 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
+                              <p className="text-[11px] sm:text-xs text-[#475569] font-medium mb-2">{label}</p>
+                              <div className="flex items-center bg-white border border-[#CBD5E1] rounded-lg p-0.5 gap-0.5">
                                 {[1, 2, 3, 4, 5].map((v) => {
                                   const isActive = rVal === String(v);
                                   return (
@@ -1356,8 +1273,8 @@ export default function NgoSurveyPage() {
                                       onClick={() => handleToolChange(i, colIdx, String(v))}
                                       className={`flex-1 py-1.5 rounded-md text-xs font-black transition-all duration-150 ${
                                         isActive
-                                          ? "bg-gradient-to-r from-[#4DE8E0] via-[#38BDF8] to-[#8B7CFF] text-[#090C14] shadow-[0_0_12px_rgba(77,232,224,0.35)]"
-                                          : "text-[#8891A8] hover:text-white hover:bg-[#151C2C]"
+                                          ? "bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] text-white shadow-sm"
+                                          : "text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9]"
                                       }`}
                                     >
                                       {v}
@@ -1365,7 +1282,7 @@ export default function NgoSurveyPage() {
                                   );
                                 })}
                               </div>
-                              {rVal && <p className="text-[10px] text-[#4DE8E0] font-bold mt-1 text-right">✓ {rVal}/5</p>}
+                              {rVal && <p className="text-[10px] text-[#2563EB] font-bold mt-1 text-right">✓ {rVal}/5</p>}
                             </div>
                           );
                         })}
@@ -1378,7 +1295,7 @@ export default function NgoSurveyPage() {
 
             {/* SECTION O */}
             <div className="survey-section">
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mb-4">
+              <h2 className="text-xl font-extrabold text-[#0F172A] mb-4">
                 O. TASK TRANSFORMATION
               </h2>
               <CheckboxQuestion
@@ -1440,7 +1357,7 @@ export default function NgoSurveyPage() {
 
             {/* SECTION P */}
             <div className="survey-section">
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mb-4">
+              <h2 className="text-xl font-extrabold text-[#0F172A] mb-4">
                 P. QUALITATIVE RESEARCH QUESTIONS
               </h2>
               {[
@@ -1469,7 +1386,7 @@ export default function NgoSurveyPage() {
 
             {/* SECTION Q */}
             <div className="survey-section">
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#4DE8E0] to-[#38BDF8] mb-4">
+              <h2 className="text-xl font-extrabold text-[#0F172A] mb-4">
                 Q. OVERALL REFLECTION
               </h2>
               <RadioQuestion
@@ -1495,16 +1412,16 @@ export default function NgoSurveyPage() {
 
 
             {errorMsg && (
-              <div className="mx-6 my-4 p-4 bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-xl font-semibold">
+              <div className="mx-6 my-4 p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl font-semibold">
                 {errorMsg}
               </div>
             )}
 
-            <div className="p-8 text-center bg-[#0F1420]/80 border-t border-[#1D2436]">
+            <div className="p-8 text-center bg-[#F8FAFC] border-t border-[#E2E8F0]">
               <button
                 type="submit"
                 disabled={submitting}
-                className="bg-gradient-to-r from-[#4DE8E0] via-[#38BDF8] to-[#8B7CFF] text-[#090C14] hover:shadow-[0_0_30px_rgba(77,232,224,0.5)] transform hover:scale-105 disabled:opacity-50 border-0 rounded-xl px-10 py-4 text-base font-extrabold cursor-pointer transition-all duration-300"
+                className="bg-gradient-to-r from-[#2563EB] via-[#1D4ED8] to-[#1E40AF] text-white hover:shadow-[0_10px_25px_rgba(37,99,235,0.3)] transform hover:scale-105 disabled:opacity-50 border-0 rounded-xl px-12 py-4 text-base font-extrabold cursor-pointer transition-all duration-300"
               >
                 {submitting ? "Submitting..." : "Submit Questionnaire"}
               </button>
@@ -1648,21 +1565,21 @@ function CompactRatingGroup({
         return (
           <div
             key={key}
-            className="p-3.5 sm:p-4 rounded-2xl border border-[#1D2436] bg-[#090C14] hover:border-[#38BDF8]/40 transition-all duration-200 shadow-sm"
+            className="p-3.5 sm:p-4 rounded-2xl border border-[#E2E8F0] bg-white hover:border-[#93C5FD] transition-all duration-200 shadow-sm"
           >
             {/* Statement Header */}
             <div className="flex items-start gap-2.5 mb-2.5">
-              <span className="flex-shrink-0 w-5 h-5 rounded-md bg-[#4DE8E0]/15 border border-[#4DE8E0]/30 text-[#4DE8E0] text-[11px] font-extrabold flex items-center justify-center mt-0.5">
+              <span className="flex-shrink-0 w-6 h-6 rounded-md bg-[#EFF6FF] border border-[#BFDBFE] text-[#1D4ED8] text-xs font-black flex items-center justify-center mt-0.5">
                 {idx + 1}
               </span>
-              <p className="text-xs sm:text-sm text-[#F3F6FB] font-semibold leading-relaxed">
+              <p className="text-xs sm:text-sm text-[#1E3A8A] font-bold leading-relaxed">
                 {rowText}
               </p>
             </div>
 
             {/* Segmented 1-5 Rating Bar */}
             <div className="mt-2.5">
-              <div className="flex items-center bg-[#0B0F19] border border-[#1D2436] rounded-xl p-1 gap-1 w-full sm:max-w-md">
+              <div className="flex items-center bg-[#F1F5F9] border border-[#CBD5E1] rounded-xl p-1 gap-1 w-full sm:max-w-md">
                 {[1, 2, 3, 4, 5].map((num, optIdx) => {
                   const valStr = labels && labels[optIdx] ? labels[optIdx] : String(num);
                   const isChecked = selectedVal === valStr || selectedVal === String(num);
@@ -1674,8 +1591,8 @@ function CompactRatingGroup({
                       onClick={() => onSelect(key, valStr)}
                       className={`flex-1 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-black transition-all duration-150 flex items-center justify-center cursor-pointer ${
                         isChecked
-                          ? "bg-gradient-to-r from-[#4DE8E0] via-[#38BDF8] to-[#8B7CFF] text-[#090C14] shadow-[0_0_15px_rgba(77,232,224,0.4)] scale-[1.03]"
-                          : "text-[#8891A8] hover:text-[#F3F6FB] hover:bg-[#151C2C]"
+                          ? "bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] text-white shadow-md scale-[1.03]"
+                          : "text-[#64748B] hover:text-[#0F172A] hover:bg-[#E2E8F0]"
                       }`}
                     >
                       {num}
@@ -1687,15 +1604,15 @@ function CompactRatingGroup({
               {/* Sub-label indicators */}
               <div className="flex items-center justify-between w-full sm:max-w-md px-1 mt-1.5 text-[10px] sm:text-[11px] text-[#64748B]">
                 <span className="flex items-center gap-1">
-                  <span className="text-[#8891A8] font-bold">1</span> ({minLabel})
+                  <span className="text-[#334155] font-bold">1</span> ({minLabel})
                 </span>
                 {selectedVal && (
-                  <span className="text-[#4DE8E0] font-bold text-[10px] sm:text-[11px]">
+                  <span className="text-[#2563EB] font-bold text-[10px] sm:text-[11px]">
                     ✓ Rated: {selectedVal}
                   </span>
                 )}
                 <span className="flex items-center gap-1">
-                  <span className="text-[#8891A8] font-bold">5</span> ({maxLabel})
+                  <span className="text-[#334155] font-bold">5</span> ({maxLabel})
                 </span>
               </div>
             </div>
@@ -1728,7 +1645,7 @@ function TextareaQuestion({
       <textarea
         value={answers[id] || ""}
         onChange={(e) => onChange(id, e.target.value)}
-        className="w-full border border-[#1D2436] rounded-xl p-3.5 min-h-[110px] text-sm bg-[#090C14] text-[#F3F6FB] outline-none focus:border-[#4DE8E0] transition-all"
+        className="w-full border 1.5px border-[#CBD5E1] rounded-xl p-3.5 min-h-[110px] text-sm bg-white text-[#0F172A] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all placeholder:text-[#94A3B8]"
       />
     </div>
   );
