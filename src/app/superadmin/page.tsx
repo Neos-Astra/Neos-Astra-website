@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { BookOpen, Users, ImageIcon, ArrowRight, Sparkles, GraduationCap, ShieldCheck } from "lucide-react";
+import { BookOpen, Users, ImageIcon, ArrowRight, Sparkles, GraduationCap, ShieldCheck, ClipboardList } from "lucide-react";
 import { prisma } from "@/superadmin/prisma/client";
 
 async function getDashboardStats() {
@@ -16,6 +16,8 @@ async function getDashboardStats() {
       webLeadCount,
       todayWebLeadCount,
       adminCount,
+      surveyCount,
+      todaySurveyCount,
     ] = await Promise.all([
       prisma.course.count(),
       prisma.teamMember.count(),
@@ -28,6 +30,10 @@ async function getDashboardStats() {
         where: { createdAt: { gte: startOfToday } },
       }),
       prisma.adminUser.count(),
+      prisma.ngoSurveyResponse.count(),
+      prisma.ngoSurveyResponse.count({
+        where: { createdAt: { gte: startOfToday } },
+      }),
     ]);
 
     return {
@@ -38,6 +44,8 @@ async function getDashboardStats() {
       webLeadCount,
       todayWebLeadCount,
       adminCount,
+      surveyCount,
+      todaySurveyCount,
     };
   } catch (error) {
     return {
@@ -48,6 +56,8 @@ async function getDashboardStats() {
       webLeadCount: 0,
       todayWebLeadCount: 0,
       adminCount: 0,
+      surveyCount: 0,
+      todaySurveyCount: 0,
     };
   }
 }
@@ -72,6 +82,8 @@ export default async function AdminDashboardPage() {
     webLeadCount,
     todayWebLeadCount,
     adminCount,
+    surveyCount,
+    todaySurveyCount,
   } = await getDashboardStats();
   const isSuperAdmin = true;
   const firstName = user?.name || user?.email?.split("@")[0] || "Super Admin";
@@ -130,6 +142,15 @@ export default async function AdminDashboardPage() {
       color: "#F43F5E",
       href: "/superadmin/admins",
       cta: "Manage admins",
+    },
+    {
+      label: "Survey Responses",
+      value: surveyCount,
+      todayValue: todaySurveyCount,
+      icon: ClipboardList,
+      color: "#A78BFA",
+      href: "/superadmin/survey",
+      cta: "View responses",
     },
   ];
 

@@ -14,6 +14,85 @@ interface SurveyResponse {
   createdAt: string;
 }
 
+const QUESTION_MAP: Record<string, string> = {
+  A1: "A1. Age",
+  A2: "A2. Gender",
+  A3: "A3. Highest educational qualification",
+  A4: "A4. Primary role",
+  A5: "A5. Years in NGO/social sector",
+  A6: "A6. Approximate organisation size",
+  A7: "A7. Primary area(s) of work",
+  A8: "A8. Proportion of work with vulnerable populations",
+  B1: "B1. Frequency of AI use before programme",
+  B2: "B2. AI tools used before programme",
+  B3: "B3. Overall AI proficiency before programme (1-5)",
+  B4: "B4. Confidence learning new AI tool without help (1-5)",
+  B5: "B5. Perception of AI usefulness before programme",
+  F1: "F1. Current AI use frequency",
+  F2: "F2. Activities actually used AI for",
+  F3: "F3. Approx. time saved weekly",
+  F4: "F4. Has AI improved work quality",
+  F5: "F5. Tasks enabled by AI previously impossible",
+  F6: "F6. Reduced need for colleague assistance",
+  F7: "F7. Introduced AI tool/workflow into org",
+  F7_description: "F7 Description: Introduced AI workflow details",
+  G6: "G6. Org guidelines for employee data",
+  G7: "G7. Org guidelines for beneficiary data",
+  G8: "G8. Entered real org info into AI",
+  G9: "G9. Entered beneficiary info into AI",
+  H1: "H1. Trust in AI-generated info",
+  H2: "H2. Verification frequency for factual info",
+  H3: "H3. Sources used for verification",
+  H4: "H4. Change in verification tendency",
+  I1: "I1. MCQ: AI statistic verification",
+  I2: "I2. MCQ: Effective prompt formulation",
+  I3: "I3. MCQ: Anonymising beneficiary data",
+  I4: "I4. MCQ: Definition of AI hallucination",
+  I5: "I5. MCQ: Handling demographic bias in AI",
+  I6: "I6. MCQ: Meaningful human oversight",
+  I7: "I7. MCQ: Least appropriate task for automation",
+  I8: "I8. MCQ: AI citation accuracy assumption",
+  I9: "I9. MCQ: Responsible AI adoption description",
+  I10: "I10. MCQ: Key question before deploying AI",
+  K1: "K1. Created more accessible content with AI",
+  K2: "K2. Accessibility applications used",
+  K3: "K3. AI can reduce digital exclusion",
+  K4: "K4. AI can create new forms of exclusion",
+  K5: "K5. Groups potentially disadvantaged by AI",
+  L1: "L1. Formal AI-use policy in org",
+  L2: "L2. Guidance received on responsible AI use",
+  L3: "L3. Org guidelines on confidential data",
+  L4: "L4. Org verification process before publishing",
+  M0: "M0. Overall usefulness of 24-day programme (0-10)",
+  M1: "M1. Change in understanding of AI",
+  M2: "M2. Change in confidence using AI",
+  M3: "M3. Change in actual AI use",
+  M4: "M4. Change in awareness of AI risks",
+  M5: "M5. Change in privacy/data risk awareness",
+  M6: "M6. Change in evaluating AI outputs",
+  M7: "M7. Change in identifying NGO AI applications",
+  M8: "M8. Change in willingness to introduce AI to org",
+  O1: "O1. How tasks were performed before AI",
+  O2: "O2. How tasks are performed after programme",
+  O3: "O3. Activities comfortable with AI recommendations + human decision",
+  P1: "P1. Most surprising thing learned about AI",
+  P2: "P2. Task can now do using AI previously couldn't",
+  P3: "P3. Situation where AI was wrong/misleading",
+  P4: "P4. Programme impact on privacy understanding",
+  P5: "P5. Programme impact on beneficiary risk understanding",
+  P6: "P6. Most valuable AI application for organisation",
+  P7: "P7. Biggest risk of AI adoption for organisation",
+  P8: "P8. What prevents more effective AI use in org",
+  P9: "P9. AI policy/guidance wanted in organisation",
+  P10: "P10. One topic to add to programme",
+  P11: "P11. Other AI tools you want to learn about",
+  P12: "P12. Painful official/field tasks wishing AI tool existed for",
+  Q1: "Q1. Is AI primarily empowering, risky, or both?",
+  Q2: "Q2. Explanation for reflection",
+  R1: "R1. Research consent statement",
+  R2: "R2. Optional follow-up interview",
+};
+
 const isSameDay = (d1: Date, d2: Date) => {
   return (
     d1.getFullYear() === d2.getFullYear() &&
@@ -49,9 +128,8 @@ export default function SurveyManagement() {
     fetchResponses(true);
   }, []);
 
-  const handleDelete = async (id: string, researchId: string | null) => {
-    const label = researchId ? `Research ID "${researchId}"` : "this submission";
-    if (!confirm(`Are you sure you want to delete ${label}?`)) return;
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this survey submission?")) return;
 
     setResponses((prev) => prev.filter((item) => item.id !== id));
     if (selectedResponse && selectedResponse.id === id) setSelectedResponse(null);
@@ -67,13 +145,11 @@ export default function SurveyManagement() {
   const todayCount = responses.filter((r) => isSameDay(new Date(r.createdAt), new Date())).length;
 
   const filtered = responses.filter((r) => {
-    const rId = r.researchId || "";
-    const role = r.participantRole || "";
-    const org = r.orgSize || "";
+    const role = r.participantRole || r.answers?.A4 || "";
+    const org = r.orgSize || r.answers?.A6 || "";
     const dateVal = r.date || "";
 
     const matchesSearch =
-      rId.toLowerCase().includes(search.toLowerCase()) ||
       role.toLowerCase().includes(search.toLowerCase()) ||
       org.toLowerCase().includes(search.toLowerCase()) ||
       dateVal.toLowerCase().includes(search.toLowerCase());
@@ -117,7 +193,6 @@ export default function SurveyManagement() {
       return;
     }
 
-    // Extract all unique answer keys across all filtered responses
     const allKeysSet = new Set<string>();
     filtered.forEach((r) => {
       if (r.answers && typeof r.answers === "object") {
@@ -129,9 +204,8 @@ export default function SurveyManagement() {
 
     const headers = [
       "Response ID",
-      "Submission Date",
-      "Research ID",
-      "Date",
+      "Submission Timestamp",
+      "Date Field",
       "Primary Role",
       "Org Size",
       ...answerKeys,
@@ -150,10 +224,9 @@ export default function SurveyManagement() {
       return [
         escapeCSV(r.id),
         escapeCSV(new Date(r.createdAt).toLocaleString("en-IN")),
-        escapeCSV(r.researchId || ""),
         escapeCSV(r.date || ""),
-        escapeCSV(r.participantRole || ""),
-        escapeCSV(r.orgSize || ""),
+        escapeCSV(r.participantRole || ans.A4 || ""),
+        escapeCSV(r.orgSize || ans.A6 || ""),
         ...rowAns,
       ].join(",");
     });
@@ -182,7 +255,7 @@ export default function SurveyManagement() {
             </span>
           </div>
           <p className="text-sm text-[#8891A8] mt-1">
-            {responses.length} total questionnaire submission{responses.length !== 1 ? "s" : ""} received
+            {responses.length} total submission{responses.length !== 1 ? "s" : ""} recorded in database
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
@@ -191,7 +264,7 @@ export default function SurveyManagement() {
             className="flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-all w-full sm:w-auto"
             title="Download currently filtered survey responses to CSV"
           >
-            <FileSpreadsheet className="h-4 w-4" /> Download CSV ({filtered.length})
+            <FileSpreadsheet className="h-4 w-4" /> Export CSV ({filtered.length})
           </button>
           <button
             onClick={() => fetchResponses(true)}
@@ -208,7 +281,7 @@ export default function SurveyManagement() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8891A8]" />
           <input
             type="text"
-            placeholder="Search by Research ID, role, org size, date..."
+            placeholder="Search by participant role, org size, date..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#0F1420] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] placeholder:text-[#8891A8]/60 text-sm transition-all"
@@ -311,25 +384,25 @@ export default function SurveyManagement() {
           <table className="w-full min-w-[700px] text-sm">
             <thead>
               <tr className="border-b border-[#1D2436] bg-[#0F1420]">
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#8891A8]">Research ID</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#8891A8]">Role</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#8891A8]">Participant Role</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#8891A8]">Org Size</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#8891A8]">Form Date</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#8891A8]">Consent</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#8891A8]">Date Submitted</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#8891A8]">Submitted At</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#8891A8]">Action</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((res) => (
                 <tr key={res.id} className="border-b border-[#1D2436] bg-[#090C14] hover:bg-[#0F1420] transition-colors">
-                  <td className="px-4 py-3 font-semibold text-[#F3F6FB]">
-                    {res.researchId || <span className="text-[#8891A8] italic">Anonymous</span>}
+                  <td className="px-4 py-3 font-semibold text-[#4DE8E0]">
+                    {res.participantRole || res.answers?.A4 || "Participant"}
                   </td>
-                  <td className="px-4 py-3 text-[#4DE8E0] font-medium">
-                    {res.participantRole || res.answers?.A4 || "—"}
-                  </td>
-                  <td className="px-4 py-3 text-[#8891A8]">
+                  <td className="px-4 py-3 text-[#F3F6FB]">
                     {res.orgSize || res.answers?.A6 || "—"}
+                  </td>
+                  <td className="px-4 py-3 text-[#8891A8] font-mono text-xs">
+                    {res.date || "—"}
                   </td>
                   <td className="px-4 py-3">
                     <span className="inline-flex items-center rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5 text-xs font-bold text-emerald-400">
@@ -343,16 +416,16 @@ export default function SurveyManagement() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setSelectedResponse(res)}
-                        className="flex items-center gap-1 rounded-lg border border-[#1D2436] px-3 py-1.5 text-xs text-[#8891A8] hover:border-[#4DE8E0] hover:text-[#4DE8E0] transition-all"
+                        className="flex items-center gap-1 rounded-lg border border-[#38BDF8]/40 bg-[#38BDF8]/10 px-3 py-1.5 text-xs font-semibold text-[#38BDF8] hover:bg-[#38BDF8]/20 transition-all"
                       >
-                        <Eye className="h-3 w-3" /> View Answers
+                        <Eye className="h-3.5 w-3.5" /> View Full Questionnaire
                       </button>
                       <button
-                        onClick={() => handleDelete(res.id, res.researchId)}
+                        onClick={() => handleDelete(res.id)}
                         title="Delete Response"
                         className="flex items-center gap-1 rounded-lg border border-red-500/30 bg-red-500/10 px-2.5 py-1.5 text-xs text-red-400 hover:bg-red-500/20 transition-all"
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </td>
@@ -366,18 +439,18 @@ export default function SurveyManagement() {
       {/* View Detail Modal */}
       {selectedResponse && (
         <div
-          className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm p-4 sm:p-6"
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-md p-4 sm:p-6"
           onWheel={(e) => e.stopPropagation()}
         >
           <div className="min-h-full flex items-center justify-center py-6">
             <div className="relative w-full max-w-4xl rounded-2xl border border-[#1D2436] bg-[#0F1420] p-6 shadow-2xl">
               <div className="mb-6 flex items-center justify-between border-b border-[#1D2436] pb-4">
                 <div>
-                  <h2 className="font-bold text-[#F3F6FB] text-lg">
-                    Survey Response: {selectedResponse.researchId || "Anonymous"}
+                  <h2 className="font-bold text-[#F3F6FB] text-xl">
+                    Questionnaire Response ({selectedResponse.participantRole || selectedResponse.answers?.A4 || "Participant"})
                   </h2>
-                  <p className="text-xs text-[#4DE8E0]">
-                    Submitted on {new Date(selectedResponse.createdAt).toLocaleString("en-IN")}
+                  <p className="text-xs text-[#4DE8E0] mt-1">
+                    Submitted on {new Date(selectedResponse.createdAt).toLocaleString("en-IN")} &nbsp;|&nbsp; Response ID: {selectedResponse.id}
                   </p>
                 </div>
                 <button onClick={() => setSelectedResponse(null)} className="text-[#8891A8] hover:text-[#F3F6FB]">
@@ -385,33 +458,62 @@ export default function SurveyManagement() {
                 </button>
               </div>
 
+              {/* Summary Bar */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl border border-[#1D2436] bg-[#090C14] mb-6">
+                <div>
+                  <p className="text-[11px] text-[#8891A8] uppercase font-mono">Date Field</p>
+                  <p className="font-bold text-white text-sm">{selectedResponse.date || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-[#8891A8] uppercase font-mono">Role (A4)</p>
+                  <p className="font-bold text-[#4DE8E0] text-sm">{selectedResponse.participantRole || selectedResponse.answers?.A4 || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-[#8891A8] uppercase font-mono">Org Size (A6)</p>
+                  <p className="font-bold text-white text-sm">{selectedResponse.orgSize || selectedResponse.answers?.A6 || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-[#8891A8] uppercase font-mono">Consent (R1)</p>
+                  <p className="font-bold text-emerald-400 text-sm">{selectedResponse.answers?.R1 || "Agreed"}</p>
+                </div>
+              </div>
+
               {/* Detailed Answers Grid */}
-              <div className="max-h-[70vh] overflow-y-auto pr-2 space-y-6 text-sm">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl border border-[#1D2436] bg-[#090C14]">
-                  <div>
-                    <p className="text-xs text-[#8891A8] uppercase font-mono">Research ID</p>
-                    <p className="font-bold text-white">{selectedResponse.researchId || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-[#8891A8] uppercase font-mono">Date Field</p>
-                    <p className="font-bold text-white">{selectedResponse.date || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-[#8891A8] uppercase font-mono">Role</p>
-                    <p className="font-bold text-[#4DE8E0]">{selectedResponse.participantRole || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-[#8891A8] uppercase font-mono">Org Size</p>
-                    <p className="font-bold text-white">{selectedResponse.orgSize || "—"}</p>
+              <div className="max-h-[65vh] overflow-y-auto pr-2 space-y-6 text-sm">
+                {/* Qualitative Questions (P1 - P12) */}
+                <div className="space-y-3">
+                  <h3 className="font-bold text-[#4DE8E0] text-sm border-b border-[#1D2436] pb-1 uppercase tracking-wider">
+                    Qualitative Research Answers (Section P)
+                  </h3>
+                  <div className="space-y-3">
+                    {["P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10", "P11", "P12"].map((pk) => {
+                      const ansVal = selectedResponse.answers?.[pk];
+                      if (!ansVal) return null;
+                      return (
+                        <div key={pk} className="p-3.5 rounded-xl border border-[#1D2436] bg-[#090C14]">
+                          <p className="font-bold text-[#38BDF8] text-xs mb-1">
+                            {QUESTION_MAP[pk] || pk}:
+                          </p>
+                          <p className="text-[#F3F6FB] text-xs leading-relaxed whitespace-pre-wrap">
+                            {String(ansVal)}
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
+                {/* All Answers Breakdown */}
                 <div className="space-y-3">
-                  <h3 className="font-bold text-[#38BDF8] border-b border-[#1D2436] pb-1">Answers Summary</h3>
+                  <h3 className="font-bold text-[#8B7CFF] text-sm border-b border-[#1D2436] pb-1 uppercase tracking-wider">
+                    Complete Answers Dictionary (A to R)
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {Object.entries(selectedResponse.answers || {}).map(([key, val]) => (
                       <div key={key} className="p-3 rounded-lg border border-[#1D2436] bg-[#090C14] text-xs">
-                        <span className="font-bold text-[#4DE8E0] font-mono">{key}: </span>
+                        <span className="font-bold text-[#4DE8E0] font-mono">
+                          {QUESTION_MAP[key] || key}:{" "}
+                        </span>
                         <span className="text-[#C7CCDA]">
                           {Array.isArray(val) ? val.join(", ") : String(val)}
                         </span>
@@ -424,7 +526,7 @@ export default function SurveyManagement() {
               <div className="flex justify-end border-t border-[#1D2436] pt-4 mt-6">
                 <button
                   onClick={() => setSelectedResponse(null)}
-                  className="px-5 py-2 rounded-xl bg-[#1D2436] text-white text-xs font-semibold hover:bg-[#2A344D]"
+                  className="px-6 py-2.5 rounded-xl bg-[#1D2436] text-white text-xs font-bold hover:bg-[#2A344D] transition-all"
                 >
                   Close
                 </button>
