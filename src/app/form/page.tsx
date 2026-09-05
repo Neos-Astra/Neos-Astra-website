@@ -8,9 +8,8 @@ const TOOLS_LIST = [
   "Gemini",
   "Perplexity",
   "Google AI Studio",
-  "NotebookLM",
   "Whisper AI",
-  "Bhasni",
+  "Bhasini",
   "ILovePDF",
   "CluCap",
   "WhiteStair",
@@ -25,7 +24,7 @@ const TOOLS_LIST = [
   "HeyGen",
   "Notion AI",
   "Otter AI",
-  "Canvas",
+  "Canva",
 ];
 
 const SECTION_C_ROWS = [
