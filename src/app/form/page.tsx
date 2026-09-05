@@ -1194,66 +1194,32 @@ export default function NgoSurveyPage() {
               <h2 className="text-xl font-extrabold text-[#0F172A] mb-1">
                 N. TOOL-LEVEL ADOPTION
               </h2>
-              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] mt-2">
-                <p className="text-xs sm:text-sm text-[#1E3A8A] font-bold mb-2">For each tool, answer Yes/No for each column, and rate Usefulness &amp; Confidence (1 = Low → 5 = High):</p>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-[#2563EB] font-medium">
-                  <span>📋 Used before? · Learned here? · Use independently? · Used at work? · Continue?</span>
+              <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <p className="text-xs sm:text-sm text-[#1E3A8A] font-bold">
+                  For each tool, rate your Usefulness &amp; Confidence:
+                </p>
+                <div className="flex items-center gap-2 text-[11px] text-[#2563EB] font-semibold">
+                  <span>1 = Low</span>
+                  <span>•</span>
+                  <span>5 = High</span>
                 </div>
               </div>
 
               <div className="space-y-4">
                 {TOOLS_LIST.map((tool, i) => {
-                  const cols = [
-                    { label: "Used before?", key: `N_${i}_0` },
-                    { label: "Learned here?", key: `N_${i}_1` },
-                    { label: "Use independently?", key: `N_${i}_2` },
-                    { label: "Used at work?", key: `N_${i}_3` },
-                    { label: "Continue?", key: `N_${i}_4` },
-                  ];
-
                   return (
                     <div
                       key={tool}
                       className="p-4 sm:p-5 rounded-2xl border border-[#E2E8F0] bg-white hover:border-[#93C5FD] shadow-sm transition-all duration-200"
                     >
                       {/* Tool Name */}
-                      <div className="flex items-center gap-2.5 mb-4">
+                      <div className="flex items-center gap-2.5 mb-3.5">
                         <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB]"></span>
                         <span className="text-sm sm:text-base font-extrabold text-[#0F172A]">{tool}</span>
                       </div>
 
-                      {/* Yes / No toggles */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
-                        {cols.map((col) => {
-                          const val = answers[col.key];
-                          return (
-                            <div key={col.key} className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
-                              <span className="text-[11px] sm:text-xs text-[#475569] font-medium flex-1">{col.label}</span>
-                              <div className="flex gap-1.5">
-                                {["Y", "N"].map((v) => (
-                                  <button
-                                    key={v}
-                                    type="button"
-                                    onClick={() => handleToolChange(i, Number(col.key.split("_")[2]), v)}
-                                    className={`px-3 py-1 rounded-lg text-xs font-extrabold transition-all duration-150 ${
-                                      val === v
-                                        ? v === "Y"
-                                          ? "bg-[#10B981] text-white shadow-sm"
-                                          : "bg-[#64748B] text-white shadow-sm"
-                                        : "bg-white text-[#64748B] border border-[#CBD5E1] hover:bg-[#F1F5F9] hover:text-[#0F172A]"
-                                    }`}
-                                  >
-                                    {v === "Y" ? "Yes" : "No"}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-
                       {/* Rating rows: Useful & Conf */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {[
                           { label: "Usefulness (1–5)", colIdx: 5 },
                           { label: "Confidence (1–5)", colIdx: 6 },
@@ -1261,9 +1227,9 @@ export default function NgoSurveyPage() {
                           const rKey = `N_${i}_${colIdx}`;
                           const rVal = answers[rKey];
                           return (
-                            <div key={rKey} className="px-3 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
-                              <p className="text-[11px] sm:text-xs text-[#475569] font-medium mb-2">{label}</p>
-                              <div className="flex items-center bg-white border border-[#CBD5E1] rounded-lg p-0.5 gap-0.5">
+                            <div key={rKey} className="px-3.5 py-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
+                              <p className="text-xs text-[#475569] font-bold mb-2">{label}</p>
+                              <div className="flex items-center bg-white border border-[#CBD5E1] rounded-lg p-1 gap-1">
                                 {[1, 2, 3, 4, 5].map((v) => {
                                   const isActive = rVal === String(v);
                                   return (
@@ -1271,9 +1237,9 @@ export default function NgoSurveyPage() {
                                       key={v}
                                       type="button"
                                       onClick={() => handleToolChange(i, colIdx, String(v))}
-                                      className={`flex-1 py-1.5 rounded-md text-xs font-black transition-all duration-150 ${
+                                      className={`flex-1 py-1.5 rounded-md text-xs font-black transition-all duration-150 cursor-pointer ${
                                         isActive
-                                          ? "bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] text-white shadow-sm"
+                                          ? "bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] text-white shadow-sm scale-[1.02]"
                                           : "text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9]"
                                       }`}
                                     >
@@ -1282,7 +1248,7 @@ export default function NgoSurveyPage() {
                                   );
                                 })}
                               </div>
-                              {rVal && <p className="text-[10px] text-[#2563EB] font-bold mt-1 text-right">✓ {rVal}/5</p>}
+                              {rVal && <p className="text-[11px] text-[#2563EB] font-bold mt-1.5 text-right">✓ Rated: {rVal}/5</p>}
                             </div>
                           );
                         })}
