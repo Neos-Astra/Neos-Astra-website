@@ -2,7 +2,7 @@ import CarrierClient from "./carrier-client";
 import { prisma } from "@/superadmin/prisma/client";
 
 export const metadata = {
-  title: "Carrier & Job Openings | Neos Astra - School of Innovation",
+  title: "Career & Job Openings | Neos Astra - School of Innovation",
   description: "Join Neos Astra in shaping the future of AI, Robotics, and STEM education. Explore open career opportunities.",
 };
 
@@ -14,12 +14,12 @@ async function getJobOpenings() {
     });
     return jobs;
   } catch (error) {
-    console.error("Failed to fetch jobs for public carrier page:", error);
+    console.error("Failed to fetch jobs for public career page:", error);
     return [];
   }
 }
 
-export default async function CarrierPage() {
+export default async function CareerPage() {
   const initialJobs = await getJobOpenings();
 
   return (

@@ -172,7 +172,7 @@ export default function CarrierManagementClient({ initialJobs }: { initialJobs: 
             Job Openings Management
           </h1>
           <p className="text-sm text-[#8891A8] mt-1">
-            Create, manage, and publish job openings on the public <code className="text-[#4DE8E0]">/carrier</code> route.
+            Create, manage, and publish job openings on the public <code className="text-[#4DE8E0]">/career</code> route.
           </p>
         </div>
 
