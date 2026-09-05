@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { ShieldCheck, Eye, EyeOff, AlertCircle } from "lucide-react";
 
 export default function AdminLoginForm() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -31,8 +29,8 @@ export default function AdminLoginForm() {
         return;
       }
 
-      // Success → go to staff admin dashboard
-      router.replace("/admin");
+      // Full page navigation so session cookie is sent and navbar renders correctly
+      window.location.href = "/admin";
     } catch {
       setError("An unexpected error occurred. Please try again.");
       setLoading(false);

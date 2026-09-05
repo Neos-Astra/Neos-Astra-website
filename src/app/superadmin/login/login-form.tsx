@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { ShieldCheck, Eye, EyeOff, AlertCircle, X } from "lucide-react";
 
 export function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/superadmin";
 
@@ -34,7 +33,8 @@ export function LoginForm() {
         return;
       }
 
-      router.push(callbackUrl);
+      // Full page navigation so session cookie is sent and navbar renders correctly
+      window.location.href = callbackUrl;
     } catch (err: any) {
       setError(err?.message || "An unexpected error occurred.");
       setLoading(false);
