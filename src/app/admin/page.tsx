@@ -4,7 +4,9 @@ import { redirect } from "next/navigation";
 import { BookOpen, Users, ImageIcon, ArrowRight, Sparkles, GraduationCap } from "lucide-react";
 import { prisma } from "@/superadmin/prisma/client";
 
-async function getDashboardStats() {
+import { unstable_cache } from "next/cache";
+
+async function fetchStats() {
   try {
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
@@ -48,6 +50,12 @@ async function getDashboardStats() {
     };
   }
 }
+
+const getDashboardStats = unstable_cache(
+  fetchStats,
+  ["admin-dashboard-stats-cache"],
+  { revalidate: 20 }
+);
 
 export default async function StaffAdminDashboardPage() {
   const session = await auth();

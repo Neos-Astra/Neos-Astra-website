@@ -1,6 +1,8 @@
 import NextAuth, { type DefaultSession } from "next-auth";
 import "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { prisma } from "@/superadmin/prisma/client";
+import bcrypt from "bcryptjs";
 
 const authSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
 if (!authSecret && process.env.NODE_ENV === "production") {
@@ -72,14 +74,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const email = String(credentials.email).toLowerCase().trim();
         const password = String(credentials.password);
 
-        const { prisma } = await import("@/superadmin/prisma/client");
-        const bcrypt = await import("bcryptjs");
-        const compareFn = bcrypt.compare || (bcrypt as any).default?.compare;
-
         let user;
         try {
           user = await prisma.adminUser.findUnique({
             where: { email },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              passwordHash: true,
+              role: true,
+              isActive: true,
+              lockedUntil: true,
+              failedLoginCount: true,
+              canManageAdmins: true,
+              canDeleteUsers: true,
+              canEditCourses: true,
+              canManageEvents: true,
+              canManageContent: true,
+            },
           });
         } catch (dbErr: any) {
           console.error("Database connection error in NextAuth authorize:", dbErr);
@@ -103,17 +116,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           );
         }
 
-        const isValidPassword = await compareFn(password, user.passwordHash);
+        const isValidPassword = await bcrypt.compare(password, user.passwordHash);
 
         if (!isValidPassword) {
           const newFailedCount = user.failedLoginCount + 1;
-          let lockedUntil: Date | null = null;
+          const lockedUntil = newFailedCount >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : null;
 
-          if (newFailedCount >= 5) {
-            lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes lock
-          }
-
-          await prisma.adminUser.update({
+          const updatePromise = prisma.adminUser.update({
             where: { id: user.id },
             data: {
               failedLoginCount: newFailedCount,
@@ -122,32 +131,39 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           });
 
           if (newFailedCount >= 5) {
+            await updatePromise;
             throw new Error(
               "Account locked due to 5 failed login attempts. Try again in 15 minutes."
             );
+          } else {
+            updatePromise.catch((e) => console.error("Non-blocking failedLoginCount update error:", e));
           }
 
           throw new Error("Invalid credentials.");
         }
 
-        // Reset failed login counters, update last login, and create audit log — all in parallel
-        await Promise.all([
-          prisma.adminUser.update({
+        // Fire-and-forget: execute last login update and audit log in background
+        // so the user does NOT have to wait 1-2 extra seconds before getting logged in!
+        prisma.adminUser
+          .update({
             where: { id: user.id },
             data: {
               failedLoginCount: 0,
               lockedUntil: null,
               lastLoginAt: new Date(),
             },
-          }),
-          prisma.auditLog.create({
+          })
+          .catch((e) => console.error("Non-blocking lastLogin update error:", e));
+
+        prisma.auditLog
+          .create({
             data: {
               action: "LOGIN_SUCCESS",
               adminUserId: user.id,
               details: `Admin user ${user.email} logged in successfully`,
             },
-          }),
-        ]);
+          })
+          .catch((e) => console.error("Non-blocking audit log error:", e));
 
         const isSuperAdmin = user.role === "SUPER_ADMIN";
 

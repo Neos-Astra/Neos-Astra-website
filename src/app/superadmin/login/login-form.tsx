@@ -14,6 +14,7 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,8 +34,9 @@ export function LoginForm() {
         return;
       }
 
-      // Full page navigation so session cookie is sent and navbar renders correctly
-      window.location.href = callbackUrl;
+      // Success! Instant feedback and full page navigation
+      setRedirecting(true);
+      window.location.replace(callbackUrl);
     } catch (err: any) {
       setError(err?.message || "An unexpected error occurred.");
       setLoading(false);
@@ -106,10 +108,32 @@ export function LoginForm() {
 
         <button
           type="submit"
-          disabled={loading}
-          className="w-full mt-2 rounded-xl bg-gradient-to-r from-[#4DE8E0] to-[#8B7CFF] py-3 text-sm font-semibold text-[#090C14] transition-transform hover:scale-[1.02] disabled:opacity-60 disabled:hover:scale-100"
+          disabled={loading || redirecting}
+          className={`w-full mt-2 rounded-xl py-3 text-sm font-semibold text-[#090C14] transition-all disabled:opacity-75 ${
+            redirecting
+              ? "bg-[#10B981] text-white shadow-[0_0_20px_rgba(16,185,129,0.4)]"
+              : "bg-gradient-to-r from-[#4DE8E0] to-[#8B7CFF] hover:scale-[1.02] disabled:hover:scale-100"
+          }`}
         >
-          {loading ? "Signing in..." : "Sign In"}
+          {redirecting ? (
+            <span className="flex items-center justify-center gap-2">
+              <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+              Success! Opening Dashboard...
+            </span>
+          ) : loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <svg className="h-4 w-4 animate-spin text-[#090C14]" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+              Signing in...
+            </span>
+          ) : (
+            "Sign In"
+          )}
         </button>
       </form>
     </div>

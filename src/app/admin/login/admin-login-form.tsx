@@ -10,6 +10,7 @@ export default function AdminLoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,8 +30,9 @@ export default function AdminLoginForm() {
         return;
       }
 
-      // Full page navigation so session cookie is sent and navbar renders correctly
-      window.location.href = "/admin";
+      // Success! Instant feedback and full page replacement
+      setRedirecting(true);
+      window.location.replace("/admin");
     } catch {
       setError("An unexpected error occurred. Please try again.");
       setLoading(false);
@@ -115,10 +117,32 @@ export default function AdminLoginForm() {
 
         <button
           type="submit"
-          disabled={loading}
-          className="mt-2 w-full rounded-lg bg-[#4DE8E0] px-5 py-3 text-sm font-semibold text-[#090C14] transition-all hover:bg-[#3cd2ca] disabled:opacity-50"
+          disabled={loading || redirecting}
+          className={`mt-2 w-full rounded-lg px-5 py-3 text-sm font-semibold transition-all disabled:opacity-75 ${
+            redirecting
+              ? "bg-[#10B981] text-white shadow-[0_0_20px_rgba(16,185,129,0.4)]"
+              : "bg-[#4DE8E0] text-[#090C14] hover:bg-[#3cd2ca]"
+          }`}
         >
-          {loading ? "Signing in..." : "Sign In to Admin Portal"}
+          {redirecting ? (
+            <span className="flex items-center justify-center gap-2">
+              <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+              Success! Opening Dashboard...
+            </span>
+          ) : loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <svg className="h-4 w-4 animate-spin text-[#090C14]" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+              Signing in...
+            </span>
+          ) : (
+            "Sign In to Admin Portal"
+          )}
         </button>
       </form>
 
