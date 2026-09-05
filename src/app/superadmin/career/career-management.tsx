@@ -17,7 +17,7 @@ type JobOpening = {
   createdAt: any;
 };
 
-export default function CarrierManagementClient({ initialJobs }: { initialJobs: JobOpening[] }) {
+export default function CareerManagementClient({ initialJobs }: { initialJobs: JobOpening[] }) {
   const [jobs, setJobs] = useState<JobOpening[]>(initialJobs);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<JobOpening | null>(null);

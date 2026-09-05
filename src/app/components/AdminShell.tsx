@@ -18,14 +18,17 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-const NAV_ITEMS = [
-  { label: "Dashboard", href: "/superadmin", icon: LayoutDashboard },
+const COMMON_NAV_ITEMS = [
   { label: "Web Leads", href: "/superadmin/inquiries", icon: FileText },
   { label: "Official Enrollments", href: "/superadmin/enrollments", icon: GraduationCap },
-  { label: "NGO Survey Responses", href: "/superadmin/survey", icon: ClipboardList },
   { label: "Courses", href: "/superadmin/course", icon: BookOpen },
   { label: "Team", href: "/superadmin/team", icon: Users },
   { label: "Home Photos", href: "/superadmin/home-media", icon: ImageIcon },
+];
+
+const SUPER_ADMIN_NAV_ITEMS = [
+  { label: "NGO Survey Responses", href: "/superadmin/survey", icon: ClipboardList },
+  { label: "Careers", href: "/superadmin/career", icon: ShieldCheck },
   { label: "Manage Admins", href: "/superadmin/admins", icon: ShieldCheck },
 ];
 
@@ -41,7 +44,14 @@ export default function AdminShell({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const role = session?.user?.role;
+  const isSuperAdmin = role === "SUPER_ADMIN";
   const initials = session?.user?.email?.charAt(0).toUpperCase() || "A";
+
+  const navItems = [
+    { label: "Dashboard", href: isSuperAdmin ? "/superadmin" : "/admin", icon: LayoutDashboard },
+    ...COMMON_NAV_ITEMS,
+    ...(isSuperAdmin ? SUPER_ADMIN_NAV_ITEMS : []),
+  ];
 
   const SidebarContent = (
     <div className="flex h-full flex-col">
@@ -58,7 +68,7 @@ export default function AdminShell({
 
       {/* Nav */}
       <nav className="flex-1 space-y-1 px-3">
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const active = pathname === item.href;
           const Icon = item.icon;
           return (

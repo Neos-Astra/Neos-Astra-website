@@ -53,7 +53,7 @@ export default async function StaffAdminDashboardPage() {
   const session = await auth();
 
   if (!session?.user) {
-    redirect("/superadmin/login");
+    redirect("/admin/login");
   }
 
   // If Super Admin visits /admin, redirect to /superadmin

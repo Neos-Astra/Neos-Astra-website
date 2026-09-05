@@ -16,7 +16,7 @@ type JobOpening = {
   createdAt: any;
 };
 
-export default function CarrierClient({ initialJobs }: { initialJobs: JobOpening[] }) {
+export default function CareerClient({ initialJobs }: { initialJobs: JobOpening[] }) {
   const [jobs] = useState<JobOpening[]>(initialJobs);
   const [selectedDept, setSelectedDept] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");

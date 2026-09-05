@@ -1,7 +1,7 @@
 import { auth } from "@/superadmin/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/superadmin/prisma/client";
-import CarrierManagementClient from "./carrier-management";
+import CareerManagementClient from "./career-management";
 
 export const metadata = {
   title: "Manage Job Openings | Super Admin | Neos Astra",
@@ -19,7 +19,7 @@ async function getJobs() {
   }
 }
 
-export default async function SuperAdminCarrierPage() {
+export default async function SuperAdminCareerPage() {
   const session = await auth();
 
   if (!session?.user) {
@@ -35,7 +35,7 @@ export default async function SuperAdminCarrierPage() {
   return (
     <div className="min-h-screen bg-[#090C14] text-[#F3F6FB] p-6 md:p-10">
       <div className="mx-auto max-w-7xl">
-        <CarrierManagementClient initialJobs={jobs} />
+        <CareerManagementClient initialJobs={jobs} />
       </div>
     </div>
   );

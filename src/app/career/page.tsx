@@ -1,4 +1,4 @@
-import CarrierClient from "./carrier-client";
+import CareerClient from "./career-client";
 import { prisma } from "@/superadmin/prisma/client";
 
 export const metadata = {
@@ -24,7 +24,7 @@ export default async function CareerPage() {
 
   return (
     <main>
-      <CarrierClient initialJobs={initialJobs} />
+      <CareerClient initialJobs={initialJobs} />
     </main>
   );
 }

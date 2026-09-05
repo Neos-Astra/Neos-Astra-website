@@ -11,7 +11,7 @@ import CoursesNavItem from "./CoursesNavItem";
 import AboutNavItem from "./AboutNavItem";
 import TeamNavItem from "./TeamNavItem";
 import EventsNavItem from "./EventsNavItem";
-import CarrierNavItem from "./CarrierNavItem";
+import CareerNavItem from "./CareerNavItem";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -79,7 +79,7 @@ export default function Navbar() {
             <AboutNavItem />
             <TeamNavItem />
             <EventsNavItem />
-            <CarrierNavItem />
+            <CareerNavItem />
           </ul>
         </nav>
 
@@ -128,7 +128,7 @@ export default function Navbar() {
           <AboutNavItem onClick={() => setMenuOpen(false)} />
           <TeamNavItem onClick={() => setMenuOpen(false)} />
           <EventsNavItem onClick={() => setMenuOpen(false)} />
-          <CarrierNavItem onClick={() => setMenuOpen(false)} />
+          <CareerNavItem onClick={() => setMenuOpen(false)} />
           <li className="pt-2">
             <a
               href="/admin/login"
