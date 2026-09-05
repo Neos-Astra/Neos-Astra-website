@@ -33,7 +33,6 @@ export default function AdminLoginForm() {
 
       // Success → go to staff admin dashboard
       router.replace("/admin");
-      router.refresh();
     } catch {
       setError("An unexpected error occurred. Please try again.");
       setLoading(false);

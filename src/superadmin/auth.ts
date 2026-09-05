@@ -130,24 +130,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new Error("Invalid credentials.");
         }
 
-        // Reset failed login counters and update last login timestamp
-        await prisma.adminUser.update({
-          where: { id: user.id },
-          data: {
-            failedLoginCount: 0,
-            lockedUntil: null,
-            lastLoginAt: new Date(),
-          },
-        });
-
-        // Create audit log entry
-        await prisma.auditLog.create({
-          data: {
-            action: "LOGIN_SUCCESS",
-            adminUserId: user.id,
-            details: `Admin user ${user.email} logged in successfully`,
-          },
-        });
+        // Reset failed login counters, update last login, and create audit log — all in parallel
+        await Promise.all([
+          prisma.adminUser.update({
+            where: { id: user.id },
+            data: {
+              failedLoginCount: 0,
+              lockedUntil: null,
+              lastLoginAt: new Date(),
+            },
+          }),
+          prisma.auditLog.create({
+            data: {
+              action: "LOGIN_SUCCESS",
+              adminUserId: user.id,
+              details: `Admin user ${user.email} logged in successfully`,
+            },
+          }),
+        ]);
 
         const isSuperAdmin = user.role === "SUPER_ADMIN";
 
