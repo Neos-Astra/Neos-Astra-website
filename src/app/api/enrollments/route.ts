@@ -46,7 +46,10 @@ export async function POST(request: Request) {
     const cleanName = String(studentName || "").trim().slice(0, 100);
     const cleanPhone = String(studentPhone || "").trim().slice(0, 20);
     const cleanEmail = String(studentEmail || "").trim().toLowerCase().slice(0, 100);
-    const cleanCourse = String(courseTitle || "").trim().slice(0, 150);
+    let cleanCourse = String(courseTitle || "").trim().slice(0, 150);
+    if (cleanCourse.toLowerCase() === "robotics") {
+      cleanCourse = "AI & Robotics Innovators Batch";
+    }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!cleanName || !cleanPhone || !cleanEmail || !cleanCourse || !emailRegex.test(cleanEmail)) {
