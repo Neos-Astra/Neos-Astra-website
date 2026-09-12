@@ -90,6 +90,7 @@ export default function PaymentsManagement() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"ALL" | "OVERDUE" | "DUE_SOON" | "PAID">("ALL");
+  const [courseFilter, setCourseFilter] = useState<string>("ALL");
 
   // Modals state
   const [selectedStudentForLedger, setSelectedStudentForLedger] = useState<StudentPaymentInfo | null>(null);
@@ -134,9 +135,17 @@ export default function PaymentsManagement() {
     fetchPayments(true);
   }, []);
 
+  // Unique course titles for the course filter dropdown
+  const uniqueCourseTitles = useMemo(() => {
+    return Array.from(new Set(students.map((s) => s.courseTitle).filter(Boolean))).sort();
+  }, [students]);
+
   // Filtered students
   const filteredStudents = useMemo(() => {
     return students.filter((s) => {
+      // Course filter
+      if (courseFilter !== "ALL" && s.courseTitle !== courseFilter) return false;
+
       // Tab filter
       if (activeTab === "OVERDUE" && s.overallStatus !== "OVERDUE") return false;
       if (activeTab === "DUE_SOON" && s.overallStatus !== "DUE_SOON") return false;
@@ -157,7 +166,7 @@ export default function PaymentsManagement() {
 
       return true;
     });
-  }, [students, activeTab, search]);
+  }, [students, courseFilter, activeTab, search]);
 
   // Open Payment Modal
   const handleOpenPaymentModal = (student: StudentPaymentInfo, targetCycle?: Cycle) => {
@@ -440,16 +449,38 @@ export default function PaymentsManagement() {
             </button>
           </div>
 
-          {/* Search Box */}
-          <div className="relative min-w-[260px]">
-            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#8891A8]" />
-            <input
-              type="text"
-              placeholder="Search by student, phone, reg no..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-[#1D2436] bg-[#0F1420] py-1.5 pl-9 pr-3 text-xs text-[#F3F6FB] placeholder-[#8891A8] focus:border-[#4DE8E0] focus:outline-none"
-            />
+          {/* Search Box & Course Filter */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            {/* Search Box */}
+            <div className="relative min-w-[240px]">
+              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#8891A8]" />
+              <input
+                type="text"
+                placeholder="Search by student, phone, reg no..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-lg border border-[#1D2436] bg-[#0F1420] py-2 pl-9 pr-3 text-xs text-[#F3F6FB] placeholder-[#8891A8] focus:border-[#4DE8E0] focus:outline-none transition-all"
+              />
+            </div>
+
+            {/* Course Filter Dropdown */}
+            <div className="relative">
+              <select
+                value={courseFilter}
+                onChange={(e) => setCourseFilter(e.target.value)}
+                className="w-full sm:w-auto pl-3.5 pr-8 py-2 rounded-lg bg-[#0F1420] border border-[#4DE8E0]/30 text-[#4DE8E0] font-semibold text-xs focus:outline-none focus:border-[#4DE8E0] transition-all appearance-none cursor-pointer"
+              >
+                <option value="ALL" className="bg-[#0F1420] text-[#F3F6FB]">🎓 All Courses</option>
+                {uniqueCourseTitles.map((title) => (
+                  <option key={title} value={title} className="bg-[#0F1420] text-[#F3F6FB]">
+                    {title}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4DE8E0] text-[10px]">
+                ▼
+              </span>
+            </div>
           </div>
         </div>
 
