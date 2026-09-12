@@ -130,7 +130,7 @@ export async function GET(request: Request) {
           if (diffDays > 0) {
             cycleStatus = "OVERDUE";
             overdueCount++;
-          } else if (diffDays >= -7) {
+          } else if (diffDays >= -14) {
             cycleStatus = "DUE_SOON";
           }
 

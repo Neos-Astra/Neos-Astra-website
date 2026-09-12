@@ -163,6 +163,45 @@ export default function PaymentsManagement() {
     };
   }, [coursePool]);
 
+  // Dynamically calculate KPI summary for the current coursePool
+  const dynamicSummary = useMemo(() => {
+    let totalCollectedThisMonth = 0;
+    let totalPendingAmount = 0;
+    let overdueStudentsCount = 0;
+    let dueSoonStudentsCount = 0;
+
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+
+    coursePool.forEach((s) => {
+      // Check payments made in current calendar month for this course pool
+      s.cycles.forEach((c) => {
+        if (c.status === "PAID" && c.paidDate) {
+          const pd = new Date(c.paidDate);
+          if (pd.getMonth() === currentMonth && pd.getFullYear() === currentYear) {
+            totalCollectedThisMonth += c.amount;
+          }
+        }
+      });
+
+      if (s.overallStatus === "OVERDUE") {
+        overdueStudentsCount++;
+        totalPendingAmount += s.nextDueCycle?.amount || s.monthlyFee;
+      } else if (s.overallStatus === "DUE_SOON") {
+        dueSoonStudentsCount++;
+      }
+    });
+
+    return {
+      totalStudents: coursePool.length,
+      totalCollectedThisMonth,
+      totalPendingAmount,
+      overdueStudentsCount,
+      dueSoonStudentsCount,
+    };
+  }, [coursePool]);
+
   // Filtered students
   const filteredStudents = useMemo(() => {
     return students.filter((s) => {
@@ -367,7 +406,7 @@ export default function PaymentsManagement() {
         {/* Top KPI Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {/* Card 1: Collected This Month */}
-          <div className="rounded-xl border border-[#1D2436] bg-[#0F1420]/80 p-4">
+          <div className="rounded-xl border border-[#1D2436] bg-[#0F1420]/80 p-4 transition-all">
             <div className="flex items-center justify-between">
               <p className="text-xs font-medium text-[#8891A8]">Collected This Month</p>
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#4DE8E0]/10 text-[#4DE8E0]">
@@ -375,13 +414,22 @@ export default function PaymentsManagement() {
               </div>
             </div>
             <p className="mt-2 text-2xl font-bold text-[#4DE8E0]">
-              {fmtCurrency(summary.totalCollectedThisMonth)}
+              {fmtCurrency(dynamicSummary.totalCollectedThisMonth)}
             </p>
-            <p className="mt-1 text-[11px] text-[#8891A8]">Total fee received in calendar month</p>
+            <p className="mt-1 text-[11px] text-[#8891A8]">
+              {courseFilter === "ALL" ? "Total fee received in calendar month" : "Received for this course"}
+            </p>
           </div>
 
           {/* Card 2: Overdue Students */}
-          <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-4">
+          <div
+            onClick={() => setActiveTab("OVERDUE")}
+            className={`rounded-xl border p-4 cursor-pointer transition-all hover:scale-[1.01] ${
+              activeTab === "OVERDUE"
+                ? "border-rose-500/60 bg-rose-500/15 shadow-lg shadow-rose-500/10"
+                : "border-rose-500/20 bg-rose-500/5 hover:border-rose-500/40"
+            }`}
+          >
             <div className="flex items-center justify-between">
               <p className="text-xs font-medium text-rose-400">Overdue Students</p>
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/15 text-rose-400">
@@ -389,37 +437,53 @@ export default function PaymentsManagement() {
               </div>
             </div>
             <p className="mt-2 text-2xl font-bold text-rose-400">
-              {summary.overdueStudentsCount} Students
+              {dynamicSummary.overdueStudentsCount} Students
             </p>
             <p className="mt-1 text-[11px] text-rose-300/80">
-              Pending: {fmtCurrency(summary.totalPendingAmount)}
+              Pending: {fmtCurrency(dynamicSummary.totalPendingAmount)}
             </p>
           </div>
 
           {/* Card 3: Due Soon */}
-          <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+          <div
+            onClick={() => setActiveTab("DUE_SOON")}
+            className={`rounded-xl border p-4 cursor-pointer transition-all hover:scale-[1.01] ${
+              activeTab === "DUE_SOON"
+                ? "border-amber-500/60 bg-amber-500/15 shadow-lg shadow-amber-500/10"
+                : "border-amber-500/20 bg-amber-500/5 hover:border-amber-500/40"
+            }`}
+          >
             <div className="flex items-center justify-between">
-              <p className="text-xs font-medium text-amber-400">Due in Next 7 Days</p>
+              <p className="text-xs font-medium text-amber-400">Due in Next 14 Days</p>
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/15 text-amber-400">
                 <Clock className="h-4 w-4" />
               </div>
             </div>
             <p className="mt-2 text-2xl font-bold text-amber-400">
-              {summary.dueSoonStudentsCount} Students
+              {dynamicSummary.dueSoonStudentsCount} Students
             </p>
-            <p className="mt-1 text-[11px] text-amber-300/80">Upcoming anniversary cycle</p>
+            <p className="mt-1 text-[11px] text-amber-300/80">Upcoming 2-week cycle</p>
           </div>
 
           {/* Card 4: Total Enrolled */}
-          <div className="rounded-xl border border-[#1D2436] bg-[#0F1420]/80 p-4">
+          <div
+            onClick={() => setActiveTab("ALL")}
+            className={`rounded-xl border p-4 cursor-pointer transition-all hover:scale-[1.01] ${
+              activeTab === "ALL"
+                ? "border-[#4DE8E0]/40 bg-[#0F1420] shadow-lg shadow-[#4DE8E0]/5"
+                : "border-[#1D2436] bg-[#0F1420]/80 hover:border-[#1D2436]/90"
+            }`}
+          >
             <div className="flex items-center justify-between">
-              <p className="text-xs font-medium text-[#8891A8]">Total Enrolled Students</p>
+              <p className="text-xs font-medium text-[#8891A8]">Total Enrolled</p>
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#8B7CFF]/10 text-[#8B7CFF]">
                 <User className="h-4 w-4" />
               </div>
             </div>
-            <p className="mt-2 text-2xl font-bold text-[#F3F6FB]">{summary.totalStudents}</p>
-            <p className="mt-1 text-[11px] text-[#8891A8]">Active students on monthly cycle</p>
+            <p className="mt-2 text-2xl font-bold text-[#F3F6FB]">{dynamicSummary.totalStudents}</p>
+            <p className="mt-1 text-[11px] text-[#8891A8]">
+              {courseFilter === "ALL" ? "Active students on monthly cycle" : "Students in this course"}
+            </p>
           </div>
         </div>
 
@@ -493,12 +557,15 @@ export default function PaymentsManagement() {
                 onChange={(e) => setCourseFilter(e.target.value)}
                 className="w-full sm:w-auto pl-3.5 pr-8 py-2 rounded-lg bg-[#0F1420] border border-[#4DE8E0]/30 text-[#4DE8E0] font-semibold text-xs focus:outline-none focus:border-[#4DE8E0] transition-all appearance-none cursor-pointer"
               >
-                <option value="ALL" className="bg-[#0F1420] text-[#F3F6FB]">🎓 All Courses</option>
-                {uniqueCourseTitles.map((title) => (
-                  <option key={title} value={title} className="bg-[#0F1420] text-[#F3F6FB]">
-                    {title}
-                  </option>
-                ))}
+                <option value="ALL" className="bg-[#0F1420] text-[#F3F6FB]">🎓 All Courses ({students.length})</option>
+                {uniqueCourseTitles.map((title) => {
+                  const count = students.filter((s) => s.courseTitle === title).length;
+                  return (
+                    <option key={title} value={title} className="bg-[#0F1420] text-[#F3F6FB]">
+                      {title} ({count})
+                    </option>
+                  );
+                })}
               </select>
               <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4DE8E0] text-[10px]">
                 ▼
@@ -525,9 +592,23 @@ export default function PaymentsManagement() {
             </p>
             <p className="mt-1 text-xs text-[#8891A8] max-w-md">
               {activeTab === "OVERDUE"
-                ? `Is course ke sabhi students ki fee up-to-date hai! Inka next billing cycle aage ki dates me aayega.`
+                ? courseFilter !== "ALL"
+                  ? `All students in "${courseFilter}" are currently up to date with their fees.`
+                  : "Awesome! There are no overdue students right now."
+                : activeTab === "DUE_SOON"
+                ? courseFilter !== "ALL"
+                  ? `No students in "${courseFilter}" have fees due in the next 14 days.`
+                  : "No students have fees due in the next 14 days."
                 : "No student matches the current filter or search criteria."}
             </p>
+            {courseFilter !== "ALL" && (
+              <button
+                onClick={() => setCourseFilter("ALL")}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-[#4DE8E0]/40 bg-[#4DE8E0]/10 px-3 py-1.5 text-xs font-semibold text-[#4DE8E0] hover:bg-[#4DE8E0] hover:text-[#090C14] transition-all"
+              >
+                Clear Course Filter & View All ({students.length})
+              </button>
+            )}
           </div>
         ) : (
           <div className="overflow-hidden rounded-xl border border-[#1D2436] bg-[#0F1420]">

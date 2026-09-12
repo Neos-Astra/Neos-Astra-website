@@ -31,44 +31,46 @@ export function cleanWhatsAppNumber(phone: string): string {
 }
 
 /**
- * Builds a polite, professional, and clear bilingual (Hinglish/English) reminder text.
+ * Builds a polite, formal, and professional English fee reminder text.
  */
 export function buildFeeReminderText(data: WhatsAppReminderData): string {
-  const academy = data.academyName || "Neos Astra Academy";
+  const academy = data.academyName || "Neos Astra School of Innovation";
   const parentOrStudent = data.guardianName?.trim()
-    ? `Dear ${data.guardianName} (Parent of ${data.studentName})`
+    ? `Dear ${data.guardianName} (Parent / Guardian of ${data.studentName})`
     : `Dear ${data.studentName}`;
-  const upi = data.upiId || "9348059284@upi"; // Default Neos Astra official contact/UPI
+  const upi = data.upiId || "9348059284@upi"; // Official Neos Astra UPI
   const contact = data.contactNumber || "+91 9348059284";
 
   let statusSentence = "";
   if (data.isOverdue && data.daysOverdue && data.daysOverdue > 0) {
-    statusSentence = `⚠️ *Payment Status: OVERDUE by ${data.daysOverdue} day(s)*\n(Due date was: *${data.dueDate}*)`;
+    statusSentence = `⚠️ *Payment Status: OVERDUE (${data.daysOverdue} days past due)*\n📅 *Original Due Date:* ${data.dueDate}`;
   } else if (data.isOverdue) {
-    statusSentence = `⚠️ *Payment Status: DUE TODAY*\n(Due date: *${data.dueDate}*)`;
+    statusSentence = `⚠️ *Payment Status: DUE TODAY*\n📅 *Due Date:* ${data.dueDate}`;
   } else {
-    statusSentence = `🗓️ *Due Date:* *${data.dueDate}*`;
+    statusSentence = `📅 *Payment Due Date:* ${data.dueDate}`;
   }
 
   const amtStr = typeof data.amount === "number" ? `₹${data.amount.toLocaleString("en-IN")}` : String(data.amount);
 
   return (
-    `Namaste! 🙏\n\n` +
     `${parentOrStudent},\n\n` +
-    `This is a gentle monthly fee reminder from *${academy}*:\n\n` +
-    `👤 *Student:* ${data.studentName}\n` +
-    `📚 *Course:* ${data.courseTitle}\n` +
-    `📅 *Fee Period:* ${data.cycleLabel}\n` +
-    `💰 *Monthly Fee Amount:* *${amtStr}*\n` +
+    `Greetings from *${academy}*.\n\n` +
+    `This is a formal reminder regarding the monthly tuition fee for *${data.studentName}*:\n\n` +
+    `• *Student Name:* ${data.studentName}\n` +
+    `• *Course / Program:* ${data.courseTitle}\n` +
+    `• *Billing Period:* ${data.cycleLabel}\n` +
+    `• *Amount Due:* *${amtStr}*\n` +
     `${statusSentence}\n\n` +
-    `----------------------------\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
     `💳 *Payment Options:*\n` +
     `• UPI ID: \`${upi}\`\n` +
-    `• Google Pay / PhonePe / Paytm to: *${contact}*\n` +
-    `----------------------------\n\n` +
-    `Agar aapne payment kar diya hai, kripya transaction receipt is number par share kar dein taaki hum system me update kar sakein.\n\n` +
-    `For any query, feel free to reach out to us at ${contact}.\n\n` +
-    `Warm regards,\n*${academy} Team*`
+    `• Google Pay / PhonePe / Paytm: *${contact}*\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n\n` +
+    `Please process the payment at your earliest convenience. If you have already completed the transaction, kindly reply with the payment screenshot or UTR reference so we can verify and update our records.\n\n` +
+    `For any assistance or billing inquiries, please contact our help desk at ${contact}.\n\n` +
+    `Thank you,\n` +
+    `*Administration & Accounts Desk*\n` +
+    `*${academy}*`
   );
 }
 
