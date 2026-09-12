@@ -140,6 +140,29 @@ export default function PaymentsManagement() {
     return Array.from(new Set(students.map((s) => s.courseTitle).filter(Boolean))).sort();
   }, [students]);
 
+  // Course-filtered students pool (for computing tab counts for selected course)
+  const coursePool = useMemo(() => {
+    if (courseFilter === "ALL") return students;
+    return students.filter((s) => s.courseTitle === courseFilter);
+  }, [students, courseFilter]);
+
+  const tabCounts = useMemo(() => {
+    let overdue = 0;
+    let dueSoon = 0;
+    let paid = 0;
+    coursePool.forEach((s) => {
+      if (s.overallStatus === "OVERDUE") overdue++;
+      else if (s.overallStatus === "DUE_SOON") dueSoon++;
+      else if (s.overallStatus === "PAID") paid++;
+    });
+    return {
+      total: coursePool.length,
+      overdue,
+      dueSoon,
+      paid,
+    };
+  }, [coursePool]);
+
   // Filtered students
   const filteredStudents = useMemo(() => {
     return students.filter((s) => {
@@ -412,7 +435,7 @@ export default function PaymentsManagement() {
                   : "text-[#8891A8] hover:text-[#F3F6FB]"
               }`}
             >
-              All Students ({students.length})
+              All Students ({tabCounts.total})
             </button>
             <button
               onClick={() => setActiveTab("OVERDUE")}
@@ -422,8 +445,8 @@ export default function PaymentsManagement() {
                   : "text-rose-400 hover:bg-rose-500/10"
               }`}
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-rose-400 animate-pulse" />
-              Overdue ({summary.overdueStudentsCount})
+              <span className={`h-1.5 w-1.5 rounded-full bg-rose-400 ${tabCounts.overdue > 0 ? "animate-pulse" : ""}`} />
+              Overdue ({tabCounts.overdue})
             </button>
             <button
               onClick={() => setActiveTab("DUE_SOON")}
@@ -434,7 +457,7 @@ export default function PaymentsManagement() {
               }`}
             >
               <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-              Due Soon ({summary.dueSoonStudentsCount})
+              Due Soon ({tabCounts.dueSoon})
             </button>
             <button
               onClick={() => setActiveTab("PAID")}
@@ -445,7 +468,7 @@ export default function PaymentsManagement() {
               }`}
             >
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              Up to Date
+              Up to Date ({tabCounts.paid})
             </button>
           </div>
 
@@ -493,10 +516,16 @@ export default function PaymentsManagement() {
         ) : filteredStudents.length === 0 ? (
           <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-[#1D2436] bg-[#0F1420] p-6 text-center">
             <CheckCircle2 className="h-10 w-10 text-emerald-400/60" />
-            <p className="mt-3 text-sm font-semibold text-[#F3F6FB]">No students found</p>
-            <p className="mt-1 text-xs text-[#8891A8]">
+            <p className="mt-3 text-sm font-semibold text-[#F3F6FB]">
               {activeTab === "OVERDUE"
-                ? "Awesome! There are no overdue students right now."
+                ? `No Overdue Students ${courseFilter !== "ALL" ? `in "${courseFilter}"` : ""}`
+                : activeTab === "DUE_SOON"
+                ? `No Upcoming Dues ${courseFilter !== "ALL" ? `in "${courseFilter}"` : ""}`
+                : "No students found"}
+            </p>
+            <p className="mt-1 text-xs text-[#8891A8] max-w-md">
+              {activeTab === "OVERDUE"
+                ? `Is course ke sabhi students ki fee up-to-date hai! Inka next billing cycle aage ki dates me aayega.`
                 : "No student matches the current filter or search criteria."}
             </p>
           </div>
