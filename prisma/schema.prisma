@@ -129,10 +129,33 @@ model Enrollment {
   gstPercent     Float    @default(0)
   total          String   @default("")
   message        String?
-  status         String   @default("CONFIRMED")
+  status         String        @default("CONFIRMED")
   createdById    String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  billingDay     Int?
+  monthlyFee     String?       @default("")
+  feePayments    FeePayment[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model FeePayment {
+  id              String      @id @default(cuid())
+  enrollmentId    String
+  enrollment      Enrollment  @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  receiptNo       String      @unique
+  cycleMonthIndex Int
+  cycleLabel      String
+  dueDate         DateTime?
+  paidDate        DateTime    @default(now())
+  amount          Float
+  paymentMethod   String      @default("UPI")
+  transactionRef  String?     @default("")
+  notes           String?     @default("")
+  collectedBy     String?     @default("Admin")
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([enrollmentId])
 }
 
 model HomeMedia {

@@ -15,12 +15,14 @@ import {
   GraduationCap,
   FileText,
   ClipboardList,
+  CreditCard,
 } from "lucide-react";
 import { useState } from "react";
 
 const COMMON_NAV_ITEMS = [
   { label: "Web Leads", href: "/superadmin/inquiries", icon: FileText },
   { label: "Official Enrollments", href: "/superadmin/enrollments", icon: GraduationCap },
+  { label: "Fee & Payments", href: "/superadmin/payments", icon: CreditCard },
   { label: "Courses", href: "/superadmin/course", icon: BookOpen },
   { label: "Team", href: "/superadmin/team", icon: Users },
   { label: "Home Photos", href: "/superadmin/home-media", icon: ImageIcon },
