@@ -10,7 +10,11 @@
     "lint": "next lint",
     "create-super-admin": "tsx scripts/create-super-admin.ts",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "k6": "k6-bin\\k6-v0.56.0-windows-amd64\\k6.exe",
+    "test:smoke": "k6-bin\\k6-v0.56.0-windows-amd64\\k6.exe run load-test/smoke.js",
+    "test:normal": "k6-bin\\k6-v0.56.0-windows-amd64\\k6.exe run load-test/normal.js",
+    "test:stress": "k6-bin\\k6-v0.56.0-windows-amd64\\k6.exe run load-test/stress.js"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

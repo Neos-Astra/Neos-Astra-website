@@ -1,40 +1,79 @@
 // src/lib/rateLimiter.ts
-// In-memory rate limiter — protects login routes from brute force attacks
-// Rule: max 5 attempts per IP per 15 minutes → then blocked for 15 minutes
+// Multi-tier Rate Limiter — protects login and form submission endpoints from spam & brute force
 
 import { RateLimiterMemory } from "rate-limiter-flexible";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-const limiter = new RateLimiterMemory({
-  points: 5,       // 5 attempts allowed
-  duration: 15 * 60, // per 15 minutes (900 seconds)
-  blockDuration: 15 * 60, // block for 15 minutes after exceeding
+// 1. Strict Limiter for Authentication / Login: 5 attempts per 15 minutes
+const loginLimiter = new RateLimiterMemory({
+  points: 5,
+  duration: 15 * 60,
+  blockDuration: 15 * 60,
 });
 
-/**
- * Returns an error response if rate limit is exceeded, otherwise null.
- * Usage: const limited = await checkRateLimit(req); if (limited) return limited;
- */
-export async function checkRateLimit(req: NextRequest | Request) {
+// 2. Form Submission Limiter (Inquiries, Enrollments, Survey): 10 requests per minute per IP
+const formLimiter = new RateLimiterMemory({
+  points: 10,
+  duration: 60,
+  blockDuration: 60,
+});
+
+function getClientIp(req: NextRequest | Request): string {
+  const headers = req.headers;
   const forwarded =
-    (req.headers instanceof Headers
-      ? req.headers.get("x-forwarded-for")
-      : (req.headers as any)["x-forwarded-for"]) || "unknown";
+    (headers instanceof Headers
+      ? headers.get("x-forwarded-for")
+      : (headers as any)["x-forwarded-for"]) || "";
 
-  const ip = typeof forwarded === "string"
-    ? forwarded.split(",")[0].trim()
-    : "unknown";
+  if (forwarded) {
+    return forwarded.split(",")[0].trim();
+  }
 
+  const realIp =
+    headers instanceof Headers
+      ? headers.get("x-real-ip")
+      : (headers as any)["x-real-ip"];
+
+  return realIp || "127.0.0.1";
+}
+
+/**
+ * Checks rate limit for public form submissions (Inquiries, Enrollments, Surveys).
+ * Returns NextResponse with 429 if exceeded, otherwise null.
+ */
+export async function checkFormRateLimit(req: NextRequest | Request): Promise<NextResponse | null> {
+  const ip = getClientIp(req);
   try {
-    await limiter.consume(ip);
-    return null; // not rate limited — continue
-  } catch {
-    // Rate limit exceeded
-    const { NextResponse } = await import("next/server");
+    await formLimiter.consume(ip);
+    return null;
+  } catch (rej: any) {
+    const retrySecs = Math.round((rej?.msBeforeNext || 60000) / 1000) || 60;
     return NextResponse.json(
       {
-        error:
-          "Too many login attempts. Please wait 15 minutes before trying again.",
+        error: "Too many requests. Please wait a moment before trying again.",
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(retrySecs),
+        },
+      }
+    );
+  }
+}
+
+/**
+ * Checks rate limit for login / authentication attempts.
+ */
+export async function checkRateLimit(req: NextRequest | Request): Promise<NextResponse | null> {
+  const ip = getClientIp(req);
+  try {
+    await loginLimiter.consume(ip);
+    return null;
+  } catch {
+    return NextResponse.json(
+      {
+        error: "Too many login attempts. Please wait 15 minutes before trying again.",
       },
       { status: 429 }
     );

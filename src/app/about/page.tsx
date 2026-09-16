@@ -1,13 +1,11 @@
-"use client";
-
-import { motion } from "framer-motion";
+import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
+import type { Metadata } from "next";
 
-// ---------------------------------------------
-// Neos Astra — About Page (Modern, image-rich)
-// Palette: Deep Navy + Cyan / Violet
-// Uses REAL Neos Astra photos instead of stock images
-// ---------------------------------------------
+export const metadata: Metadata = {
+  title: "About Us | Neos Astra - School of Innovation",
+  description: "Founded by engineers and educators from robotics labs and applied AI teams — closing the gap between theory and a working prototype.",
+};
 
 const PILLARS = [
   {
@@ -30,13 +28,7 @@ const PILLARS = [
   },
 ];
 
-// Real photos from our own sessions — replaces the old stock gallery
 const GALLERY = ["/event1.jpg", "/event2.jpg", "/event5.jpg", "/event3.jpg"];
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
-};
 
 export default function AboutPage() {
   return (
@@ -44,12 +36,7 @@ export default function AboutPage() {
       {/* Hero: text + big rounded image */}
       <section className="px-6 pt-16 pb-14 md:px-12 md:pt-24">
         <div className="mx-auto max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={fadeUp}
-          >
+          <div>
             <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#8B7CFF4d] bg-[#8B7CFF0d] px-4 py-1.5 font-mono text-xs text-[#8B7CFF]">
               ABOUT NEOS ASTRA
             </span>
@@ -72,20 +59,17 @@ export default function AboutPage() {
               See our courses
               <ArrowUpRight className="h-4 w-4" />
             </a>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6 }}
-            className="relative"
-          >
+          <div className="relative">
             <div className="relative aspect-[4/5] md:aspect-square rounded-3xl overflow-hidden border border-[#1D2436]">
-              <img
+              <Image
                 src="/event2.jpg"
                 alt="Students building at Neos Astra"
-                className="absolute inset-0 h-full w-full object-cover"
+                fill
+                priority
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#090C14cc] via-transparent to-transparent" />
             </div>
@@ -96,46 +80,38 @@ export default function AboutPage() {
               </div>
               <div className="text-xs text-[#8891A8]">students building today</div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* Pillars — image cards */}
       <section className="px-6 py-20 md:px-12">
         <div className="mx-auto max-w-6xl">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={fadeUp}
-            className="mb-12 max-w-xl"
-          >
+          <div className="mb-12 max-w-xl">
             <span className="mb-3 block font-mono text-xs uppercase tracking-widest text-[#4DE8E0]">
               Why Neos Astra
             </span>
             <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
               Not another course platform. A build lab.
             </h2>
-          </motion.div>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {PILLARS.map((pillar, i) => (
-              <motion.div
+            {PILLARS.map((pillar) => (
+              <div
                 key={pillar.num}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="group rounded-2xl border border-[#1D2436] bg-[#0F1420] overflow-hidden transition-colors hover:border-[#4DE8E066]"
+                className="group rounded-2xl border border-[#1D2436] bg-[#0F1420] overflow-hidden transition-all duration-300 hover:border-[#4DE8E066] hover:-translate-y-1"
               >
                 <div className="relative h-44 overflow-hidden">
-                  <img
+                  <Image
                     src={pillar.image}
                     alt={pillar.title}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0F1420] via-transparent to-transparent" />
-                  <span className="absolute top-4 left-4 font-mono text-xs text-[#4DE8E0]">
+                  <span className="absolute top-4 left-4 font-mono text-xs text-[#4DE8E0] z-10">
                     {pillar.num}
                   </span>
                 </div>
@@ -147,7 +123,7 @@ export default function AboutPage() {
                     {pillar.desc}
                   </p>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -156,13 +132,7 @@ export default function AboutPage() {
       {/* Gallery — life at Neos Astra */}
       <section className="px-6 pb-20 md:px-12">
         <div className="mx-auto max-w-6xl">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={fadeUp}
-            className="mb-8 flex items-end justify-between flex-wrap gap-4"
-          >
+          <div className="mb-8 flex items-end justify-between flex-wrap gap-4">
             <div>
               <span className="mb-3 block font-mono text-xs uppercase tracking-widest text-[#8B7CFF]">
                 Behind the scenes
@@ -171,26 +141,24 @@ export default function AboutPage() {
                 Life at Neos Astra
               </h2>
             </div>
-          </motion.div>
+          </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {GALLERY.map((src, i) => (
-              <motion.div
+              <div
                 key={src}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.4, delay: i * 0.08 }}
                 className={`relative overflow-hidden rounded-xl border border-[#1D2436] ${
                   i === 0 ? "col-span-2 row-span-2 aspect-square" : "aspect-square"
                 }`}
               >
-                <img
+                <Image
                   src={src}
                   alt="Neos Astra community"
-                  className="absolute inset-0 h-full w-full object-cover hover:scale-105 transition-transform duration-500"
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover hover:scale-105 transition-transform duration-500"
                 />
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -198,13 +166,7 @@ export default function AboutPage() {
 
       {/* Mission statement banner */}
       <section className="px-6 pb-24 md:px-12">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.6 }}
-          className="mx-auto max-w-6xl relative overflow-hidden rounded-3xl border border-[#4DE8E033] bg-gradient-to-br from-[#0F1420] via-[#151C2C] to-[#090C14] p-10 md:p-14 text-center"
-        >
+        <div className="mx-auto max-w-6xl relative overflow-hidden rounded-3xl border border-[#4DE8E033] bg-gradient-to-br from-[#0F1420] via-[#151C2C] to-[#090C14] p-10 md:p-14 text-center">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(139,124,255,0.12),transparent_70%)]" />
           <div className="relative z-10 max-w-2xl mx-auto">
             <h3 className="text-2xl md:text-3xl font-bold mb-4">
@@ -217,7 +179,7 @@ export default function AboutPage() {
               building things that matter.
             </p>
           </div>
-        </motion.div>
+        </div>
       </section>
     </main>
   );

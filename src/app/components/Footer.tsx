@@ -1,8 +1,8 @@
 "use client";
 
 import { Instagram, Facebook, Linkedin, Mail, ArrowUp } from "lucide-react";
-
-
+import Image from "next/image";
+import Link from "next/link";
 
 const FOOTER_LINKS = {
   Explore: [
@@ -41,12 +41,16 @@ export default function Footer() {
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 border-b border-[#1D2436] pb-12 md:grid-cols-4">
         {/* Brand column */}
         <div className="md:col-span-1">
-          <a href="/" className="flex items-center gap-3 group">
-            <img
-              src="/logo.jpg"
-              alt="Neos Astra Logo"
-              className="h-10 w-10 md:h-11 md:w-11 rounded-full object-cover bg-white ring-2 ring-[#4DE8E0]/40 transition-transform duration-300 group-hover:scale-105 shadow-md shadow-[#4DE8E0]/10"
-            />
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="relative h-10 w-10 md:h-11 md:w-11 shrink-0">
+              <Image
+                src="/logo.jpg"
+                alt="Neos Astra Logo"
+                fill
+                sizes="44px"
+                className="rounded-full object-cover bg-white ring-2 ring-[#4DE8E0]/40 transition-transform duration-300 group-hover:scale-105 shadow-md shadow-[#4DE8E0]/10"
+              />
+            </div>
             <div className="flex flex-col">
               <span className="font-bold tracking-tight text-[#F3F6FB] text-lg leading-tight group-hover:text-[#4DE8E0] transition-colors">
                 NEOS <span className="text-[#4DE8E0]">ASTRA</span>
@@ -55,7 +59,7 @@ export default function Footer() {
                 School of Innovation
               </span>
             </div>
-          </a>
+          </Link>
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-[#8891A8]">
             Next-gen education in artificial intelligence, robotics, and hands-on STEM — empowering future innovators.
           </p>
@@ -70,12 +74,21 @@ export default function Footer() {
             <ul className="flex flex-col gap-3">
               {links.map((link) => (
                 <li key={link.label}>
-                  <a
-                    href={link.href}
-                    className="text-sm text-[#8891A8] transition-colors hover:text-[#F3F6FB]"
-                  >
-                    {link.label}
-                  </a>
+                  {link.href.startsWith("/") ? (
+                    <Link
+                      href={link.href}
+                      className="text-sm text-[#8891A8] transition-colors hover:text-[#F3F6FB]"
+                    >
+                      {link.label}
+                    </Link>
+                  ) : (
+                    <a
+                      href={link.href}
+                      className="text-sm text-[#8891A8] transition-colors hover:text-[#F3F6FB]"
+                    >
+                      {link.label}
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>

@@ -4,7 +4,6 @@ import Footer from "./components/Footer";
 import SmoothScroll from "./components/SmoothScroll";
 import ClientLayout from "./components/ClientLayout";
 
-import { SessionProvider } from "next-auth/react";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -54,14 +53,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
+      <head>
+        {/* Preconnect to external image domains for faster loading */}
+        <link rel="preconnect" href="https://images.unsplash.com" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        <link rel="preconnect" href="https://supabase.co" />
+      </head>
       <body className="bg-[#090C14] text-[#F3F6FB] min-h-screen">
-        <SessionProvider>
-            <SmoothScroll>
-              <ClientLayout>
-                {children}
-              </ClientLayout>
-            </SmoothScroll>
-        </SessionProvider>
+        <SmoothScroll>
+          <ClientLayout>
+            {children}
+          </ClientLayout>
+        </SmoothScroll>
       </body>
     </html>
   );

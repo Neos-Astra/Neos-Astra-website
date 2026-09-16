@@ -5,9 +5,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/superadmin/prisma/client";
 import { auth } from "@/superadmin/auth";
+import { checkFormRateLimit } from "@/lib/rateLimiter";
 
 // Public POST: anyone can submit a web lead / inquiry
 export async function POST(request: Request) {
+  const rateLimitError = await checkFormRateLimit(request);
+  if (rateLimitError) return rateLimitError;
+
   try {
     const body = await request.json();
     const {

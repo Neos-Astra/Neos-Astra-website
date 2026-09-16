@@ -12,6 +12,8 @@ import AboutNavItem from "./AboutNavItem";
 import TeamNavItem from "./TeamNavItem";
 import EventsNavItem from "./EventsNavItem";
 import CareerNavItem from "./CareerNavItem";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -55,12 +57,16 @@ export default function Navbar() {
     >
       <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-4 md:px-12">
         {/* Logo */}
-        <a href="/" className="flex items-center gap-3 group">
-          <img
-            src="/logo.jpg"
-            alt="Neos Astra Logo"
-            className="h-10 w-10 md:h-11 md:w-11 rounded-full object-cover bg-white ring-2 ring-[#4DE8E0]/40 transition-transform duration-300 group-hover:scale-105 shadow-md shadow-[#4DE8E0]/10"
-          />
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="relative h-10 w-10 md:h-11 md:w-11 shrink-0">
+            <Image
+              src="/logo.jpg"
+              alt="Neos Astra Logo"
+              fill
+              sizes="44px"
+              className="rounded-full object-cover bg-white ring-2 ring-[#4DE8E0]/40 transition-transform duration-300 group-hover:scale-105 shadow-md shadow-[#4DE8E0]/10"
+            />
+          </div>
           <div className="flex flex-col">
             <span className="font-bold tracking-tight text-[#F3F6FB] text-lg leading-tight group-hover:text-[#4DE8E0] transition-colors">
               NEOS <span className="text-[#4DE8E0]">ASTRA</span>
@@ -69,7 +75,7 @@ export default function Navbar() {
               School of Innovation
             </span>
           </div>
-        </a>
+        </Link>
 
         {/* Desktop nav */}
         <nav className="hidden md:block">
@@ -84,13 +90,13 @@ export default function Navbar() {
         </nav>
 
         {/* Login CTA (desktop) — navigates to /admin/login page */}
-        <a
+        <Link
           href="/admin/login"
           id="navbar-login-btn"
           className="hidden rounded-md bg-[#4DE8E0] px-5 py-2.5 text-sm font-semibold text-[#090C12] transition-transform hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(77,232,224,0.25)] md:inline-block"
         >
           Login
-        </a>
+        </Link>
 
         {/* Mobile toggle */}
         <button
@@ -130,13 +136,13 @@ export default function Navbar() {
           <EventsNavItem onClick={() => setMenuOpen(false)} />
           <CareerNavItem onClick={() => setMenuOpen(false)} />
           <li className="pt-2">
-            <a
+            <Link
               href="/admin/login"
               onClick={() => setMenuOpen(false)}
               className="block w-full rounded-md bg-[#4DE8E0] px-5 py-3 text-center text-sm font-semibold text-[#090C14]"
             >
               Login
-            </a>
+            </Link>
           </li>
         </ul>
       </div>

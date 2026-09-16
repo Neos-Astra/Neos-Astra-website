@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import {
   Cpu,
   Sparkles,
@@ -24,7 +25,7 @@ import {
 // Palette: Deep Navy + Cyan / Violet
 // ---------------------------------------------
 
-const FALLBACK_HERO_IMAGES = [
+export const FALLBACK_HERO_IMAGES = [
   "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=1600&auto=format&fit=crop",
   "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1600&auto=format&fit=crop",
   "https://images.unsplash.com/photo-1531746790731-6c087fecd65a?q=80&w=1600&auto=format&fit=crop",
@@ -108,7 +109,7 @@ const FEATURES = [
   },
 ];
 
-interface EventHighlight {
+export interface EventHighlight {
   id?: string;
   img: string;
   title: string;
@@ -116,7 +117,7 @@ interface EventHighlight {
 }
 
 // Recent events — update image paths / titles / dates as new events happen
-const RECENT_EVENTS: EventHighlight[] = [
+export const RECENT_EVENTS: EventHighlight[] = [
   { id: "ev-1", img: "/event1.jpg", title: "Classroom & Tech Session", date: "Jul 2026" },
   { id: "ev-2", img: "/event2.jpg", title: "Robotics Car Demonstration", date: "Jul 2026" },
   { id: "ev-3", img: "/event3.jpg", title: "Microscope & Science Experimentation", date: "Jun 2026" },
@@ -141,38 +142,22 @@ const staggerContainer = {
   },
 };
 
-export default function Home() {
+export default function Home({
+  initialHeroImages = FALLBACK_HERO_IMAGES,
+  initialEventHighlights = RECENT_EVENTS,
+}: {
+  initialHeroImages?: string[];
+  initialEventHighlights?: EventHighlight[];
+}) {
   const [activeImage, setActiveImage] = useState(0);
-  const [heroImages, setHeroImages] = useState<string[]>(FALLBACK_HERO_IMAGES);
-  const [eventHighlights, setEventHighlights] = useState<EventHighlight[]>(RECENT_EVENTS);
-
-  // Fetch hero & highlight images from DB; fall back to hardcoded ones
-  useEffect(() => {
-    fetch("/api/home-media")
-      .then((r) => r.json())
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          const urls = data.map((m: { imageUrl: string }) => m.imageUrl);
-          setHeroImages(urls);
-          setEventHighlights(
-            data.map((m: { id?: string; imageUrl: string; title?: string }, idx: number) => ({
-              id: m.id || `ev-${idx}`,
-              img: m.imageUrl,
-              title: m.title?.trim() || `STEM Innovation Moment ${idx + 1}`,
-              date: "2026",
-            }))
-          );
-        }
-      })
-      .catch(() => {
-        // silently fall back to hardcoded images
-      });
-  }, []);
+  const heroImages = initialHeroImages && initialHeroImages.length > 0 ? initialHeroImages : FALLBACK_HERO_IMAGES;
+  const eventHighlights = initialEventHighlights && initialEventHighlights.length > 0 ? initialEventHighlights : RECENT_EVENTS;
 
   useEffect(() => {
+    if (heroImages.length <= 1) return;
     const interval = setInterval(() => {
       setActiveImage((prev) => (prev + 1) % heroImages.length);
-    }, 3500);
+    }, 4500);
     return () => clearInterval(interval);
   }, [heroImages.length]);
 
@@ -183,11 +168,14 @@ export default function Home() {
         {/* Background image carousel */}
         <div className="absolute inset-0 z-0">
         {heroImages.map((src, i) => (
-            <img
+            <Image
               key={src}
               src={src}
               alt="Neos Astra STEM Learning"
-              className={`absolute inset-0 h-full w-full object-cover object-[center_30%] transition-opacity duration-1000 ease-in-out ${
+              fill
+              priority={i === 0}
+              sizes="100vw"
+              className={`object-cover object-[center_30%] transition-opacity duration-1000 ease-in-out ${
                 i === activeImage ? "opacity-100" : "opacity-0"
               }`}
             />
@@ -300,7 +288,7 @@ export default function Home() {
                   <div className="bg-[#1D2436] p-3 rounded-2xl rounded-tr-none max-w-[80%] border border-[#F3F6FB1a]">
                     <div className="flex items-start gap-3">
                       <div className="h-11 w-11 shrink-0 rounded-full bg-[#1D2436] flex items-center overflow-hidden border border-[#4DE8E0]">
-                        <img src="/student.png" alt="Student" className="h-full w-full object-cover" />
+                        <Image src="/student.png" alt="Student" fill sizes="44px" className="object-cover" />
                       </div>
                       <div>
                         <p className="text-xs text-[#4DE8E0] font-mono">Student</p>
@@ -315,7 +303,7 @@ export default function Home() {
                   <div className="bg-[#8B7CFF] p-3 rounded-2xl rounded-tl-none max-w-[85%] shadow-lg shadow-[#8B7CFF26]">
                     <div className="flex items-start gap-3">
                       <div className="h-11 w-11 shrink-0 rounded-full bg-[#090C14] flex items-center overflow-hidden border border-[#8B7CFF]">
-                        <img src="/icon.png?v=2" alt="Mentor" className="h-full w-full object-cover object-center" />
+                        <Image src="/icon.png" alt="Mentor" fill sizes="44px" className="object-cover object-center" />
                       </div>
                       <div>
                         <p className="text-xs text-[#090C14] font-mono font-bold">Mentor</p>
@@ -388,10 +376,12 @@ export default function Home() {
                   key={`${ev.id || i}-${i}`}
                   className="group relative w-56 sm:w-64 shrink-0 aspect-[3/4] rounded-2xl overflow-hidden border border-[#1D2436] bg-[#090C14] hover:border-[#4DE8E066] transition-all hover:scale-105 shadow-xl cursor-pointer"
                 >
-                  <img
+                  <Image
                     src={ev.img}
                     alt={ev.title}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    fill
+                    sizes="(max-width: 640px) 224px, 256px"
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#090C14ee] via-[#090C1433] to-transparent pointer-events-none" />
                   <div className="absolute bottom-0 inset-x-0 p-4 pointer-events-none">
@@ -404,23 +394,6 @@ export default function Home() {
             </div>
           </motion.div>
         </div>
-
-        <style jsx>{`
-          .event-marquee {
-            animation: scroll-marquee 28s linear infinite;
-          }
-          .event-marquee:hover {
-            animation-play-state: paused;
-          }
-          @keyframes scroll-marquee {
-            from {
-              transform: translateX(0);
-            }
-            to {
-              transform: translateX(-50%);
-            }
-          }
-        `}</style>
       </motion.section>
 
       {/* Tech Tracks Section with Scroll Stagger */}
@@ -502,10 +475,12 @@ export default function Home() {
                       imageFirst ? "md:order-1" : "md:order-2"
                     }`}
                   >
-                    <img
+                    <Image
                       src={track.image}
                       alt={track.title}
-                      className="absolute inset-0 h-full w-full object-cover"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#090C1466] via-transparent to-transparent md:bg-gradient-to-l md:from-[#090C1440] md:via-transparent md:to-transparent" />
                   </div>

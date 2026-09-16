@@ -45,5 +45,19 @@ body {
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
+
   background: #4DE8E088;
 }
+
+/* Event marquee — moved from Home.tsx <style jsx> to eliminate runtime CSS */
+.event-marquee {
+  animation: scroll-marquee 28s linear infinite;
+}
+.event-marquee:hover {
+  animation-play-state: paused;
+}
+@keyframes scroll-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+

@@ -1,10 +1,7 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import Image from "next/image";
 import { Linkedin, Twitter, Mail, Award, Sparkles } from "lucide-react";
 
-interface TeamMemberItem {
+export interface TeamMemberItem {
   id?: string;
   name: string;
   role: string;
@@ -16,7 +13,7 @@ interface TeamMemberItem {
   email: string | null;
 }
 
-const STATIC_TEAM_MEMBERS: TeamMemberItem[] = [
+export const STATIC_TEAM_MEMBERS: TeamMemberItem[] = [
   {
     name: "Dr. Aris Thorne",
     role: "Founder & Chief Innovator",
@@ -59,114 +56,56 @@ const STATIC_TEAM_MEMBERS: TeamMemberItem[] = [
   },
 ];
 
-const fadeInUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
-};
-
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.05,
-    },
-  },
-};
-
-export default function TeamPage() {
-  const [members, setMembers] = useState<TeamMemberItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/team")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setMembers(data);
-        } else {
-          setMembers(STATIC_TEAM_MEMBERS);
-        }
-      })
-      .catch(() => {
-        setMembers(STATIC_TEAM_MEMBERS);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+export default function TeamComponent({ members = STATIC_TEAM_MEMBERS }: { members?: TeamMemberItem[] }) {
+  const displayMembers = members && members.length > 0 ? members : STATIC_TEAM_MEMBERS;
 
   return (
     <main className="min-h-screen bg-[#090C14] text-[#F3F6FB] px-4 py-12 sm:px-6 sm:py-16 md:px-12">
       <div className="mx-auto max-w-7xl">
         {/* Header */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={staggerContainer}
-          className="text-center max-w-3xl mx-auto mb-12 sm:mb-16 md:mb-20"
-        >
-          <motion.div
-            variants={fadeInUp}
-            className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#4DE8E04d] bg-[#4DE8E00d] px-3 py-1.5 sm:px-4 font-mono text-[10px] sm:text-xs text-[#4DE8E0]"
-          >
+        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16 md:mb-20">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#4DE8E04d] bg-[#4DE8E00d] px-3 py-1.5 sm:px-4 font-mono text-[10px] sm:text-xs text-[#4DE8E0]">
             <Award className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             WORLD CLASS EDUCATORS & INNOVATORS
-          </motion.div>
+          </div>
 
-          <motion.h1
-            variants={fadeInUp}
-            className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-[#F3F6FB]"
-          >
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-[#F3F6FB]">
             Meet Our{" "}
             <span className="bg-gradient-to-r from-[#4DE8E0] via-[#64B5F6] to-[#8B7CFF] bg-clip-text text-transparent">
               Team
             </span>
-          </motion.h1>
+          </h1>
 
-          <motion.p
-            variants={fadeInUp}
-            className="mt-4 sm:mt-6 text-sm sm:text-lg leading-relaxed text-[#8891A8] px-2 sm:px-0"
-          >
+          <p className="mt-4 sm:mt-6 text-sm sm:text-lg leading-relaxed text-[#8891A8] px-2 sm:px-0">
             Driven by passion, innovation, and industry expertise — our team of engineers,
             researchers, and mentors are dedicated to inspiring the next generation of STEM leaders.
-          </motion.p>
-        </motion.div>
+          </p>
+        </div>
 
         {/* Team Grid */}
-        {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#1D2436] border-t-[#4DE8E0]" />
-          </div>
-        ) : (
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={staggerContainer}
-            className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 md:gap-8"
-          >
-            {members.map((member, i) => {
-              return (
-                <motion.div
-                  key={member.id || i}
-                  variants={fadeInUp}
-                  whileHover={{ y: -6 }}
-                  transition={{ duration: 0.3 }}
-                  className="group relative rounded-xl sm:rounded-2xl border border-[#1D2436] bg-[#0F1420] p-3 sm:p-6 transition-all duration-300 hover:border-[#4DE8E066] hover:shadow-[0_12px_30px_rgba(77,232,224,0.12)] flex flex-col justify-between"
-                >
-                  <div>
-                    {/* Avatar */}
-                    <div className="relative mb-3 sm:mb-6 overflow-hidden rounded-lg sm:rounded-xl aspect-square w-full bg-[#1D2436]">
-                      {member.image ? (
-                        <img
-                          src={member.image}
-                          alt={member.name}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="h-full w-full flex items-center justify-center font-bold text-2xl sm:text-3xl text-[#4DE8E0]">
-                          {member.name.charAt(0)}
-                        </div>
-                      )}
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 md:gap-8">
+          {displayMembers.map((member, i) => {
+            return (
+              <div
+                key={member.id || i}
+                className="group relative rounded-xl sm:rounded-2xl border border-[#1D2436] bg-[#0F1420] p-3 sm:p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-[#4DE8E066] hover:shadow-[0_12px_30px_rgba(77,232,224,0.12)] flex flex-col justify-between"
+              >
+                <div>
+                  {/* Avatar */}
+                  <div className="relative mb-3 sm:mb-6 overflow-hidden rounded-lg sm:rounded-xl aspect-square w-full bg-[#1D2436]">
+                    {member.image ? (
+                      <Image
+                        src={member.image}
+                        alt={member.name}
+                        fill
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center font-bold text-2xl sm:text-3xl text-[#4DE8E0]">
+                        {member.name.charAt(0)}
+                      </div>
+                    )}
                       <div className="absolute inset-0 bg-gradient-to-t from-[#0F1420] via-transparent to-transparent opacity-80" />
                       {member.badge && (
                         <span className="absolute top-1.5 right-1.5 sm:top-3 sm:right-3 rounded-full bg-[#090C14]/80 backdrop-blur-md px-2 py-0.5 sm:px-3 sm:py-1 text-[8px] sm:text-[10px] font-mono font-semibold text-[#4DE8E0] border border-[#4DE8E033] max-w-[85%] truncate">
@@ -220,11 +159,10 @@ export default function TeamPage() {
                       </a>
                     )}
                   </div>
-                </motion.div>
+                </div>
               );
             })}
-          </motion.div>
-        )}
+          </div>
       </div>
     </main>
   );

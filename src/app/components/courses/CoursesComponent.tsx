@@ -1,18 +1,16 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import Image from "next/image";
 import { BookOpen, Clock, Sparkles, ArrowRight } from "lucide-react";
 
-interface Course {
+export interface Course {
   id: string;
   title: string;
   description: string;
   category: string;
   price: string;
-  admissionFee?: string;
-  kitPrice?: string;
-  hasKit?: boolean;
-  gstPercent?: number;
+  admissionFee?: string | null;
+  kitPrice?: string | null;
+  hasKit?: boolean | null;
+  gstPercent?: number | null;
   duration: string;
   badge: string | null;
   image: string | null;
@@ -26,20 +24,7 @@ function fmtAmt(val: number): string {
   return `₹${val.toLocaleString("en-IN")}`;
 }
 
-export default function CoursesPage() {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/courses")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) setCourses(data);
-      })
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
-  }, []);
-
+export default function CoursesComponent({ courses = [] }: { courses?: Course[] }) {
   return (
     <main className="min-h-screen bg-[#090C14] text-[#F3F6FB] px-6 py-16 md:px-12">
       <div className="mx-auto max-w-7xl">
@@ -58,9 +43,7 @@ export default function CoursesPage() {
         </div>
 
         {/* Content */}
-        {loading ? (
-          <div className="text-center py-20 text-[#8891A8]">Loading courses...</div>
-        ) : courses.length === 0 ? (
+        {courses.length === 0 ? (
           <div className="text-center py-20 bg-[#0F1420] rounded-3xl border border-[#1D2436]">
             <BookOpen className="h-14 w-14 text-[#4DE8E0] mx-auto mb-4 opacity-40" />
             <h3 className="text-xl font-bold text-[#F3F6FB] mb-2">No Courses Available Yet</h3>
@@ -82,13 +65,15 @@ export default function CoursesPage() {
                   <div>
                     {course.image ? (
                       <div className="relative h-48 w-full overflow-hidden rounded-2xl mb-6">
-                        <img
+                        <Image
                           src={course.image}
                           alt={course.title}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                         {course.badge && (
-                          <span className="absolute top-3 left-3 rounded-full bg-[#090C14cc] backdrop-blur-md border border-[#8B7CFF66] px-3 py-1 font-mono text-[10px] text-[#8B7CFF]">
+                          <span className="absolute top-3 left-3 rounded-full bg-[#090C14cc] backdrop-blur-md border border-[#8B7CFF66] px-3 py-1 font-mono text-[10px] text-[#8B7CFF] z-10">
                             {course.badge}
                           </span>
                         )}

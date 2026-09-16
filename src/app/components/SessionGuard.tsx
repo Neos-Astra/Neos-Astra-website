@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { SessionProvider, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
-export default function SessionGuard({ children }: { children: React.ReactNode }) {
+function SessionGuardInner({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [isValid, setIsValid] = useState(false);
@@ -30,4 +30,12 @@ export default function SessionGuard({ children }: { children: React.ReactNode }
   }
 
   return <>{children}</>;
+}
+
+export default function SessionGuard({ children }: { children: React.ReactNode }) {
+  return (
+    <SessionProvider>
+      <SessionGuardInner>{children}</SessionGuardInner>
+    </SessionProvider>
+  );
 }

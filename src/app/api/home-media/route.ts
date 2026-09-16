@@ -13,7 +13,7 @@ export async function GET() {
     });
     return NextResponse.json(media, {
       headers: {
-        "Cache-Control": "public, s-maxage=30, stale-while-revalidate=120",
+        "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
       },
     });
   } catch (error) {
@@ -49,30 +49,26 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Image data is required." }, { status: 400 });
       }
 
-      // If it's a base64 data URL, try to save to disk, or keep data URL as fallback
+      // If it's a base64 data URL, save persistently
       if (imageUrl.startsWith("data:image/")) {
         try {
           const matches = imageUrl.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
           if (matches && matches.length === 3) {
-            const extMatch = matches[1].split("/")[1] || "jpeg";
-            const ext = extMatch.replace("e", "") === "jpg" ? "jpg" : extMatch === "webp" ? "webp" : "png";
+            const mime = matches[1];
+            const ext = mime.split("/")[1] || "jpeg";
             const buffer = Buffer.from(matches[2], "base64");
+            const filename = `hero-${Date.now()}-${Math.round(Math.random() * 1e6)}.${ext.replace("e", "")}`;
 
-            const uploadDir = path.join(process.cwd(), "public/uploads");
-            if (!fs.existsSync(uploadDir)) {
-              fs.mkdirSync(uploadDir, { recursive: true });
-            }
-
-            const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-            const filename = `hero-${uniqueSuffix}.${ext}`;
-            const filepath = path.join(uploadDir, filename);
-
-            await writeFile(filepath, buffer);
-            imageUrl = `/uploads/${filename}`;
+            const { uploadPersistentFile } = await import("@/lib/storage");
+            imageUrl = await uploadPersistentFile({
+              bucket: "home-media",
+              filename,
+              buffer,
+              contentType: mime,
+            });
           }
         } catch (fileErr) {
-          console.warn("Could not save to public/uploads disk, using data URL fallback:", fileErr);
-          // Keep imageUrl as data URL so it still succeeds in DB
+          console.warn("Could not save persistent image, using fallback:", fileErr);
         }
       }
     } else {
@@ -89,25 +85,21 @@ export async function POST(request: Request) {
 
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
+      const rawName = file.name ? file.name.replace(/[^a-zA-Z0-9.-]/g, "") : "photo.jpg";
+      const filename = `${Date.now()}-${rawName || "photo.jpg"}`;
+      const mimeType = file.type || "image/jpeg";
 
       try {
-        const uploadDir = path.join(process.cwd(), "public/uploads");
-        if (!fs.existsSync(uploadDir)) {
-          fs.mkdirSync(uploadDir, { recursive: true });
-        }
-
-        const rawName = file.name ? file.name.replace(/[^a-zA-Z0-9.-]/g, "") : "photo.jpg";
-        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-        const filename = `${uniqueSuffix}-${rawName || "photo.jpg"}`;
-        const filepath = path.join(uploadDir, filename);
-
-        await writeFile(filepath, buffer);
-        imageUrl = `/uploads/${filename}`;
+        const { uploadPersistentFile } = await import("@/lib/storage");
+        imageUrl = await uploadPersistentFile({
+          bucket: "home-media",
+          filename,
+          buffer,
+          contentType: mimeType,
+        });
       } catch (fileErr) {
-        console.warn("Disk write failed, falling back to base64 data URL:", fileErr);
-        const mimeType = file.type || "image/jpeg";
-        const base64 = buffer.toString("base64");
-        imageUrl = `data:${mimeType};base64,${base64}`;
+        console.warn("Persistent upload failed, using fallback:", fileErr);
+        imageUrl = `data:${mimeType};base64,${buffer.toString("base64")}`;
       }
     }
 

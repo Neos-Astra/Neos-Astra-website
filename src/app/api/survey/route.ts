@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/superadmin/prisma/client";
 import { auth } from "@/superadmin/auth";
+import { checkFormRateLimit } from "@/lib/rateLimiter";
 
 export async function POST(request: Request) {
+  const rateLimitError = await checkFormRateLimit(request);
+  if (rateLimitError) return rateLimitError;
+
   try {
     const body = await request.json();
     const { researchId, date, answers } = body;

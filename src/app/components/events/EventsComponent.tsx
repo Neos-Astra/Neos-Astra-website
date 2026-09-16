@@ -1,17 +1,6 @@
-"use client";
+import Image from "next/image";
+import { Calendar, Clock } from "lucide-react";
 
-import { motion } from "framer-motion";
-import { Calendar, MapPin, Clock, ArrowRight } from "lucide-react";
-
-// ---------------------------------------------
-// Neos Astra — Events Page
-// Palette: Deep Navy + Cyan / Violet
-// Shows events WE have organized, plus events WE
-// are planning to organize next.
-// ---------------------------------------------
-
-// Past / hosted events — update this list whenever a new event happens.
-// Reuses the same event photos already used on the Home page marquee.
 const HOSTED_EVENTS = [
   {
     title: "Classroom & Tech Session",
@@ -50,7 +39,6 @@ const HOSTED_EVENTS = [
   },
 ];
 
-// Upcoming events — update this list as new events get planned.
 const UPCOMING_EVENTS = [
   {
     title: "Drone Building Bootcamp",
@@ -72,31 +60,13 @@ const UPCOMING_EVENTS = [
   },
 ];
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
-};
-
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.05 },
-  },
-};
-
-export default function EventsPage() {
+export default function EventsComponent() {
   return (
     <main className="min-h-screen bg-[#090C14] text-[#F3F6FB]">
       {/* Header */}
       <section className="px-4 pt-14 pb-8 sm:px-6 sm:pt-16 sm:pb-10 md:px-12 md:pt-24">
         <div className="mx-auto max-w-6xl">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.2 }}
-            variants={fadeUp}
-          >
+          <div>
             <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#4DE8E04d] bg-[#4DE8E00d] px-3 py-1.5 sm:px-4 font-mono text-[10px] sm:text-xs text-[#4DE8E0]">
               LIFE AT NEOS ASTRA
             </span>
@@ -107,45 +77,34 @@ export default function EventsPage() {
               From hands-on labs to full-day bootcamps — see what our students have
               already built together, and what we're planning next.
             </p>
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* Hosted / Past events */}
       <section className="px-4 pb-14 sm:px-6 sm:pb-16 md:px-12">
         <div className="mx-auto max-w-6xl">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.15 }}
-            variants={fadeUp}
-            className="mb-6 sm:mb-8 flex items-center gap-2"
-          >
+          <div className="mb-6 sm:mb-8 flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-[#4DE8E0]" />
             <h2 className="text-lg sm:text-2xl font-bold tracking-tight">Events We've Hosted</h2>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.1 }}
-            variants={staggerContainer}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {HOSTED_EVENTS.map((event) => (
-              <motion.div
+              <div
                 key={event.title}
-                variants={fadeUp}
-                className="group rounded-2xl border border-[#1D2436] bg-[#0F1420] overflow-hidden transition-colors hover:border-[#4DE8E066]"
+                className="group rounded-2xl border border-[#1D2436] bg-[#0F1420] overflow-hidden transition-all duration-300 hover:border-[#4DE8E066] hover:-translate-y-1"
               >
                 <div className="relative h-44 sm:h-48 overflow-hidden">
-                  <img
+                  <Image
                     src={event.image}
                     alt={event.title}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0F1420] via-transparent to-transparent" />
-                  <span className="absolute top-3 left-3 sm:top-4 sm:left-4 rounded-full bg-[#090C14cc] px-2.5 py-1 sm:px-3 font-mono text-[9px] sm:text-[10px] text-[#4DE8E0] backdrop-blur-sm">
+                  <span className="absolute top-3 left-3 sm:top-4 sm:left-4 rounded-full bg-[#090C14cc] px-2.5 py-1 sm:px-3 font-mono text-[9px] sm:text-[10px] text-[#4DE8E0] backdrop-blur-sm z-10">
                     {event.track}
                   </span>
                 </div>
@@ -161,39 +120,25 @@ export default function EventsPage() {
                     {event.desc}
                   </p>
                 </div>
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* Upcoming events */}
       <section className="px-4 pb-20 sm:px-6 sm:pb-24 md:px-12">
         <div className="mx-auto max-w-6xl">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.15 }}
-            variants={fadeUp}
-            className="mb-6 sm:mb-8 flex items-center gap-2"
-          >
+          <div className="mb-6 sm:mb-8 flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-[#8B7CFF]" />
             <h2 className="text-lg sm:text-2xl font-bold tracking-tight">Upcoming Events</h2>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.1 }}
-            variants={staggerContainer}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {UPCOMING_EVENTS.map((event) => (
-              <motion.div
+              <div
                 key={event.title}
-                variants={fadeUp}
-                whileHover={{ y: -4 }}
-                className="rounded-xl border border-[#1D2436] bg-[#0F1420] p-5 sm:p-6 hover:border-[#8B7CFF66] transition-colors"
+                className="rounded-xl border border-[#1D2436] bg-[#0F1420] p-5 sm:p-6 hover:border-[#8B7CFF66] hover:-translate-y-1 transition-all duration-300"
               >
                 <span className="inline-block rounded-full bg-[#8B7CFF1a] text-[#8B7CFF] text-[9px] sm:text-[10px] font-mono px-2.5 py-1 sm:px-3 mb-3 sm:mb-4">
                   {event.track}
@@ -208,9 +153,9 @@ export default function EventsPage() {
                   <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                   {event.date}
                 </div>
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
     </main>
