@@ -287,7 +287,7 @@ export default function Home({
                 <div className="flex justify-end mb-2">
                   <div className="bg-[#1D2436] p-3 rounded-2xl rounded-tr-none max-w-[80%] border border-[#F3F6FB1a]">
                     <div className="flex items-start gap-3">
-                      <div className="h-11 w-11 shrink-0 rounded-full bg-[#1D2436] flex items-center overflow-hidden border border-[#4DE8E0]">
+                      <div className="relative h-11 w-11 shrink-0 rounded-full bg-[#1D2436] flex items-center overflow-hidden border border-[#4DE8E0]">
                         <Image src="/student.png" alt="Student" fill sizes="44px" className="object-cover" />
                       </div>
                       <div>
@@ -302,8 +302,8 @@ export default function Home({
                 <div className="flex justify-start">
                   <div className="bg-[#8B7CFF] p-3 rounded-2xl rounded-tl-none max-w-[85%] shadow-lg shadow-[#8B7CFF26]">
                     <div className="flex items-start gap-3">
-                      <div className="h-11 w-11 shrink-0 rounded-full bg-[#090C14] flex items-center overflow-hidden border border-[#8B7CFF]">
-                        <Image src="/icon.png" alt="Mentor" fill sizes="44px" className="object-cover object-center" />
+                      <div className="relative h-11 w-11 shrink-0 rounded-full bg-white flex items-center overflow-hidden border border-[#8B7CFF] shadow-sm">
+                        <Image src="/logo-fit.png" alt="Mentor" fill sizes="44px" className="object-cover" />
                       </div>
                       <div>
                         <p className="text-xs text-[#090C14] font-mono font-bold">Mentor</p>
