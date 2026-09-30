@@ -38,7 +38,6 @@ export function buildFeeReminderText(data: WhatsAppReminderData): string {
   const parentOrStudent = data.guardianName?.trim()
     ? `Dear ${data.guardianName} (Parent / Guardian of ${data.studentName})`
     : `Dear ${data.studentName}`;
-  const upi = data.upiId || "9348059284@upi"; // Official Neos Astra UPI
   const contact = data.contactNumber || "+91 9348059284";
 
   let statusSentence = "";
@@ -62,9 +61,8 @@ export function buildFeeReminderText(data: WhatsAppReminderData): string {
     `• *Amount Due:* *${amtStr}*\n` +
     `${statusSentence}\n\n` +
     `━━━━━━━━━━━━━━━━━━━━\n` +
-    `💳 *Payment Options:*\n` +
-    `• UPI ID: \`${upi}\`\n` +
-    `• Google Pay / PhonePe / Paytm: *${contact}*\n` +
+    `💳 *Payment Option:*\n` +
+    `Please scan the QR code in the attached image to complete the payment.\n` +
     `━━━━━━━━━━━━━━━━━━━━\n\n` +
     `Please process the payment at your earliest convenience. If you have already completed the transaction, kindly reply with the payment screenshot or UTR reference so we can verify and update our records.\n\n` +
     `For any assistance or billing inquiries, please contact our help desk at ${contact}.\n\n` +
