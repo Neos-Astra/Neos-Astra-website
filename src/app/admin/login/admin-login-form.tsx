@@ -145,11 +145,6 @@ export default function AdminLoginForm() {
           )}
         </button>
       </form>
-
-      {/* Rate limit warning */}
-      <p className="mt-6 text-center text-xs text-[#8891A8]/60">
-        🔒 5 failed attempts will lock your IP for 15 minutes
-      </p>
     </div>
   );
 }

@@ -107,38 +107,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new Error("Account is inactive.");
         }
 
-        if (user.lockedUntil && new Date(user.lockedUntil) > new Date()) {
-          const timeRemaining = Math.ceil(
-            (new Date(user.lockedUntil).getTime() - Date.now()) / (1000 * 60)
-          );
-          throw new Error(
-            `Account is locked due to multiple failed login attempts. Try again in ${timeRemaining} minute(s).`
-          );
-        }
-
         const isValidPassword = await bcrypt.compare(password, user.passwordHash);
 
         if (!isValidPassword) {
-          const newFailedCount = user.failedLoginCount + 1;
-          const lockedUntil = newFailedCount >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : null;
-
-          const updatePromise = prisma.adminUser.update({
-            where: { id: user.id },
-            data: {
-              failedLoginCount: newFailedCount,
-              lockedUntil: lockedUntil ?? user.lockedUntil,
-            },
-          });
-
-          if (newFailedCount >= 5) {
-            await updatePromise;
-            throw new Error(
-              "Account locked due to 5 failed login attempts. Try again in 15 minutes."
-            );
-          } else {
-            updatePromise.catch((e) => console.error("Non-blocking failedLoginCount update error:", e));
-          }
-
           throw new Error("Invalid credentials.");
         }
 
