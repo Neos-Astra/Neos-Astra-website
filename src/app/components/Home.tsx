@@ -563,7 +563,7 @@ export default function Home({
               className="mt-10 flex items-center gap-6 sm:gap-8 border-t border-[#F3F6FB1a] pt-6"
             >
               {[
-                { value: "5,000+", label: "Students" },
+                { value: "50+", label: "Students" },
                 { value: "4", label: "Tech Tracks" },
                 { value: "100%", label: "Hands-on" },
               ].map((st, i) => (
