@@ -21,7 +21,6 @@ export default function robots(): MetadataRoute.Robots {
           "/superadmin/",
           "/api/",
           "/_next/",
-          "/form/", // Survey form — not meant to be indexed
         ],
       },
     ],

@@ -1,5 +1,4 @@
 import HomeComponent, {
-  FALLBACK_HERO_IMAGES,
   RECENT_EVENTS,
   EventHighlight,
 } from "./components/Home";
@@ -9,7 +8,6 @@ import { prisma } from "@/superadmin/prisma/client";
 export const revalidate = 3600;
 
 export default async function Home() {
-  let heroImages = FALLBACK_HERO_IMAGES;
   let eventHighlights: EventHighlight[] = RECENT_EVENTS;
 
   try {
@@ -17,7 +15,6 @@ export default async function Home() {
       orderBy: { position: "asc" },
     });
     if (data && data.length > 0) {
-      heroImages = data.map((m) => m.imageUrl);
       eventHighlights = data.map((m, idx) => ({
         id: m.id || `ev-${idx}`,
         img: m.imageUrl,
@@ -31,7 +28,6 @@ export default async function Home() {
 
   return (
     <HomeComponent
-      initialHeroImages={heroImages}
       initialEventHighlights={eventHighlights}
     />
   );

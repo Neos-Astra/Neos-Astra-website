@@ -29,7 +29,6 @@ const COMMON_NAV_ITEMS = [
 ];
 
 const SUPER_ADMIN_NAV_ITEMS = [
-  { label: "NGO Survey Responses", href: "/superadmin/survey", icon: ClipboardList },
   { label: "Careers", href: "/superadmin/career", icon: ShieldCheck },
   { label: "Manage Admins", href: "/superadmin/admins", icon: ShieldCheck },
 ];

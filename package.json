@@ -8,16 +8,14 @@
     "postinstall": "prisma generate --schema=src/superadmin/prisma/schema.prisma",
     "start": "next start",
     "lint": "next lint",
-    "create-super-admin": "tsx scripts/create-super-admin.ts",
+    "create-super-admin": "tsx src/superadmin/scripts/create-super-admin.ts",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio",
-    "k6": "k6-bin\\k6-v0.56.0-windows-amd64\\k6.exe",
-    "test:smoke": "k6-bin\\k6-v0.56.0-windows-amd64\\k6.exe run load-test/smoke.js",
-    "test:normal": "k6-bin\\k6-v0.56.0-windows-amd64\\k6.exe run load-test/normal.js",
-    "test:stress": "k6-bin\\k6-v0.56.0-windows-amd64\\k6.exe run load-test/stress.js"
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "^9.8.1",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "framer-motion": "^11.18.2",
@@ -31,7 +29,8 @@
     "rate-limiter-flexible": "^11.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "tailwind-merge": "^3.0.1"
+    "tailwind-merge": "^3.0.1",
+    "three": "^0.186.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -41,6 +40,7 @@
     "@types/nodemailer": "^8.0.1",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
+    "@types/three": "^0.186.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.19.0",
     "eslint-config-next": "^15.1.6",

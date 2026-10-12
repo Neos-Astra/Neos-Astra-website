@@ -184,13 +184,3 @@ model JobOpening {
   updatedAt    DateTime @updatedAt
 }
 
-model NgoSurveyResponse {
-  id              String   @id @default(cuid())
-  researchId      String?  @default("")
-  date            String?  @default("")
-  participantRole String?  @default("")
-  orgSize         String?  @default("")
-  answers         Json
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-}

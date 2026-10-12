@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Edges } from "@react-three/drei";
+import * as THREE from "three";
 import {
   Cpu,
   Sparkles,
@@ -10,26 +13,10 @@ import {
   Users,
   Rocket,
   ArrowRight,
-  ShieldCheck,
   Zap,
   BookOpen,
   Award,
-  MessageCircle,
-  User,
-  GraduationCap,
-  Bot,
 } from "lucide-react";
-
-// --------------------------------------------- 
-// Neos Astra — Home Component (with Motion)
-// Palette: Deep Navy + Cyan / Violet
-// ---------------------------------------------
-
-export const FALLBACK_HERO_IMAGES = [
-  "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=1600&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1600&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1531746790731-6c087fecd65a?q=80&w=1600&auto=format&fit=crop",
-];
 
 const TRACKS = [
   {
@@ -142,58 +129,373 @@ const staggerContainer = {
   },
 };
 
+/* ------------------------------------------------------------------ */
+/*  3D HERO BACKGROUND — AI chip with glowing data lines (r3f)         */
+/* ------------------------------------------------------------------ */
+const CYAN = "#4DE8E0";
+const BLUE = "#64B5F6";
+const PURPLE = "#8B7CFF";
+const PALETTE = [CYAN, BLUE, PURPLE];
+
+function mulberry32(seed: number) {
+  let a = seed;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// "AI" text drawn on a canvas -> texture (no font download needed)
+function makeAITexture() {
+  const size = 512;
+  const c = document.createElement("canvas");
+  c.width = size;
+  c.height = size;
+  const ctx = c.getContext("2d")!;
+  const g = ctx.createLinearGradient(0, 0, size, size);
+  g.addColorStop(0, CYAN);
+  g.addColorStop(1, PURPLE);
+  ctx.font = "800 360px system-ui, -apple-system, Segoe UI, Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.shadowColor = CYAN;
+  ctx.shadowBlur = 40;
+  ctx.fillStyle = g;
+  ctx.fillText("AI", size / 2, size / 2 + 12);
+  ctx.shadowBlur = 0;
+  ctx.fillText("AI", size / 2, size / 2 + 12);
+  const tex = new THREE.CanvasTexture(c);
+  tex.anisotropy = 4;
+  return tex;
+}
+
+// Soft radial glow texture
+function makeGlowTexture() {
+  const size = 256;
+  const c = document.createElement("canvas");
+  c.width = size;
+  c.height = size;
+  const ctx = c.getContext("2d")!;
+  const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  g.addColorStop(0, "rgba(77,232,224,0.55)");
+  g.addColorStop(0.4, "rgba(139,124,255,0.18)");
+  g.addColorStop(1, "rgba(9,12,20,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  return new THREE.CanvasTexture(c);
+}
+
+// Round soft dot texture for the star particles
+function makeDotTexture() {
+  const size = 64;
+  const c = document.createElement("canvas");
+  c.width = size;
+  c.height = size;
+  const ctx = c.getContext("2d")!;
+  const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  g.addColorStop(0, "rgba(255,255,255,1)");
+  g.addColorStop(0.35, "rgba(255,255,255,0.85)");
+  g.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  return new THREE.CanvasTexture(c);
+}
+
+function Particles({ mobile }: { mobile: boolean }) {
+  const ref = useRef<THREE.Points>(null);
+  const { viewport } = useThree();
+  const count = mobile ? 160 : 320;
+
+  const positions = useMemo(() => {
+    const rand = mulberry32(99);
+    const arr = new Float32Array(count * 3);
+    for (let i = 0; i < count * 3; i++) arr[i] = rand() - 0.5;
+    return arr;
+  }, [count]);
+  const texture = useMemo(() => makeDotTexture(), []);
+
+  useFrame((_, delta) => {
+    if (ref.current) ref.current.rotation.y += delta * 0.01;
+  });
+
+  return (
+    <points ref={ref} scale={[viewport.width * 1.3, viewport.height * 1.3, 8]} position={[0, 1, -2]}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <pointsMaterial
+        color={CYAN}
+        map={texture}
+        size={mobile ? 0.08 : 0.07}
+        sizeAttenuation
+        transparent
+        opacity={0.55}
+        alphaTest={0.01}
+        depthWrite={false}
+      />
+    </points>
+  );
+}
+
+type Link = {
+  curve: THREE.CatmullRomCurve3;
+  end: THREE.Vector3;
+  color: string;
+  speed: number;
+  offset: number;
+};
+
+function AIChipScene({ mobile }: { mobile: boolean }) {
+  const { viewport } = useThree();
+  const root = useRef<THREE.Group>(null);
+  const pulses = useRef<(THREE.Group | null)[]>([]);
+  const time = useRef(0);
+
+  const aiTex = useMemo(() => makeAITexture(), []);
+  const glowTex = useMemo(() => makeGlowTexture(), []);
+
+  const { links, decor } = useMemo(() => {
+    const rand = mulberry32(7);
+    const grid = 0.9;
+    const nLinks = mobile ? 20 : 38;
+    const reach = mobile ? 3.4 : 6.2;
+    const links: Link[] = [];
+
+    for (let i = 0; i < nLinks; i++) {
+      const th = (i / nLinks) * Math.PI * 2 + (rand() - 0.5) * 0.1;
+      const dx = Math.cos(th);
+      const dz = Math.sin(th);
+      const edge = 1.1 / Math.max(Math.abs(dx), Math.abs(dz));
+      const start = new THREE.Vector3(dx * edge, 0.14, dz * edge);
+
+      const r = 3.4 + Math.pow(rand(), 0.8) * reach;
+      const lat = (rand() - 0.5) * 2.6;
+      const ex = Math.round((dx * r - dz * lat) / grid) * grid;
+      const ez = Math.round((dz * r + dx * lat) / grid) * grid;
+      const end = new THREE.Vector3(ex, 0.15, ez);
+
+      const dir = end.clone().sub(start).normalize();
+      const p1 = start.clone().add(new THREE.Vector3(dx * 0.8, 0.3, dz * 0.8));
+      const p2 = start.clone().lerp(end, 0.55).add(new THREE.Vector3(-dz * lat * 0.25, 0.16, dx * lat * 0.25));
+      const p3 = end.clone().sub(dir.multiplyScalar(0.2));
+      const curve = new THREE.CatmullRomCurve3([start, p1, p2, p3], false, "catmullrom", 0.5);
+
+      links.push({
+        curve,
+        end,
+        color: PALETTE[i % 3],
+        speed: 0.1 + rand() * 0.14,
+        offset: rand(),
+      });
+    }
+
+    const decor: { pos: THREE.Vector3; color: string }[] = [];
+    const nDecor = mobile ? 10 : 28;
+    for (let i = 0; i < nDecor; i++) {
+      const th = rand() * Math.PI * 2;
+      const r = 3 + rand() * (mobile ? 3.4 : 7);
+      const x = Math.round((Math.cos(th) * r) / grid) * grid;
+      const z = Math.round((Math.sin(th) * r) / grid) * grid;
+      if (Math.abs(x) < 2.2 && Math.abs(z) < 2.2) continue;
+      decor.push({ pos: new THREE.Vector3(x, 0.15, z), color: PALETTE[Math.floor(rand() * 3)] });
+    }
+    return { links, decor };
+  }, [mobile]);
+
+  useFrame((state, delta) => {
+    time.current += delta;
+    const t = time.current;
+    if (root.current) {
+      root.current.rotation.y = THREE.MathUtils.lerp(
+        root.current.rotation.y,
+        Math.sin(t * 0.15) * 0.2 + state.pointer.x * 0.15,
+        0.04
+      );
+    }
+    links.forEach((l, i) => {
+      const g = pulses.current[i];
+      if (!g) return;
+      const u = (t * l.speed + l.offset) % 1;
+      l.curve.getPoint(u, g.position);
+      g.scale.setScalar(0.45 + Math.sin(u * Math.PI) * 0.9);
+    });
+  });
+
+  // laptop: scene lives in its own right-side zone, so fit the chip to that zone
+  const scale = mobile ? Math.min(1.3, viewport.height / 6.5) : Math.min(1.05, viewport.width / 7.5, viewport.height / 8);
+  const posX = mobile ? 0 : viewport.width * 0.02;
+  const posY = mobile ? -0.2 : -0.3;
+
+  return (
+    <group ref={root} position={[posX, posY, 0]} scale={scale}>
+      {/* board grid */}
+      <gridHelper
+        args={[44, 44, CYAN, PURPLE]}
+        position={[0, -0.01, 0]}
+        material-transparent
+        material-opacity={0.1}
+      />
+      {/* glow under chip */}
+      <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[9, 9]} />
+        <meshBasicMaterial map={glowTex} transparent depthWrite={false} />
+      </mesh>
+
+      {/* chip */}
+      <mesh position={[0, 0.25, 0]}>
+        <boxGeometry args={[2.2, 0.5, 2.2]} />
+        <meshStandardMaterial color="#0E1424" metalness={0.7} roughness={0.35} emissive={PURPLE} emissiveIntensity={0.1} />
+        <Edges color={CYAN} />
+      </mesh>
+      <mesh position={[0, 0.54, 0]}>
+        <boxGeometry args={[1.9, 0.08, 1.9]} />
+        <meshStandardMaterial color="#17203A" metalness={0.8} roughness={0.3} />
+        <Edges color={PURPLE} />
+      </mesh>
+      <mesh position={[0, 0.585, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[1.8, 1.8]} />
+        <meshBasicMaterial map={aiTex} transparent depthWrite={false} />
+      </mesh>
+
+      {/* data lines */}
+      {links.map((l, i) => (
+        <mesh key={`t${i}`}>
+          <tubeGeometry args={[l.curve, 40, 0.014, 5, false]} />
+          <meshBasicMaterial color={l.color} transparent opacity={0.55} />
+        </mesh>
+      ))}
+
+      {/* node cubes at line ends */}
+      {links.map((l, i) => (
+        <mesh key={`c${i}`} position={l.end}>
+          <boxGeometry args={[0.3, 0.3, 0.3]} />
+          <meshStandardMaterial color="#141B2D" metalness={0.6} roughness={0.35} emissive={l.color} emissiveIntensity={0.25} />
+          <Edges color={l.color} />
+        </mesh>
+      ))}
+
+      {/* decorative cubes */}
+      {decor.map((d, i) => (
+        <mesh key={`d${i}`} position={d.pos}>
+          <boxGeometry args={[0.26, 0.26, 0.26]} />
+          <meshStandardMaterial color="#111827" metalness={0.5} roughness={0.4} emissive={d.color} emissiveIntensity={0.12} />
+          <Edges color={d.color} />
+        </mesh>
+      ))}
+
+      {/* travelling light pulses */}
+      {links.map((l, i) => (
+        <group key={`p${i}`} ref={(el) => { pulses.current[i] = el; }}>
+          <mesh>
+            <sphereGeometry args={[0.055, 10, 10]} />
+            <meshBasicMaterial color="#ffffff" />
+          </mesh>
+          <mesh>
+            <sphereGeometry args={[0.12, 10, 10]} />
+            <meshBasicMaterial color={l.color} transparent opacity={0.35} depthWrite={false} />
+          </mesh>
+        </group>
+      ))}
+
+      <pointLight position={[0, 1.4, 0]} color={CYAN} intensity={35} distance={11} />
+      <pointLight position={[3, 2, 3]} color={PURPLE} intensity={14} distance={10} />
+    </group>
+  );
+}
+
+function Scene({ split }: { split: boolean }) {
+  const mobile = !split;
+  return (
+    <>
+      <fog attach="fog" args={["#090C14", 13, 32]} />
+      <ambientLight intensity={0.7} />
+      <Particles mobile={mobile} />
+      <AIChipScene mobile={mobile} />
+    </>
+  );
+}
+
+function HeroBackground3D({ split }: { split: boolean }) {
+  // Render canvas only on client to avoid SSR issues
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
+  return (
+    <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
+      <Canvas
+        camera={{ position: [0, 6, 10], fov: 45 }}
+        dpr={[1, 1.5]}
+        gl={{ alpha: true, antialias: true }}
+        onCreated={({ camera }) => camera.lookAt(0, 0, 0)}
+      >
+        <Scene split={split} />
+      </Canvas>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  PAGE                                                               */
+/* ------------------------------------------------------------------ */
 export default function Home({
-  initialHeroImages = FALLBACK_HERO_IMAGES,
   initialEventHighlights = RECENT_EVENTS,
 }: {
-  initialHeroImages?: string[];
   initialEventHighlights?: EventHighlight[];
 }) {
-  const [activeImage, setActiveImage] = useState(0);
-  const heroImages = initialHeroImages && initialHeroImages.length > 0 ? initialHeroImages : FALLBACK_HERO_IMAGES;
   const eventHighlights = initialEventHighlights && initialEventHighlights.length > 0 ? initialEventHighlights : RECENT_EVENTS;
 
+  // laptop/desktop (>=1024px): 3D scene gets its own zone on the right, never under the text
+  const [split, setSplit] = useState(false);
   useEffect(() => {
-    if (heroImages.length <= 1) return;
-    const interval = setInterval(() => {
-      setActiveImage((prev) => (prev + 1) % heroImages.length);
-    }, 4500);
-    return () => clearInterval(interval);
-  }, [heroImages.length]);
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const update = () => setSplit(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   return (
     <main className="min-h-screen bg-[#090C14] text-[#F3F6FB] overflow-x-hidden">
-      {/* Hero Section - Updated with New Interactive Block */}
+      {/* Hero Section */}
       <section className="relative flex min-h-[88vh] items-center overflow-hidden px-6 md:px-12">
-        {/* Background image carousel */}
-        <div className="absolute inset-0 z-0">
-        {heroImages.map((src, i) => (
-            <Image
-              key={src}
-              src={src}
-              alt="Neos Astra STEM Learning"
-              fill
-              priority={i === 0}
-              sizes="100vw"
-              className={`object-cover object-[center_30%] transition-opacity duration-1000 ease-in-out ${
-                i === activeImage ? "opacity-100" : "opacity-0"
-              }`}
-            />
-          ))}
-          {/* Overlay now only strong on the LEFT (behind text), fades out on the right so image stays visible */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#090C14] via-[#090C14cc] to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#090C14] via-transparent to-[#090C1499]" />
+        {/* Background: theme glows + 3D animation */}
+        <div className="absolute inset-0 z-0 bg-[#090C14]">
+          <div className="absolute -top-40 left-1/4 h-[500px] w-[500px] rounded-full bg-[#4DE8E0]/10 blur-[130px] pointer-events-none" />
+          <div className="absolute top-1/3 -right-20 h-[450px] w-[450px] rounded-full bg-[#8B7CFF]/10 blur-[140px] pointer-events-none" />
+          <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[#090C14] to-transparent pointer-events-none" />
         </div>
 
-        {/* Hero content with Framer Motion */}
-        <div className="relative z-10 mx-auto max-w-7xl w-full py-20 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          
-          {/* LEFT SIDE: Text & CTA */}
+        {/* laptop: 3D zone fills the right side of the hero; text stays on the left */}
+        {split && (
+          <div
+            className="pointer-events-none absolute inset-y-0 right-0 z-[5] [mask-image:linear-gradient(to_right,transparent_0%,black_22%)] [-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_22%)]"
+            style={{
+              left: "calc((100% - min(1280px, 100% - 96px)) / 2 + 0.56 * min(1280px, 100% - 96px))",
+            }}
+          >
+            <HeroBackground3D split />
+            <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#090C14] to-transparent" />
+          </div>
+        )}
+
+        {/* Hero content */}
+        <div className="relative z-10 mx-auto max-w-7xl w-full pt-4 pb-16 lg:py-20">
+          {/* phone / tablet: 3D scene sits in its own block ABOVE the text (no overlap) */}
+          {!split && (
+            <div className="pointer-events-none relative -mx-6 mb-4 h-72 md:-mx-12 md:h-80 [mask-image:linear-gradient(to_bottom,black_65%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_65%,transparent_100%)]">
+              <HeroBackground3D split={false} />
+            </div>
+          )}
+
           <motion.div
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
-            className="lg:col-span-6"
+            className="max-w-3xl lg:max-w-[52%] [container-type:inline-size]"
           >
             <motion.div
               variants={fadeInUp}
@@ -205,18 +507,31 @@ export default function Home({
 
             <motion.h1
               variants={fadeInUp}
-              className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-[1.1] tracking-tight text-[#F3F6FB] drop-shadow-[0_2px_20px_rgba(9,12,20,0.8)]"
+              className="text-[clamp(1.65rem,5.3cqw,2.75rem)] font-extrabold leading-[1.2] tracking-tight text-[#F3F6FB] drop-shadow-[0_2px_20px_rgba(9,12,20,0.8)]"
             >
-              Unlock <br className="hidden sm:block" />
-              Tomorrow <br className="hidden sm:block" />
-              <span className="bg-gradient-to-r from-[#4DE8E0] via-[#64B5F6] to-[#8B7CFF] bg-clip-text text-transparent">
-                with Future Technologies
+              <span className="block md:whitespace-nowrap">
+                Our students build{" "}
+                <span className="bg-gradient-to-r from-[#4DE8E0] to-[#64B5F6] bg-clip-text text-transparent">
+                  real robots,
+                </span>
+              </span>
+              <span className="block md:whitespace-nowrap">
+                Train{" "}
+                <span className="bg-gradient-to-r from-[#64B5F6] to-[#8B7CFF] bg-clip-text text-transparent">
+                  real AI models,
+                </span>
+              </span>
+              <span className="block md:whitespace-nowrap">
+                Fly{" "}
+                <span className="bg-gradient-to-r from-[#8B7CFF] to-[#4DE8E0] bg-clip-text text-transparent">
+                  real drones.
+                </span>
               </span>
             </motion.h1>
 
             <motion.p
               variants={fadeInUp}
-              className="mt-6 max-w-xl text-base sm:text-lg leading-relaxed text-[#E4E8F1] drop-shadow-[0_2px_10px_rgba(9,12,20,0.9)]"
+              className="mt-6 max-w-xl text-base sm:text-lg leading-relaxed text-[#8891A8]"
             >
               We help students think creatively, solve real-world problems, and
               prepare for future opportunities in STEM through immersive, hands-on
@@ -242,87 +557,24 @@ export default function Home({
               </a>
             </motion.div>
 
-            {/* Carousel dots */}
-            <motion.div variants={fadeInUp} className="mt-12 flex items-center gap-2">
-              {heroImages.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveImage(i)}
-                  aria-label={`Show background ${i + 1}`}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    i === activeImage
-                      ? "w-8 bg-[#4DE8E0]"
-                      : "w-2 bg-[#F3F6FB4d] hover:bg-[#8891A8]"
-                  }`}
-                />
+            {/* Stats row */}
+            <motion.div
+              variants={fadeInUp}
+              className="mt-10 flex items-center gap-6 sm:gap-8 border-t border-[#F3F6FB1a] pt-6"
+            >
+              {[
+                { value: "5,000+", label: "Students" },
+                { value: "4", label: "Tech Tracks" },
+                { value: "100%", label: "Hands-on" },
+              ].map((st, i) => (
+                <div key={st.label} className={`flex flex-col ${i > 0 ? "border-l border-[#F3F6FB1a] pl-6 sm:pl-8" : ""}`}>
+                  <span className="text-xl sm:text-2xl font-bold text-[#F3F6FB]">{st.value}</span>
+                  <span className="text-[11px] sm:text-xs font-mono uppercase tracking-wider text-[#8891A8]">
+                    {st.label}
+                  </span>
+                </div>
               ))}
             </motion.div>
-          </motion.div>
-
-          {/* RIGHT SIDE: NEW TRUSTED & AFFORDABLE BLOCK (Like your image) */}
-          <motion.div
-            initial={{ opacity: 0, x: 40, y: 20 }}
-            animate={{ opacity: 1, x: 0, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="lg:col-span-6 flex flex-col items-center justify-center"
-          >
-            {/* The Interaction Card */}
-            <div className="relative w-full max-w-md rounded-2xl border border-[#1D2436] bg-[#0F1420]/90 p-6 backdrop-blur-md shadow-2xl transition-all duration-500 hover:border-[#4DE8E044]">
-              
-              {/* Floating Trust Badge (Top Right) */}
-              <div className="absolute -top-4 -right-2 rounded-full bg-[#090C14] border border-[#4DE8E0] p-0.5">
-                <div className="rounded-full px-4 py-1.5 flex items-center gap-1.5 text-[11px] font-mono font-bold text-[#4DE8E0]">
-                  <ShieldCheck className="h-4 w-4" /> Trusted Platform
-                </div>
-              </div>
-
-              <h3 className="text-xl font-bold text-[#F3F6FB] mb-6 flex items-center gap-2">
-                <Users className="text-[#4DE8E0] h-6 w-6" /> Community Hub
-              </h3>
-
-              {/* Teacher-Student Interactive Section (Mimicking your image) */}
-              <div className="flex flex-col gap-4 relative">
-                
-                {/* Student Bubble (Right) */}
-                <div className="flex justify-end mb-2">
-                  <div className="bg-[#1D2436] p-3 rounded-2xl rounded-tr-none max-w-[80%] border border-[#F3F6FB1a]">
-                    <div className="flex items-start gap-3">
-                      <div className="relative h-11 w-11 shrink-0 rounded-full bg-[#1D2436] flex items-center overflow-hidden border border-[#4DE8E0]">
-                        <Image src="/student.png" alt="Student" fill sizes="44px" className="object-cover" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-[#4DE8E0] font-mono">Student</p>
-                        <p className="text-sm text-[#C7CCDA]">Sambit Sir, What is Neos Astra?</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Teacher Bubble (Left) */}
-                <div className="flex justify-start">
-                  <div className="bg-[#8B7CFF] p-3 rounded-2xl rounded-tl-none max-w-[85%] shadow-lg shadow-[#8B7CFF26]">
-                    <div className="flex items-start gap-3">
-                      <div className="relative h-11 w-11 shrink-0 rounded-full bg-white flex items-center overflow-hidden border border-[#8B7CFF] shadow-sm">
-                        <Image src="/logo-fit.png" alt="Mentor" fill sizes="44px" className="object-cover" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-[#090C14] font-mono font-bold">Mentor</p>
-                        <p className="text-sm text-[#090C14] font-semibold">Neos Astra is a platform where students can learn with love and can grow with guidance</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Connecting Dots (Decorative) */}
-                <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full border border-dashed border-[#F3F6FB1a] rounded-full opacity-30" />
-                
-                {/* Bottom Trust Metrics */}
-                <div className="mt-4 pt-4 border-t border-[#1D2436] flex justify-between items-center text-xs text-[#8891A8]">
-                   <span className="flex items-center gap-1 text-[#4DE8E0]"><MessageCircle className="h-3 w-3" /> 2k+ Conversations</span>
-                   <span className="flex items-center gap-1"><Users className="h-3 w-3" /> 5,000+ Students</span>
-                </div>
-              </div>
-            </div>
           </motion.div>
         </div>
       </section>
@@ -348,7 +600,6 @@ export default function Home({
             </p>
           </motion.div>
 
-          {/* Recent Events — Continuous Auto-Scrolling Gallery */}
           <motion.div variants={fadeInUp} className="mb-8">
             <h3 className="text-lg font-bold text-[#F3F6FB] mb-6 flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-[#4DE8E0]" /> Recent Highlights
@@ -367,7 +618,6 @@ export default function Home({
             }}
           >
             <div className="event-marquee flex w-max gap-5 py-2">
-              {/* Build seamless looping marquee items */}
               {(eventHighlights.length < 5
                 ? [...eventHighlights, ...eventHighlights, ...eventHighlights, ...eventHighlights]
                 : [...eventHighlights, ...eventHighlights]
@@ -416,10 +666,10 @@ export default function Home({
           </p>
         </motion.div>
 
-        {/* Stacked overlap cards: image on one side, text on other. Each card slides up and overlaps the previous as you scroll. */}
+        {/* Stacked overlap cards */}
         <div className="relative flex flex-col gap-4">
           {TRACKS.map((track, i) => {
-            const imageFirst = i % 2 === 1; // alternate image left/right
+            const imageFirst = i % 2 === 1;
             return (
               <div
                 key={i}
