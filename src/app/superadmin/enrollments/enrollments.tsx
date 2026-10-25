@@ -426,11 +426,7 @@ export default function EnrollmentsManagement() {
       hasKit: details.isRobo,
       gstPercent: details.gstPercent,
       total: details.totalStr,
-      date: new Date(eRecord.createdAt).toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      }),
+      date: eRecord.createdAt,
     });
 
     const printWin = window.open("", "_blank", "width=900,height=800");

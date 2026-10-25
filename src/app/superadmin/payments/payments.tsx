@@ -282,12 +282,66 @@ export default function PaymentsManagement() {
         return;
       }
 
+      // Automatically print monthly course receipt
+      if (data.receipt) {
+        printMonthlyReceipt(data.receipt);
+      }
+
       await fetchPayments();
     } catch (err) {
       console.error("Quick mark paid error:", err);
       alert("An error occurred while marking payment.");
     } finally {
       setMarkingPaidId(null);
+    }
+  };
+
+  // 1-Click Mark Paid from inside Ledger Modal
+  const handleQuickMarkPaidFromLedger = async (student: StudentPaymentInfo, cycle: any) => {
+    const confirmMsg = `Mark "${cycle.cycleLabel}" as PAID for ${student.studentName} (${fmtCurrency(cycle.amount || student.monthlyFee)})?\n\nThis will record payment and open the Course Fee Receipt.`;
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      const payload = {
+        enrollmentId: student.id,
+        cycleMonthIndex: cycle.monthIndex,
+        cycleLabel: cycle.cycleLabel,
+        amount: Number(cycle.amount || student.monthlyFee),
+        paymentMethod: "UPI",
+        transactionRef: "Ledger Quick Paid",
+        notes: `Paid for ${cycle.cycleLabel}`,
+        paidDate: new Date().toISOString(),
+        dueDate: cycle.dueDate,
+      };
+
+      const res = await fetch("/api/payments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to mark as paid.");
+        return;
+      }
+
+      if (data.receipt) {
+        printMonthlyReceipt(data.receipt);
+      }
+
+      await fetchPayments();
+
+      // Refresh current student's ledger
+      const refreshRes = await fetch("/api/payments");
+      const refreshData = await refreshRes.json();
+      if (refreshData.students) {
+        const fresh = refreshData.students.find((s: any) => s.id === student.id);
+        if (fresh) setSelectedStudentForLedger(fresh);
+      }
+    } catch (err) {
+      console.error("Ledger mark paid error:", err);
+      alert("An error occurred while marking payment.");
     }
   };
 
@@ -611,22 +665,7 @@ export default function PaymentsManagement() {
                         {/* Action Buttons */}
                         <td className="px-4 py-3.5 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            {/* 1-Click Mark Paid Button */}
-                            {nextCycle && (
-                              <button
-                                onClick={() => handleQuickMarkPaid(student)}
-                                disabled={markingPaidId === student.id}
-                                title={`Mark ${nextCycle.cycleLabel} as Paid & Move to Next Month`}
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-3 py-1.5 text-xs font-bold text-emerald-400 transition-all hover:bg-emerald-500 hover:text-[#090C14] disabled:opacity-50 shadow-sm"
-                              >
-                                {markingPaidId === student.id ? (
-                                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                                ) : (
-                                  <Check className="h-3.5 w-3.5" />
-                                )}
-                                Mark Paid
-                              </button>
-                            )}
+
 
                             {/* WhatsApp Reminder (wa.me) */}
                             <a
@@ -912,9 +951,13 @@ export default function PaymentsManagement() {
                               </span>
                             </div>
                             <p className="text-[11px] text-[#8891A8]">
-                              Due: {c.dueDateFormatted}
-                              {isPaid && c.paidDateFormatted && ` • Paid on ${c.paidDateFormatted} via ${c.paymentMethod}`}
-                              {c.receiptNo && ` • Rec: ${c.receiptNo}`}
+                              {c.paymentId === "INITIAL_REGISTRATION" ? (
+                                <span>Admission Date: <strong className="text-[#F3F6FB]">{c.paidDateFormatted || c.dueDateFormatted}</strong></span>
+                              ) : isPaid ? (
+                                <span>Paid on: <strong className="text-[#F3F6FB]">{c.paidDateFormatted}</strong></span>
+                              ) : (
+                                <span>Due: <strong className="text-amber-400">{c.dueDateFormatted}</strong></span>
+                              )}
                             </p>
                           </div>
                         </div>
@@ -942,7 +985,7 @@ export default function PaymentsManagement() {
                                       notes: c.notes,
                                     })
                                   }
-                                  title="Print Receipt"
+                                  title="Print Course Fee Receipt"
                                   className="inline-flex items-center gap-1 rounded-lg border border-[#1D2436] bg-[#0F1420] px-2.5 py-1 text-xs font-medium text-[#4DE8E0] hover:border-[#4DE8E0]"
                                 >
                                   <Printer className="h-3 w-3" />
@@ -959,16 +1002,26 @@ export default function PaymentsManagement() {
                                 )}
                               </>
                             ) : (
-                              <button
-                                onClick={() => {
-                                  setSelectedStudentForLedger(null);
-                                  handleOpenPaymentModal(selectedStudentForLedger, c);
-                                }}
-                                className="inline-flex items-center gap-1 rounded-lg bg-[#4DE8E0] px-3 py-1 text-xs font-semibold text-[#090C14] hover:opacity-90"
-                              >
-                                <Plus className="h-3 w-3" />
-                                Collect
-                              </button>
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  onClick={() => handleQuickMarkPaidFromLedger(selectedStudentForLedger, c)}
+                                  className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1 text-xs font-bold text-emerald-400 hover:bg-emerald-500 hover:text-[#090C14] transition-all"
+                                  title="1-Click Mark as Paid and Print Receipt"
+                                >
+                                  <Check className="h-3 w-3" />
+                                  Mark Paid
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setSelectedStudentForLedger(null);
+                                    handleOpenPaymentModal(selectedStudentForLedger, c);
+                                  }}
+                                  className="inline-flex items-center gap-1 rounded-lg bg-[#1D2436] px-2 py-1 text-xs font-semibold text-[#8891A8] hover:text-[#F3F6FB]"
+                                  title="Custom Details (Payment Mode / UTR / Date)"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </button>
+                              </div>
                             )}
                           </div>
                         </div>
