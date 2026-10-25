@@ -244,6 +244,53 @@ export default function PaymentsManagement() {
     setFormPaidDate(new Date().toISOString().split("T")[0]);
   };
 
+  // Quick 1-Click Mark Paid: Immediately mark current month paid and advance to next month
+  const [markingPaidId, setMarkingPaidId] = useState<string | null>(null);
+  const handleQuickMarkPaid = async (student: StudentPaymentInfo) => {
+    const cycleToPay = student.nextDueCycle;
+    if (!cycleToPay) {
+      alert("All current cycles for this student are already marked as Paid!");
+      return;
+    }
+
+    const confirmMsg = `Mark "${cycleToPay.cycleLabel}" as PAID for ${student.studentName} (${fmtCurrency(cycleToPay.amount || student.monthlyFee)})?\n\nThis will immediately clear this month and advance the reminder to the next month.`;
+    if (!confirm(confirmMsg)) return;
+
+    setMarkingPaidId(student.id);
+    try {
+      const payload = {
+        enrollmentId: student.id,
+        cycleMonthIndex: cycleToPay.monthIndex,
+        cycleLabel: cycleToPay.cycleLabel,
+        amount: Number(cycleToPay.amount || student.monthlyFee),
+        paymentMethod: "UPI",
+        transactionRef: "Quick 1-Click Paid",
+        notes: "Marked paid via Quick Action",
+        paidDate: new Date().toISOString(),
+        dueDate: cycleToPay.dueDate,
+      };
+
+      const res = await fetch("/api/payments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to mark as paid.");
+        return;
+      }
+
+      await fetchPayments();
+    } catch (err) {
+      console.error("Quick mark paid error:", err);
+      alert("An error occurred while marking payment.");
+    } finally {
+      setMarkingPaidId(null);
+    }
+  };
+
   // Submit Payment Record
   const handleRecordPayment = async (andPrintReceipt: boolean = true) => {
     if (!paymentModalData) return;
@@ -618,8 +665,7 @@ export default function PaymentsManagement() {
                   <tr className="border-b border-[#1D2436] bg-[#0A0D16] text-[#8891A8]">
                     <th className="px-4 py-3 font-semibold">Student & Contact</th>
                     <th className="px-4 py-3 font-semibold">Course & Monthly Fee</th>
-                    <th className="px-4 py-3 font-semibold">Billing Cycle Anchor</th>
-                    <th className="px-4 py-3 font-semibold">Current Fee Status</th>
+                    <th className="px-4 py-3 font-semibold">Next Payment Reminder</th>
                     <th className="px-4 py-3 font-semibold text-right">Quick Actions</th>
                   </tr>
                 </thead>
@@ -627,7 +673,6 @@ export default function PaymentsManagement() {
                   {filteredStudents.map((student) => {
                     const nextCycle = student.nextDueCycle;
                     const isOverdue = student.overallStatus === "OVERDUE";
-                    const isDueSoon = student.overallStatus === "DUE_SOON";
 
                     const waUrl = nextCycle
                       ? generateWhatsAppReminderUrl({
@@ -677,63 +722,36 @@ export default function PaymentsManagement() {
                           </div>
                         </td>
 
-                        {/* Billing Cycle Anchor */}
+                        {/* Next Payment Reminder */}
                         <td className="px-4 py-3.5">
-                          <div className="inline-flex items-center gap-1.5 rounded-md bg-[#1D2436]/60 px-2.5 py-1 text-[11px] font-medium text-[#F3F6FB]">
-                            <Calendar className="h-3 w-3 text-[#4DE8E0]" />
-                            Due on {student.billingDay}th of month
+                          <div className="inline-flex items-center gap-1.5 rounded-lg border border-[#4DE8E0]/20 bg-[#4DE8E0]/10 px-3 py-1.5 text-xs font-bold text-[#4DE8E0]">
+                            <Calendar className="h-3.5 w-3.5 text-[#4DE8E0]" />
+                            {nextCycle?.dueDateFormatted || `Due on ${student.billingDay}th`}
                           </div>
                           <div className="mt-1 text-[10px] text-[#8891A8]">
-                            Joined: {student.admissionDateFormatted}
+                            Cycle Anchor: {student.billingDay}th of every month
                           </div>
-                        </td>
-
-                        {/* Status Badge */}
-                        <td className="px-4 py-3.5">
-                          {isOverdue && nextCycle ? (
-                            <div>
-                              <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/15 px-2.5 py-0.5 text-[11px] font-bold text-rose-400 border border-rose-500/30">
-                                <AlertTriangle className="h-3 w-3" />
-                                OVERDUE: {nextCycle.daysOverdue} Days
-                              </span>
-                              <p className="mt-1 text-[11px] font-medium text-rose-300">
-                                {nextCycle.cycleLabel} (Due {nextCycle.dueDateFormatted})
-                              </p>
-                            </div>
-                          ) : isDueSoon && nextCycle ? (
-                            <div>
-                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-bold text-amber-400 border border-amber-500/30">
-                                <Clock className="h-3 w-3" />
-                                DUE IN {nextCycle.daysRemaining} DAYS
-                              </span>
-                              <p className="mt-1 text-[11px] text-[#8891A8]">
-                                {nextCycle.cycleLabel} (Due {nextCycle.dueDateFormatted})
-                              </p>
-                            </div>
-                          ) : (
-                            <div>
-                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-bold text-emerald-400 border border-emerald-500/30">
-                                <CheckCircle2 className="h-3 w-3" />
-                                UP TO DATE
-                              </span>
-                              <p className="mt-1 text-[11px] text-[#8891A8]">
-                                Next: {nextCycle?.dueDateFormatted || "Upcoming cycle"}
-                              </p>
-                            </div>
-                          )}
                         </td>
 
                         {/* Action Buttons */}
                         <td className="px-4 py-3.5 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            {/* Collect Fee Button */}
-                            <button
-                              onClick={() => handleOpenPaymentModal(student)}
-                              className="inline-flex items-center gap-1.5 rounded-lg bg-[#4DE8E0] px-3 py-1.5 text-xs font-semibold text-[#090C14] transition-opacity hover:opacity-90 shadow-sm"
-                            >
-                              <Plus className="h-3.5 w-3.5" />
-                              Collect Fee
-                            </button>
+                          <div className="flex items-center justify-end gap-2">
+                            {/* 1-Click Mark Paid Button */}
+                            {nextCycle && (
+                              <button
+                                onClick={() => handleQuickMarkPaid(student)}
+                                disabled={markingPaidId === student.id}
+                                title={`Mark ${nextCycle.cycleLabel} as Paid & Move to Next Month`}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-3 py-1.5 text-xs font-bold text-emerald-400 transition-all hover:bg-emerald-500 hover:text-[#090C14] disabled:opacity-50 shadow-sm"
+                              >
+                                {markingPaidId === student.id ? (
+                                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <Check className="h-3.5 w-3.5" />
+                                )}
+                                Mark Paid
+                              </button>
+                            )}
 
                             {/* WhatsApp Reminder (wa.me) */}
                             <a
@@ -741,31 +759,18 @@ export default function PaymentsManagement() {
                               target="_blank"
                               rel="noopener noreferrer"
                               title="Send WhatsApp Reminder"
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 transition-colors hover:bg-emerald-500 hover:text-white"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 transition-colors hover:bg-emerald-500 hover:text-white"
                             >
-                              <MessageCircle className="h-3.5 w-3.5" />
+                              <MessageCircle className="h-4 w-4" />
                             </a>
-
-                            {/* Copy Reminder Text */}
-                            <button
-                              onClick={() => handleCopyReminder(student)}
-                              title="Copy Reminder Message"
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[#1D2436] bg-[#0F1420] text-[#8891A8] transition-colors hover:border-[#4DE8E0] hover:text-[#4DE8E0]"
-                            >
-                              {copiedId === student.id ? (
-                                <Check className="h-3.5 w-3.5 text-emerald-400" />
-                              ) : (
-                                <Copy className="h-3.5 w-3.5" />
-                              )}
-                            </button>
 
                             {/* Student Ledger / History */}
                             <button
                               onClick={() => setSelectedStudentForLedger(student)}
                               title="View Fee Ledger / History"
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[#1D2436] bg-[#0F1420] text-[#8891A8] transition-colors hover:border-[#8B7CFF] hover:text-[#8B7CFF]"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#1D2436] bg-[#0F1420] text-[#8891A8] transition-colors hover:border-[#8B7CFF] hover:text-[#8B7CFF]"
                             >
-                              <History className="h-3.5 w-3.5" />
+                              <History className="h-4 w-4" />
                             </button>
 
                             {/* Edit Billing Settings */}
@@ -778,9 +783,9 @@ export default function PaymentsManagement() {
                                 })
                               }
                               title="Edit Billing Day / Fee"
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[#1D2436] bg-[#0F1420] text-[#8891A8] transition-colors hover:border-amber-400 hover:text-amber-400"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#1D2436] bg-[#0F1420] text-[#8891A8] transition-colors hover:border-amber-400 hover:text-amber-400"
                             >
-                              <Settings className="h-3.5 w-3.5" />
+                              <Settings className="h-4 w-4" />
                             </button>
                           </div>
                         </td>
