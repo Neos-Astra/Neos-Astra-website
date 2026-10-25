@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { BookOpen, Users, ImageIcon, ArrowRight, Sparkles, GraduationCap, ShieldCheck } from "lucide-react";
 import { prisma } from "@/superadmin/prisma/client";
+import AdminShell from "@/app/components/AdminShell";
 
 import { unstable_cache } from "next/cache";
 
@@ -142,7 +143,7 @@ export default async function AdminDashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#090C14] text-[#F3F6FB] px-4 py-8 sm:px-6 md:px-10">
+    <AdminShell title="Dashboard">
       <div className="mx-auto max-w-6xl">
         {/* Welcome banner */}
         <div className="mb-8 rounded-2xl border border-[#1D2436] bg-gradient-to-br from-[#0F1420] via-[#151C2C] to-[#090C14] p-6 sm:p-8">
@@ -224,6 +225,6 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
       </div>
-    </div>
+    </AdminShell>
   );
 }
