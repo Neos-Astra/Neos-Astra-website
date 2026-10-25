@@ -25,6 +25,7 @@ import {
   BookOpen,
   Copy,
   Check,
+  Mail,
 } from "lucide-react";
 import { generateMonthlyFeeReceiptHTML } from "@/lib/receiptTemplate";
 import { generateWhatsAppReminderUrl, buildFeeReminderText } from "@/lib/whatsappReminder";
@@ -457,6 +458,57 @@ export default function PaymentsManagement() {
     if (printWin) {
       printWin.document.write(html);
       printWin.document.close();
+    }
+  };
+
+  // State & Handler for Emailing Monthly Fee Receipt
+  const [emailingCycleIndex, setEmailingCycleIndex] = useState<number | null>(null);
+
+  const handleEmailMonthlyReceipt = async (cycle: any) => {
+    if (!selectedStudentForLedger) return;
+    if (!selectedStudentForLedger.studentEmail) {
+      alert(`No student email address found for ${selectedStudentForLedger.studentName}`);
+      return;
+    }
+
+    setEmailingCycleIndex(cycle.monthIndex);
+    try {
+      const receiptData = {
+        receiptNo: cycle.receiptNo || `NA-FEE-${selectedStudentForLedger.registrationNo}`,
+        registrationNo: selectedStudentForLedger.registrationNo,
+        studentName: selectedStudentForLedger.studentName,
+        courseTitle: selectedStudentForLedger.courseTitle,
+        cycleLabel: cycle.cycleLabel,
+        amount: cycle.amount,
+        paymentMode: cycle.paymentMethod || "UPI",
+        transactionRef: cycle.transactionRef,
+        date: cycle.paidDateFormatted,
+        notes: cycle.notes,
+      };
+
+      const res = await fetch("/api/email-receipt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "MONTHLY",
+          studentEmail: selectedStudentForLedger.studentEmail,
+          studentName: selectedStudentForLedger.studentName,
+          receiptData,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to send email receipt.");
+        return;
+      }
+
+      alert(data.message || `Receipt successfully emailed to ${selectedStudentForLedger.studentEmail}!`);
+    } catch (err: any) {
+      console.error("Email receipt error:", err);
+      alert("An error occurred while emailing the receipt.");
+    } finally {
+      setEmailingCycleIndex(null);
     }
   };
 
@@ -990,6 +1042,19 @@ export default function PaymentsManagement() {
                                 >
                                   <Printer className="h-3 w-3" />
                                   Receipt
+                                </button>
+                                <button
+                                  onClick={() => handleEmailMonthlyReceipt(c)}
+                                  disabled={emailingCycleIndex === c.monthIndex}
+                                  title={`Email Course Fee Receipt to ${selectedStudentForLedger.studentEmail}`}
+                                  className="inline-flex items-center gap-1 rounded-lg border border-purple-500/30 bg-purple-500/10 px-2.5 py-1 text-xs font-medium text-purple-300 hover:bg-purple-500/20 hover:border-purple-400 disabled:opacity-50 transition-colors"
+                                >
+                                  {emailingCycleIndex === c.monthIndex ? (
+                                    <RefreshCw className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <Mail className="h-3 w-3" />
+                                  )}
+                                  Email
                                 </button>
                                 {c.paymentId && c.paymentId !== "INITIAL_REGISTRATION" && (
                                   <button

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Users, Search, Eye, X, RefreshCw, Printer, Trash2, Plus, Save, Download, Calendar, FileSpreadsheet } from "lucide-react";
+import { Users, Search, Eye, X, RefreshCw, Printer, Trash2, Plus, Save, Download, Calendar, FileSpreadsheet, Mail } from "lucide-react";
 import AdminShell from "@/app/components/AdminShell";
 import { generateOfficialFeeReceiptHTML } from "@/lib/receiptTemplate";
 
@@ -232,6 +232,30 @@ export default function EnrollmentsManagement() {
         printWin.document.close();
       }
 
+      // Automatically email official admission receipt if student has email
+      if (newForm.studentEmail) {
+        fetch("/api/email-receipt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "ADMISSION",
+            studentEmail: newForm.studentEmail,
+            studentName: newForm.studentName,
+            receiptData: {
+              registrationNo: json.registrationNo,
+              studentName: newForm.studentName,
+              courseTitle: newForm.courseTitle,
+              admissionFee: newForm.admissionFee,
+              kitPrice: newForm.hasKit ? newForm.kitPrice : "",
+              hasKit: newForm.hasKit,
+              gstPercent: newForm.gstPercent,
+              total: newForm.total,
+              date: new Date(),
+            },
+          }),
+        }).catch((e) => console.error("Auto email error:", e));
+      }
+
       alert(`Official Student Registered! Registration No: ${json.registrationNo}`);
       fetchEnrollments();
     } catch (err) {
@@ -436,6 +460,55 @@ export default function EnrollmentsManagement() {
     }
     printWin.document.write(html);
     printWin.document.close();
+  };
+
+  const [emailingEnrollmentId, setEmailingEnrollmentId] = useState<string | null>(null);
+
+  const handleEmailAdmissionReceipt = async (eRecord: Enrollment) => {
+    if (!eRecord.studentEmail) {
+      alert(`No email address on file for ${eRecord.studentName}`);
+      return;
+    }
+
+    setEmailingEnrollmentId(eRecord.id);
+    const details = getEnrollmentDetails(eRecord);
+    try {
+      const receiptData = {
+        registrationNo: eRecord.registrationNo,
+        studentName: eRecord.studentName,
+        courseTitle: eRecord.courseTitle,
+        admissionFee: eRecord.admissionFee,
+        kitPrice: details.isRobo ? eRecord.kitPrice : "",
+        hasKit: details.isRobo,
+        gstPercent: details.gstPercent,
+        total: details.totalStr,
+        date: eRecord.createdAt,
+      };
+
+      const res = await fetch("/api/email-receipt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "ADMISSION",
+          studentEmail: eRecord.studentEmail,
+          studentName: eRecord.studentName,
+          receiptData,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to email admission receipt.");
+        return;
+      }
+
+      alert(data.message || `Official Admission Receipt emailed to ${eRecord.studentEmail}!`);
+    } catch (err: any) {
+      console.error(err);
+      alert("An error occurred while emailing the receipt.");
+    } finally {
+      setEmailingEnrollmentId(null);
+    }
   };
 
   const inputClass = "w-full px-4 py-2.5 bg-[#090C14] border border-[#1D2436] text-[#F3F6FB] focus:outline-none focus:border-[#4DE8E0] text-sm rounded-xl transition-colors";
@@ -660,6 +733,19 @@ export default function EnrollmentsManagement() {
                           className="flex items-center gap-1 rounded-lg border border-[#1D2436] px-3 py-1.5 text-xs text-[#4DE8E0] bg-[#4DE8E010] hover:bg-[#4DE8E020] transition-all"
                         >
                           <Printer className="h-3 w-3" /> Print
+                        </button>
+                        <button
+                          onClick={() => handleEmailAdmissionReceipt(e)}
+                          disabled={emailingEnrollmentId === e.id}
+                          title={`Email Official Fee Receipt to ${e.studentEmail}`}
+                          className="flex items-center gap-1 rounded-lg border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 text-xs text-purple-300 hover:bg-purple-500/20 hover:border-purple-400 disabled:opacity-50 transition-all"
+                        >
+                          {emailingEnrollmentId === e.id ? (
+                            <RefreshCw className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Mail className="h-3 w-3" />
+                          )}
+                          Email
                         </button>
                         <button
                           onClick={() => handleDelete(e.id, e.studentName)}
@@ -909,6 +995,18 @@ export default function EnrollmentsManagement() {
                     className="flex items-center gap-1.5 rounded-xl border border-[#4DE8E033] bg-[#4DE8E010] px-3 py-1.5 text-xs font-bold text-[#4DE8E0] hover:bg-[#4DE8E020] transition-all"
                   >
                     <Printer className="h-3.5 w-3.5" /> Print
+                  </button>
+                  <button
+                    onClick={() => handleEmailAdmissionReceipt(selected)}
+                    disabled={emailingEnrollmentId === selected.id}
+                    className="flex items-center gap-1.5 rounded-xl border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 text-xs font-bold text-purple-300 hover:bg-purple-500/20 hover:border-purple-400 disabled:opacity-50 transition-all"
+                  >
+                    {emailingEnrollmentId === selected.id ? (
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Mail className="h-3.5 w-3.5" />
+                    )}
+                    Email Receipt
                   </button>
                   <button
                     onClick={() => handleDelete(selected.id, selected.studentName)}
