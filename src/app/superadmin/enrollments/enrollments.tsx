@@ -120,11 +120,11 @@ export default function EnrollmentsManagement() {
     school: "",
     guardianName: "",
     courseTitle: "",
-    admissionFee: "₹3,000",
-    kitPrice: "",
-    hasKit: false,
+    admissionFee: "1700",
+    kitPrice: "1100",
+    hasKit: true,
     gstPercent: 18,
-    total: "₹3,540",
+    total: "₹3,106",
     message: "",
   });
   const [submittingNew, setSubmittingNew] = useState(false);
@@ -145,17 +145,21 @@ export default function EnrollmentsManagement() {
         // Always re-initialize with the first course so pricing is always up-to-date
         if (crsData.length > 0) {
           const first = crsData[0];
-          const isRobo = Boolean(first.hasKit || first.category.toLowerCase().includes("robotics"));
-          const base = parseAmt(first.admissionFee) + (isRobo ? parseAmt(first.kitPrice) : 0);
-          const gstAmt = Math.round((base * (first.gstPercent || 0)) / 100);
+          const isRobo = Boolean(first.hasKit || first.category.toLowerCase().includes("robotics") || first.title.toLowerCase().includes("robotics"));
+          const courseFeeNum = parseAmt(first.admissionFee) || 1700;
+          const gstPercent = first.gstPercent ?? 18;
+          const gstAmt = Math.round((courseFeeNum * gstPercent) / 100);
+          const kitNum = isRobo ? (parseAmt(first.kitPrice) || 1100) : 0;
+          const finalTotal = courseFeeNum + gstAmt + kitNum;
+
           setNewForm((prev) => ({
             ...prev,
             courseTitle: first.title,
-            admissionFee: first.admissionFee || "₹3,000",
-            kitPrice: isRobo ? first.kitPrice : "",
+            admissionFee: String(courseFeeNum),
+            kitPrice: isRobo ? String(kitNum) : "",
             hasKit: isRobo,
-            gstPercent: first.gstPercent ?? 0,
-            total: first.price || fmtAmt(base + gstAmt),
+            gstPercent,
+            total: fmtAmt(finalTotal),
           }));
         }
       }
@@ -171,20 +175,20 @@ export default function EnrollmentsManagement() {
   const handleSelectCourseInForm = (courseTitleStr: string) => {
     const match = courses.find((c) => c.title === courseTitleStr);
     const isRobo = Boolean(match?.hasKit || courseTitleStr.toLowerCase().includes("robotics"));
-    const admissionFee = match?.admissionFee || "₹3,000";
-    const kitPrice = isRobo ? (match?.kitPrice || "₹1,100") : "";
+    const courseFeeNum = parseAmt(match?.admissionFee) || 1700;
     const gstPercent = match?.gstPercent ?? 18;
-    const base = parseAmt(admissionFee) + (isRobo ? parseAmt(kitPrice) : 0);
-    const gstAmt = Math.round((base * gstPercent) / 100);
+    const gstAmt = Math.round((courseFeeNum * gstPercent) / 100);
+    const kitNum = isRobo ? (parseAmt(match?.kitPrice) || 1100) : 0;
+    const finalTotal = courseFeeNum + gstAmt + kitNum;
 
     setNewForm((prev) => ({
       ...prev,
       courseTitle: courseTitleStr,
-      admissionFee,
-      kitPrice,
+      admissionFee: String(courseFeeNum),
+      kitPrice: isRobo ? String(kitNum) : "",
       hasKit: isRobo,
       gstPercent,
-      total: match?.price || fmtAmt(base + gstAmt),
+      total: fmtAmt(finalTotal),
     }));
   };
 
@@ -896,19 +900,20 @@ export default function EnrollmentsManagement() {
                         value={newForm.admissionFee}
                         onChange={(e) => {
                           const val = e.target.value;
-                          const base = parseAmt(val) + (newForm.hasKit ? parseAmt(newForm.kitPrice) : 0);
-                          const gstAmt = Math.round((base * newForm.gstPercent) / 100);
+                          const cFee = parseAmt(val);
+                          const gstAmt = Math.round((cFee * newForm.gstPercent) / 100);
+                          const kitAmt = newForm.hasKit ? parseAmt(newForm.kitPrice) : 0;
                           setNewForm((prev) => ({
                             ...prev,
                             admissionFee: val,
-                            total: fmtAmt(base + gstAmt),
+                            total: fmtAmt(cFee + gstAmt + kitAmt),
                           }));
                         }}
                         className={inputClass}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-[#8891A8] mb-1.5">GST %</label>
+                      <label className="block text-xs text-[#8891A8] mb-1.5">GST % (on Course Fee only)</label>
                       <input
                         type="number"
                         min="0"
@@ -916,12 +921,13 @@ export default function EnrollmentsManagement() {
                         value={newForm.gstPercent}
                         onChange={(e) => {
                           const gstVal = parseFloat(e.target.value) || 0;
-                          const base = parseAmt(newForm.admissionFee) + (newForm.hasKit ? parseAmt(newForm.kitPrice) : 0);
-                          const gstAmt = Math.round((base * gstVal) / 100);
+                          const cFee = parseAmt(newForm.admissionFee);
+                          const gstAmt = Math.round((cFee * gstVal) / 100);
+                          const kitAmt = newForm.hasKit ? parseAmt(newForm.kitPrice) : 0;
                           setNewForm((prev) => ({
                             ...prev,
                             gstPercent: gstVal,
-                            total: fmtAmt(base + gstAmt),
+                            total: fmtAmt(cFee + gstAmt + kitAmt),
                           }));
                         }}
                         className={inputClass}
@@ -931,21 +937,23 @@ export default function EnrollmentsManagement() {
 
                   {newForm.hasKit && (
                     <div>
-                      <label className="block text-xs text-[#8891A8] mb-1.5">Kit Price (Robotics)</label>
+                      <label className="block text-xs text-[#8891A8] mb-1.5">Kit Price (Robotics) — Direct Flat Fee (No GST)</label>
                       <input
                         type="text"
                         value={newForm.kitPrice}
                         onChange={(e) => {
                           const kVal = e.target.value;
-                          const base = parseAmt(newForm.admissionFee) + parseAmt(kVal);
-                          const gstAmt = Math.round((base * newForm.gstPercent) / 100);
+                          const cFee = parseAmt(newForm.admissionFee);
+                          const gstAmt = Math.round((cFee * newForm.gstPercent) / 100);
+                          const kitAmt = parseAmt(kVal);
                           setNewForm((prev) => ({
                             ...prev,
                             kitPrice: kVal,
-                            total: fmtAmt(base + gstAmt),
+                            total: fmtAmt(cFee + gstAmt + kitAmt),
                           }));
                         }}
                         className={inputClass}
+                        placeholder="1100"
                       />
                     </div>
                   )}
