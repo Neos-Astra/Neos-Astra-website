@@ -52,10 +52,16 @@ export function generateOfficialFeeReceiptHTML(data: ReceiptData, emailOnly = fa
   const dateStr = formatReceiptDate(data.date);
   const receiptNo = data.registrationNo || "NA-2026-08-08-010";
 
-  // Check if course has kit
+  // Check if course has kit (Robotics courses, or kitPrice > 0, or total >= 3000, or hasKit=true)
   const isRobotics = Boolean(data.courseTitle?.toLowerCase().includes("robotics"));
   const rawKitNum = parseAmt(data.kitPrice);
-  const hasKit = Boolean(data.hasKit === true || (isRobotics && rawKitNum > 0) || rawKitNum > 0);
+  const rawTotal = parseAmt(data.total);
+  const hasKit = Boolean(
+    data.hasKit === true ||
+    isRobotics ||
+    rawKitNum > 0 ||
+    rawTotal >= 3000
+  );
   const kitFeeNum = rawKitNum > 0 ? rawKitNum : 1100;
 
   // Fee and GST calculation
@@ -65,11 +71,7 @@ export function generateOfficialFeeReceiptHTML(data: ReceiptData, emailOnly = fa
   let courseTotalNum = 2006;
 
   if (rawAdmission > 0) {
-    if (rawAdmission === 2006) {
-      courseFeeNum = 1700;
-      gstAmtNum = 306;
-      courseTotalNum = 2006;
-    } else if (rawAdmission === 1700) {
+    if (rawAdmission === 2006 || rawAdmission === 1700) {
       courseFeeNum = 1700;
       gstAmtNum = 306;
       courseTotalNum = 2006;
@@ -78,37 +80,34 @@ export function generateOfficialFeeReceiptHTML(data: ReceiptData, emailOnly = fa
       gstAmtNum = Math.round((courseFeeNum * data.gstPercent) / 100);
       courseTotalNum = courseFeeNum + gstAmtNum;
     } else {
-      // Default standard 18% GST calculation as requested
-      // If admission fee was inclusive of 18% GST:
       courseFeeNum = Math.round((rawAdmission / 1.18) * 100) / 100;
       gstAmtNum = Math.round((rawAdmission - courseFeeNum) * 100) / 100;
       courseTotalNum = rawAdmission;
     }
   }
 
-  // Payment mode checkboxes matching Word document exactly:
-  // Payment Mode:     Cash/    UPI /    Card /    Bank Transfer
+  // Payment mode checkboxes matching Word document
   const renderPaymentMode = () => `
-    <div class="payment-mode-line">
+    <div style="font-size: 9.5pt; font-family: Cambria, 'Times New Roman', Georgia, serif; margin-top: 6px; margin-bottom: 16px;">
       Payment Mode: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <span class="box-item"><span class="box"></span>Cash/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <span class="box-item"><span class="box"></span>UPI /</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <span class="box-item"><span class="box"></span>Card /</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <span class="box-item"><span class="box"></span>Bank Transfer</span>
+      <span style="display: inline-flex; align-items: center;"><span style="display: inline-block; width: 10px; height: 10px; border: 1px solid #000; margin-right: 4px; background: #fff;"></span>Cash/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <span style="display: inline-flex; align-items: center;"><span style="display: inline-block; width: 10px; height: 10px; border: 1px solid #000; margin-right: 4px; background: #fff;"></span>UPI /</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <span style="display: inline-flex; align-items: center;"><span style="display: inline-block; width: 10px; height: 10px; border: 1px solid #000; margin-right: 4px; background: #fff;"></span>Card /</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <span style="display: inline-flex; align-items: center;"><span style="display: inline-block; width: 10px; height: 10px; border: 1px solid #000; margin-right: 4px; background: #fff;"></span>Bank Transfer</span>
     </div>
   `;
 
-  // Signatures matching Word document exactly
+  // Signatures matching Word document
   const renderSignatures = () => `
-    <table class="signatures-table">
+    <table style="width: 100%; border-collapse: collapse; border: none; margin-top: 10px; margin-bottom: 14px; font-family: Cambria, 'Times New Roman', Georgia, serif;">
       <tr>
-        <td style="width: 50%; text-align: left;">
-          <div class="sig-line">____________________</div>
-          <div class="sig-text">Student Signature</div>
+        <td style="width: 50%; text-align: left; border: none; padding: 0; vertical-align: bottom;">
+          <div style="font-size: 10pt; line-height: 1; margin-bottom: 3px;">____________________</div>
+          <div style="font-size: 9.5pt;">Student Signature</div>
         </td>
-        <td style="width: 50%; text-align: right;">
-          <div class="sig-line">____________________</div>
-          <div class="sig-text">Authorized Signature</div>
+        <td style="width: 50%; text-align: right; border: none; padding: 0; vertical-align: bottom;">
+          <div style="font-size: 10pt; line-height: 1; margin-bottom: 3px;">____________________</div>
+          <div style="font-size: 9.5pt;">Authorized Signature</div>
         </td>
       </tr>
     </table>
@@ -116,54 +115,54 @@ export function generateOfficialFeeReceiptHTML(data: ReceiptData, emailOnly = fa
 
   // Render Single Course Fee Unit (STUDENT COPY or OFFICE COPY)
   const renderCourseReceiptUnit = (copyType: "STUDENT COPY" | "OFFICE COPY") => `
-    <div class="receipt-unit">
+    <div style="width: 100%; padding-top: 4px; padding-bottom: 4px; font-family: Cambria, 'Times New Roman', Georgia, serif; color: #000;">
       <!-- Header -->
-      <table class="header-table">
+      <table style="width: 100%; border-collapse: collapse; border: none; margin-bottom: 12px;">
         <tr>
-          <td class="header-left">
-            <div class="brand-title">NEOS ASTRA</div>
-            <div class="brand-sub">SCHOOL OF INNOVATION</div>
-            <div class="brand-web">www.neosastra.com | +91 9348059284</div>
+          <td style="width: 44%; text-align: left; border: none; vertical-align: top; padding: 0;">
+            <div style="font-size: 13pt; font-weight: bold; letter-spacing: 0.5px; line-height: 1.2;">NEOS ASTRA</div>
+            <div style="font-size: 10.5pt; font-weight: bold; line-height: 1.2; margin-top: 1px;">SCHOOL OF INNOVATION</div>
+            <div style="font-size: 9pt; margin-top: 2px;">www.neosastra.com | +91 9348059284</div>
           </td>
-          <td class="header-center">
-            <img src="${RECEIPT_LOGO_DATA_URL}" alt="Neos Astra" class="header-logo" />
+          <td style="width: 16%; text-align: center; border: none; vertical-align: middle; padding: 0;">
+            <img src="${RECEIPT_LOGO_DATA_URL}" alt="Neos Astra" style="width: 65px; height: 65px; object-fit: contain; display: inline-block;" />
           </td>
-          <td class="header-right">
-            <div class="badge-title">FEE RECEIPT</div>
-            <div class="badge-copy">(${copyType})</div>
+          <td style="width: 40%; text-align: right; border: none; vertical-align: top; padding: 0;">
+            <div style="font-size: 11.5pt; font-weight: bold; line-height: 1.2;">FEE RECEIPT</div>
+            <div style="font-size: 10pt; font-weight: bold; line-height: 1.2; margin-top: 2px;">(${copyType})</div>
           </td>
         </tr>
       </table>
 
       <!-- Info Table (Bordered) -->
-      <table class="grid-table">
+      <table style="width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #000; margin-bottom: 10px; font-size: 10pt;">
         <tr>
-          <td style="width: 50%;">RECEIPT NO: ${receiptNo}</td>
-          <td style="width: 50%;">DATE: ${dateStr}</td>
+          <td style="width: 50%; border: 1px solid #000; padding: 4px 6px; text-align: left; vertical-align: middle;">RECEIPT NO: ${receiptNo}</td>
+          <td style="width: 50%; border: 1px solid #000; padding: 4px 6px; text-align: left; vertical-align: middle;">DATE: ${dateStr}</td>
         </tr>
         <tr>
-          <td style="width: 50%;">STUDENT NAME: ${data.studentName}</td>
-          <td style="width: 50%;">COURSE: ${data.courseTitle}</td>
+          <td style="width: 50%; border: 1px solid #000; padding: 4px 6px; text-align: left; vertical-align: middle;">STUDENT NAME: ${data.studentName}</td>
+          <td style="width: 50%; border: 1px solid #000; padding: 4px 6px; text-align: left; vertical-align: middle;">COURSE: ${data.courseTitle}</td>
         </tr>
       </table>
 
       <!-- Amount Table (Bordered) -->
-      <table class="grid-table amount-table">
+      <table style="width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #000; margin-bottom: 10px; font-size: 10pt;">
         <tr>
-          <th style="width: 50%;">DESCRIPTION</th>
-          <th style="width: 50%;">AMOUNT</th>
+          <th style="width: 50%; border: 1px solid #000; padding: 4px 6px; text-align: left; font-weight: bold; background: #fff;">DESCRIPTION</th>
+          <th style="width: 50%; border: 1px solid #000; padding: 4px 6px; text-align: left; font-weight: bold; background: #fff;">AMOUNT</th>
         </tr>
         <tr>
-          <td>Course Fee</td>
-          <td>${fmtAmt(courseFeeNum)}</td>
+          <td style="border: 1px solid #000; padding: 4px 6px;">Course Fee</td>
+          <td style="border: 1px solid #000; padding: 4px 6px;">${fmtAmt(courseFeeNum)}</td>
         </tr>
         <tr>
-          <td>GST (18%)</td>
-          <td>${fmtAmt(gstAmtNum)}</td>
+          <td style="border: 1px solid #000; padding: 4px 6px;">GST (18%)</td>
+          <td style="border: 1px solid #000; padding: 4px 6px;">${fmtAmt(gstAmtNum)}</td>
         </tr>
         <tr>
-          <td>Total Paid</td>
-          <td>${fmtAmt(courseTotalNum)}</td>
+          <td style="border: 1px solid #000; padding: 4px 6px; font-weight: bold;">Total Paid</td>
+          <td style="border: 1px solid #000; padding: 4px 6px; font-weight: bold;">${fmtAmt(courseTotalNum)}</td>
         </tr>
       </table>
 
@@ -177,50 +176,50 @@ export function generateOfficialFeeReceiptHTML(data: ReceiptData, emailOnly = fa
 
   // Render Single Starter Kit Unit (STUDENT COPY or OFFICE COPY)
   const renderKitReceiptUnit = (copyType: "STUDENT COPY" | "OFFICE COPY") => `
-    <div class="receipt-unit">
+    <div style="width: 100%; padding-top: 4px; padding-bottom: 4px; font-family: Cambria, 'Times New Roman', Georgia, serif; color: #000;">
       <!-- Header -->
-      <table class="header-table">
+      <table style="width: 100%; border-collapse: collapse; border: none; margin-bottom: 12px;">
         <tr>
-          <td class="header-left">
-            <div class="brand-title">NEOS ASTRA</div>
-            <div class="brand-sub">SCHOOL OF INNOVATION</div>
-            <div class="brand-web">www.neosastra.com | +91 9348059284</div>
+          <td style="width: 44%; text-align: left; border: none; vertical-align: top; padding: 0;">
+            <div style="font-size: 13pt; font-weight: bold; letter-spacing: 0.5px; line-height: 1.2;">NEOS ASTRA</div>
+            <div style="font-size: 10.5pt; font-weight: bold; line-height: 1.2; margin-top: 1px;">SCHOOL OF INNOVATION</div>
+            <div style="font-size: 9pt; margin-top: 2px;">www.neosastra.com | +91 9348059284</div>
           </td>
-          <td class="header-center">
-            <img src="${RECEIPT_LOGO_DATA_URL}" alt="Neos Astra" class="header-logo" />
+          <td style="width: 16%; text-align: center; border: none; vertical-align: middle; padding: 0;">
+            <img src="${RECEIPT_LOGO_DATA_URL}" alt="Neos Astra" style="width: 65px; height: 65px; object-fit: contain; display: inline-block;" />
           </td>
-          <td class="header-right">
-            <div class="badge-title">FEE RECEIPT</div>
-            <div class="badge-copy">(${copyType})</div>
+          <td style="width: 40%; text-align: right; border: none; vertical-align: top; padding: 0;">
+            <div style="font-size: 11.5pt; font-weight: bold; line-height: 1.2;">FEE RECEIPT</div>
+            <div style="font-size: 10pt; font-weight: bold; line-height: 1.2; margin-top: 2px;">(${copyType})</div>
           </td>
         </tr>
       </table>
 
       <!-- Info Table (Bordered) -->
-      <table class="grid-table">
+      <table style="width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #000; margin-bottom: 10px; font-size: 10pt;">
         <tr>
-          <td style="width: 50%;">RECEIPT NO: ${receiptNo}</td>
-          <td style="width: 50%;">DATE: ${dateStr}</td>
+          <td style="width: 50%; border: 1px solid #000; padding: 4px 6px; text-align: left; vertical-align: middle;">RECEIPT NO: ${receiptNo}</td>
+          <td style="width: 50%; border: 1px solid #000; padding: 4px 6px; text-align: left; vertical-align: middle;">DATE: ${dateStr}</td>
         </tr>
         <tr>
-          <td style="width: 50%;">STUDENT NAME: ${data.studentName}</td>
-          <td style="width: 50%;">COURSE: ${data.courseTitle}</td>
+          <td style="width: 50%; border: 1px solid #000; padding: 4px 6px; text-align: left; vertical-align: middle;">STUDENT NAME: ${data.studentName}</td>
+          <td style="width: 50%; border: 1px solid #000; padding: 4px 6px; text-align: left; vertical-align: middle;">COURSE: ${data.courseTitle}</td>
         </tr>
       </table>
 
       <!-- Amount Table (Bordered) -->
-      <table class="grid-table amount-table">
+      <table style="width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #000; margin-bottom: 10px; font-size: 10pt;">
         <tr>
-          <th style="width: 50%;">DESCRIPTION</th>
-          <th style="width: 50%;">AMOUNT</th>
+          <th style="width: 50%; border: 1px solid #000; padding: 4px 6px; text-align: left; font-weight: bold; background: #fff;">DESCRIPTION</th>
+          <th style="width: 50%; border: 1px solid #000; padding: 4px 6px; text-align: left; font-weight: bold; background: #fff;">AMOUNT</th>
         </tr>
         <tr>
-          <td>Innovators Starter Kit Fee</td>
-          <td>${fmtAmt(kitFeeNum)}</td>
+          <td style="border: 1px solid #000; padding: 4px 6px;">Innovators Starter Kit Fee</td>
+          <td style="border: 1px solid #000; padding: 4px 6px;">${fmtAmt(kitFeeNum)}</td>
         </tr>
         <tr>
-          <td>Total Paid</td>
-          <td>${fmtAmt(kitFeeNum)}</td>
+          <td style="border: 1px solid #000; padding: 4px 6px; font-weight: bold;">Total Paid</td>
+          <td style="border: 1px solid #000; padding: 4px 6px; font-weight: bold;">${fmtAmt(kitFeeNum)}</td>
         </tr>
       </table>
 
@@ -233,8 +232,30 @@ export function generateOfficialFeeReceiptHTML(data: ReceiptData, emailOnly = fa
   `;
 
   // Dotted line matching Word doc
-  const dividerLine = `<div class="dash-divider">----------------------------------------------------------------------------------------------------------------------------------</div>`;
+  const dividerLine = `<div style="width: 100%; text-align: center; font-size: 9pt; letter-spacing: -0.5px; color: #000; margin: 16px 0 20px 0; overflow: hidden; white-space: nowrap;">----------------------------------------------------------------------------------------------------------------------------------</div>`;
 
+  // IF EMAIL ONLY: Return pure inline-styled HTML with Student Copy only (no Office Copy, no script tags)
+  if (emailOnly) {
+    return `
+      <div style="font-family: Cambria, 'Times New Roman', Georgia, serif; color: #000; background: #ffffff;">
+        ${renderCourseReceiptUnit("STUDENT COPY")}
+        ${
+          hasKit
+            ? `
+          <div style="margin: 28px 0 20px; border-top: 2px dashed #94a3b8; text-align: center;">
+            <span style="background: #ffffff; padding: 2px 14px; font-size: 11px; font-weight: bold; color: #475569; letter-spacing: 0.5px; border: 1px solid #cbd5e1; border-radius: 9999px;">
+              INNOVATORS STARTER KIT RECEIPT
+            </span>
+          </div>
+          ${renderKitReceiptUnit("STUDENT COPY")}
+        `
+            : ""
+        }
+      </div>
+    `;
+  }
+
+  // PRINT MODE: Full A4 document with dual copy (Student Copy + Office Copy)
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -269,146 +290,6 @@ export function generateOfficialFeeReceiptHTML(data: ReceiptData, emailOnly = fa
       page-break-after: avoid;
     }
 
-    .receipt-unit {
-      width: 100%;
-      padding-top: 4px;
-      padding-bottom: 4px;
-    }
-
-    /* Header */
-    .header-table {
-      width: 100%;
-      border-collapse: collapse;
-      border: none;
-      margin-bottom: 12px;
-    }
-    .header-table td {
-      border: none;
-      vertical-align: top;
-      padding: 0;
-    }
-    .header-left {
-      width: 44%;
-      text-align: left;
-    }
-    .brand-title {
-      font-size: 13pt;
-      font-weight: bold;
-      letter-spacing: 0.5px;
-      line-height: 1.2;
-    }
-    .brand-sub {
-      font-size: 10.5pt;
-      font-weight: bold;
-      line-height: 1.2;
-      margin-top: 1px;
-    }
-    .brand-web {
-      font-size: 9pt;
-      margin-top: 2px;
-    }
-
-    .header-center {
-      width: 16%;
-      text-align: center;
-      vertical-align: middle !important;
-    }
-    .header-logo {
-      width: 65px;
-      height: 65px;
-      object-fit: contain;
-      display: inline-block;
-    }
-
-    .header-right {
-      width: 40%;
-      text-align: right;
-    }
-    .badge-title {
-      font-size: 11.5pt;
-      font-weight: bold;
-      line-height: 1.2;
-    }
-    .badge-copy {
-      font-size: 10pt;
-      font-weight: bold;
-      line-height: 1.2;
-      margin-top: 2px;
-    }
-
-    /* Bordered Tables */
-    .grid-table {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-      border: 1px solid #000;
-      margin-bottom: 10px;
-      font-size: 10pt;
-    }
-    .grid-table th, .grid-table td {
-      border: 1px solid #000;
-      padding: 3.5px 6px;
-      vertical-align: middle;
-      text-align: left;
-    }
-    .grid-table th {
-      font-weight: bold;
-      background: #fff;
-    }
-
-    /* Payment Mode */
-    .payment-mode-line {
-      font-size: 9.5pt;
-      margin-top: 6px;
-      margin-bottom: 22px;
-    }
-    .box-item {
-      display: inline-flex;
-      align-items: center;
-    }
-    .box {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border: 1px solid #000;
-      margin-right: 4px;
-      background: #fff;
-    }
-
-    /* Signatures */
-    .signatures-table {
-      width: 100%;
-      border-collapse: collapse;
-      border: none;
-      margin-top: 10px;
-      margin-bottom: 18px;
-    }
-    .signatures-table td {
-      border: none;
-      padding: 0;
-      vertical-align: bottom;
-    }
-    .sig-line {
-      font-size: 10pt;
-      line-height: 1;
-      margin-bottom: 3px;
-    }
-    .sig-text {
-      font-size: 9.5pt;
-    }
-
-    /* Divider */
-    .dash-divider {
-      width: 100%;
-      text-align: center;
-      font-size: 9pt;
-      letter-spacing: -0.5px;
-      color: #000;
-      margin: 16px 0 20px 0;
-      overflow: hidden;
-      white-space: nowrap;
-    }
-
     @media print {
       body { padding: 0; }
       .page { padding: 0; }
@@ -420,7 +301,8 @@ export function generateOfficialFeeReceiptHTML(data: ReceiptData, emailOnly = fa
   <!-- PAGE 1: Course Fee -->
   <div class="page">
     ${renderCourseReceiptUnit("STUDENT COPY")}
-    ${emailOnly ? '' : `${dividerLine}${renderCourseReceiptUnit("OFFICE COPY")}`}
+    ${dividerLine}
+    ${renderCourseReceiptUnit("OFFICE COPY")}
   </div>
 
   ${
@@ -429,7 +311,8 @@ export function generateOfficialFeeReceiptHTML(data: ReceiptData, emailOnly = fa
     <!-- PAGE 2: Innovators Starter Kit Fee -->
     <div class="page">
       ${renderKitReceiptUnit("STUDENT COPY")}
-      ${emailOnly ? '' : `${dividerLine}${renderKitReceiptUnit("OFFICE COPY")}`}
+      ${dividerLine}
+      ${renderKitReceiptUnit("OFFICE COPY")}
     </div>
   `
       : ""
@@ -474,7 +357,6 @@ export function generateMonthlyFeeReceiptHTML(data: MonthlyReceiptData, emailOnl
       gstAmtNum = 306;
       totalNum = 2006;
     } else {
-      // 18% GST calculation
       courseFeeNum = Math.round((amtNum / 1.18) * 100) / 100;
       gstAmtNum = Math.round((amtNum - courseFeeNum) * 100) / 100;
       totalNum = amtNum;
@@ -482,83 +364,83 @@ export function generateMonthlyFeeReceiptHTML(data: MonthlyReceiptData, emailOnl
   }
 
   const renderPaymentMode = () => `
-    <div class="payment-mode-line">
+    <div style="font-size: 9.5pt; font-family: Cambria, 'Times New Roman', Georgia, serif; margin-top: 6px; margin-bottom: 16px;">
       Payment Mode: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <span class="box-item"><span class="box"></span>Cash/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <span class="box-item"><span class="box"></span>UPI /</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <span class="box-item"><span class="box"></span>Card /</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <span class="box-item"><span class="box"></span>Bank Transfer</span>
+      <span style="display: inline-flex; align-items: center;"><span style="display: inline-block; width: 10px; height: 10px; border: 1px solid #000; margin-right: 4px; background: #fff;"></span>Cash/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <span style="display: inline-flex; align-items: center;"><span style="display: inline-block; width: 10px; height: 10px; border: 1px solid #000; margin-right: 4px; background: #fff;"></span>UPI /</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <span style="display: inline-flex; align-items: center;"><span style="display: inline-block; width: 10px; height: 10px; border: 1px solid #000; margin-right: 4px; background: #fff;"></span>Card /</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <span style="display: inline-flex; align-items: center;"><span style="display: inline-block; width: 10px; height: 10px; border: 1px solid #000; margin-right: 4px; background: #fff;"></span>Bank Transfer</span>
     </div>
   `;
 
   const renderSignatures = () => `
-    <table class="signatures-table">
+    <table style="width: 100%; border-collapse: collapse; border: none; margin-top: 10px; margin-bottom: 14px; font-family: Cambria, 'Times New Roman', Georgia, serif;">
       <tr>
-        <td style="width: 50%; text-align: left;">
-          <div class="sig-line">____________________</div>
-          <div class="sig-text">Student Signature</div>
+        <td style="width: 50%; text-align: left; border: none; padding: 0; vertical-align: bottom;">
+          <div style="font-size: 10pt; line-height: 1; margin-bottom: 3px;">____________________</div>
+          <div style="font-size: 9.5pt;">Student Signature</div>
         </td>
-        <td style="width: 50%; text-align: right;">
-          <div class="sig-line">____________________</div>
-          <div class="sig-text">Authorized Signature</div>
+        <td style="width: 50%; text-align: right; border: none; padding: 0; vertical-align: bottom;">
+          <div style="font-size: 10pt; line-height: 1; margin-bottom: 3px;">____________________</div>
+          <div style="font-size: 9.5pt;">Authorized Signature</div>
         </td>
       </tr>
     </table>
   `;
 
   const renderSingleMonthlyUnit = (copyType: "STUDENT COPY" | "OFFICE COPY") => `
-    <div class="receipt-unit">
+    <div style="width: 100%; padding-top: 4px; padding-bottom: 4px; font-family: Cambria, 'Times New Roman', Georgia, serif; color: #000;">
       <!-- Header -->
-      <table class="header-table">
+      <table style="width: 100%; border-collapse: collapse; border: none; margin-bottom: 12px;">
         <tr>
-          <td class="header-left">
-            <div class="brand-title">NEOS ASTRA</div>
-            <div class="brand-sub">SCHOOL OF INNOVATION</div>
-            <div class="brand-web">www.neosastra.com | +91 9348059284</div>
+          <td style="width: 44%; text-align: left; border: none; vertical-align: top; padding: 0;">
+            <div style="font-size: 13pt; font-weight: bold; letter-spacing: 0.5px; line-height: 1.2;">NEOS ASTRA</div>
+            <div style="font-size: 10.5pt; font-weight: bold; line-height: 1.2; margin-top: 1px;">SCHOOL OF INNOVATION</div>
+            <div style="font-size: 9pt; margin-top: 2px;">www.neosastra.com | +91 9348059284</div>
           </td>
-          <td class="header-center">
-            <img src="${RECEIPT_LOGO_DATA_URL}" alt="Neos Astra" class="header-logo" />
+          <td style="width: 16%; text-align: center; border: none; vertical-align: middle; padding: 0;">
+            <img src="${RECEIPT_LOGO_DATA_URL}" alt="Neos Astra" style="width: 65px; height: 65px; object-fit: contain; display: inline-block;" />
           </td>
-          <td class="header-right">
-            <div class="badge-title">FEE RECEIPT</div>
-            <div class="badge-copy">(${copyType})</div>
+          <td style="width: 40%; text-align: right; border: none; vertical-align: top; padding: 0;">
+            <div style="font-size: 11.5pt; font-weight: bold; line-height: 1.2;">FEE RECEIPT</div>
+            <div style="font-size: 10pt; font-weight: bold; line-height: 1.2; margin-top: 2px;">(${copyType})</div>
           </td>
         </tr>
       </table>
 
       <!-- Info Table -->
-      <table class="grid-table">
+      <table style="width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #000; margin-bottom: 10px; font-size: 10pt;">
         <tr>
-          <td style="width: 50%;">RECEIPT NO: ${data.receiptNo}</td>
-          <td style="width: 50%;">DATE: ${dateStr}</td>
+          <td style="width: 50%; border: 1px solid #000; padding: 4px 6px; text-align: left; vertical-align: middle;">RECEIPT NO: ${data.receiptNo}</td>
+          <td style="width: 50%; border: 1px solid #000; padding: 4px 6px; text-align: left; vertical-align: middle;">DATE: ${dateStr}</td>
         </tr>
         <tr>
-          <td style="width: 50%;">STUDENT NAME: ${data.studentName}</td>
-          <td style="width: 50%;">COURSE: ${data.courseTitle}</td>
+          <td style="width: 50%; border: 1px solid #000; padding: 4px 6px; text-align: left; vertical-align: middle;">STUDENT NAME: ${data.studentName}</td>
+          <td style="width: 50%; border: 1px solid #000; padding: 4px 6px; text-align: left; vertical-align: middle;">COURSE: ${data.courseTitle}</td>
         </tr>
       </table>
 
       <!-- Amount Table (Pure Course Fee + GST) -->
-      <table class="grid-table amount-table">
+      <table style="width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #000; margin-bottom: 10px; font-size: 10pt;">
         <tr>
-          <th style="width: 50%;">DESCRIPTION</th>
-          <th style="width: 50%;">AMOUNT</th>
+          <th style="width: 50%; border: 1px solid #000; padding: 4px 6px; text-align: left; font-weight: bold; background: #fff;">DESCRIPTION</th>
+          <th style="width: 50%; border: 1px solid #000; padding: 4px 6px; text-align: left; font-weight: bold; background: #fff;">AMOUNT</th>
         </tr>
         <tr>
-          <td>Course Fee</td>
-          <td>${fmtAmt(courseFeeNum)}</td>
+          <td style="border: 1px solid #000; padding: 4px 6px;">Course Fee</td>
+          <td style="border: 1px solid #000; padding: 4px 6px;">${fmtAmt(courseFeeNum)}</td>
         </tr>
         ${
           gstAmtNum > 0
             ? `<tr>
-                <td>GST (18%)</td>
-                <td>${fmtAmt(gstAmtNum)}</td>
+                <td style="border: 1px solid #000; padding: 4px 6px;">GST (18%)</td>
+                <td style="border: 1px solid #000; padding: 4px 6px;">${fmtAmt(gstAmtNum)}</td>
               </tr>`
             : ""
         }
         <tr>
-          <td>Total Paid</td>
-          <td>${fmtAmt(totalNum)}</td>
+          <td style="border: 1px solid #000; padding: 4px 6px; font-weight: bold;">Total Paid</td>
+          <td style="border: 1px solid #000; padding: 4px 6px; font-weight: bold;">${fmtAmt(totalNum)}</td>
         </tr>
       </table>
 
@@ -570,8 +452,18 @@ export function generateMonthlyFeeReceiptHTML(data: MonthlyReceiptData, emailOnl
     </div>
   `;
 
-  const dividerLine = `<div class="dash-divider">----------------------------------------------------------------------------------------------------------------------------------</div>`;
+  const dividerLine = `<div style="width: 100%; text-align: center; font-size: 9pt; letter-spacing: -0.5px; color: #000; margin: 16px 0 20px 0; overflow: hidden; white-space: nowrap;">----------------------------------------------------------------------------------------------------------------------------------</div>`;
 
+  // IF EMAIL ONLY: Return pure inline-styled HTML with Student Copy only (no Office Copy, no script tags)
+  if (emailOnly) {
+    return `
+      <div style="font-family: Cambria, 'Times New Roman', Georgia, serif; color: #000; background: #ffffff;">
+        ${renderSingleMonthlyUnit("STUDENT COPY")}
+      </div>
+    `;
+  }
+
+  // PRINT MODE: Full A4 document with dual copy (Student Copy + Office Copy)
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -606,146 +498,6 @@ export function generateMonthlyFeeReceiptHTML(data: MonthlyReceiptData, emailOnl
       page-break-after: avoid;
     }
 
-    .receipt-unit {
-      width: 100%;
-      padding-top: 4px;
-      padding-bottom: 4px;
-    }
-
-    /* Header */
-    .header-table {
-      width: 100%;
-      border-collapse: collapse;
-      border: none;
-      margin-bottom: 12px;
-    }
-    .header-table td {
-      border: none;
-      vertical-align: top;
-      padding: 0;
-    }
-    .header-left {
-      width: 44%;
-      text-align: left;
-    }
-    .brand-title {
-      font-size: 13pt;
-      font-weight: bold;
-      letter-spacing: 0.5px;
-      line-height: 1.2;
-    }
-    .brand-sub {
-      font-size: 10.5pt;
-      font-weight: bold;
-      line-height: 1.2;
-      margin-top: 1px;
-    }
-    .brand-web {
-      font-size: 9pt;
-      margin-top: 2px;
-    }
-
-    .header-center {
-      width: 16%;
-      text-align: center;
-      vertical-align: middle !important;
-    }
-    .header-logo {
-      width: 65px;
-      height: 65px;
-      object-fit: contain;
-      display: inline-block;
-    }
-
-    .header-right {
-      width: 40%;
-      text-align: right;
-    }
-    .badge-title {
-      font-size: 11.5pt;
-      font-weight: bold;
-      line-height: 1.2;
-    }
-    .badge-copy {
-      font-size: 10pt;
-      font-weight: bold;
-      line-height: 1.2;
-      margin-top: 2px;
-    }
-
-    /* Bordered Tables */
-    .grid-table {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-      border: 1px solid #000;
-      margin-bottom: 10px;
-      font-size: 10pt;
-    }
-    .grid-table th, .grid-table td {
-      border: 1px solid #000;
-      padding: 3.5px 6px;
-      vertical-align: middle;
-      text-align: left;
-    }
-    .grid-table th {
-      font-weight: bold;
-      background: #fff;
-    }
-
-    /* Payment Mode */
-    .payment-mode-line {
-      font-size: 9.5pt;
-      margin-top: 6px;
-      margin-bottom: 22px;
-    }
-    .box-item {
-      display: inline-flex;
-      align-items: center;
-    }
-    .box {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border: 1px solid #000;
-      margin-right: 4px;
-      background: #fff;
-    }
-
-    /* Signatures */
-    .signatures-table {
-      width: 100%;
-      border-collapse: collapse;
-      border: none;
-      margin-top: 10px;
-      margin-bottom: 18px;
-    }
-    .signatures-table td {
-      border: none;
-      padding: 0;
-      vertical-align: bottom;
-    }
-    .sig-line {
-      font-size: 10pt;
-      line-height: 1;
-      margin-bottom: 3px;
-    }
-    .sig-text {
-      font-size: 9.5pt;
-    }
-
-    /* Divider */
-    .dash-divider {
-      width: 100%;
-      text-align: center;
-      font-size: 9pt;
-      letter-spacing: -0.5px;
-      color: #000;
-      margin: 16px 0 20px 0;
-      overflow: hidden;
-      white-space: nowrap;
-    }
-
     @media print {
       body { padding: 0; }
       .page { padding: 0; }
@@ -757,7 +509,8 @@ export function generateMonthlyFeeReceiptHTML(data: MonthlyReceiptData, emailOnl
   <!-- Fee Receipt -->
   <div class="page">
     ${renderSingleMonthlyUnit("STUDENT COPY")}
-    ${emailOnly ? '' : `${dividerLine}${renderSingleMonthlyUnit("OFFICE COPY")}`}
+    ${dividerLine}
+    ${renderSingleMonthlyUnit("OFFICE COPY")}
   </div>
 
   <script>

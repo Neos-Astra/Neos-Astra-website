@@ -50,10 +50,12 @@ function fmtAmt(val: number): string {
 function getEnrollmentDetails(e: Enrollment) {
   const isRobo = Boolean(
     e.hasKit === true ||
-    e.courseTitle?.toLowerCase().includes("robotics")
+    e.courseTitle?.toLowerCase().includes("robotics") ||
+    parseAmt(e.kitPrice) > 0 ||
+    parseAmt(e.total) >= 3000
   );
-  const admissionAmt = parseAmt(e.admissionFee);
-  const kitAmt = isRobo ? parseAmt(e.kitPrice) : 0;
+  const admissionAmt = parseAmt(e.admissionFee) || 1700;
+  const kitAmt = isRobo ? (parseAmt(e.kitPrice) || 1100) : 0;
   const baseAmt = admissionAmt + kitAmt;
 
   let gstPercent = e.gstPercent ?? 0;
@@ -257,7 +259,7 @@ export default function EnrollmentsManagement() {
       }
 
       alert(`Official Student Registered! Registration No: ${json.registrationNo}`);
-      fetchEnrollments();
+      await fetchEnrollments(true);
     } catch (err) {
       console.error(err);
       alert("Error creating enrollment.");
@@ -477,8 +479,8 @@ export default function EnrollmentsManagement() {
         registrationNo: eRecord.registrationNo,
         studentName: eRecord.studentName,
         courseTitle: eRecord.courseTitle,
-        admissionFee: eRecord.admissionFee,
-        kitPrice: details.isRobo ? eRecord.kitPrice : "",
+        admissionFee: eRecord.admissionFee || "₹2,006",
+        kitPrice: details.isRobo ? (eRecord.kitPrice || "₹1,100") : "",
         hasKit: details.isRobo,
         gstPercent: details.gstPercent,
         total: details.totalStr,

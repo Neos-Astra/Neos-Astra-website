@@ -124,6 +124,12 @@ export default function PaymentsManagement() {
       if (data.students) {
         setStudents(data.students);
         setSummary(data.summary);
+        // Automatically sync currently open ledger modal with fresh payment data
+        setSelectedStudentForLedger((prev) => {
+          if (!prev) return null;
+          const fresh = data.students.find((s: any) => s.id === prev.id);
+          return fresh || prev;
+        });
       }
     } catch (err) {
       console.error("Error loading payments:", err);
@@ -332,14 +338,6 @@ export default function PaymentsManagement() {
       }
 
       await fetchPayments();
-
-      // Refresh current student's ledger
-      const refreshRes = await fetch("/api/payments");
-      const refreshData = await refreshRes.json();
-      if (refreshData.students) {
-        const fresh = refreshData.students.find((s: any) => s.id === student.id);
-        if (fresh) setSelectedStudentForLedger(fresh);
-      }
     } catch (err) {
       console.error("Ledger mark paid error:", err);
       alert("An error occurred while marking payment.");
@@ -382,12 +380,6 @@ export default function PaymentsManagement() {
 
       setPaymentModalData(null);
       await fetchPayments();
-
-      // If ledger is open, update selected student
-      if (selectedStudentForLedger && selectedStudentForLedger.id === paymentModalData.student.id) {
-        const updatedStudent = students.find((s) => s.id === paymentModalData.student.id);
-        if (updatedStudent) setSelectedStudentForLedger(updatedStudent);
-      }
     } catch (err) {
       console.error(err);
       alert("An error occurred while saving payment.");
@@ -463,21 +455,61 @@ export default function PaymentsManagement() {
 
   // State & Handler for Emailing Monthly Fee Receipt
   const [emailingCycleIndex, setEmailingCycleIndex] = useState<number | null>(null);
+  const [emailingDirectId, setEmailingDirectId] = useState<string | null>(null);
 
-  const handleEmailMonthlyReceipt = async (cycle: any) => {
-    if (!selectedStudentForLedger) return;
-    if (!selectedStudentForLedger.studentEmail) {
-      alert(`No student email address found for ${selectedStudentForLedger.studentName}`);
+  const handleEmailMonthlyReceipt = async (cycle: any, targetStudent?: StudentPaymentInfo) => {
+    const student = targetStudent || selectedStudentForLedger;
+    if (!student) return;
+    if (!student.studentEmail) {
+      alert(`No student email address found for ${student.studentName}`);
       return;
     }
 
     setEmailingCycleIndex(cycle.monthIndex);
     try {
+      const isInitial = cycle.paymentId === "INITIAL_REGISTRATION" || cycle.monthIndex === 1;
+
+      if (isInitial) {
+        // Month 1 is admission: send Course Fee + Kit Fee (if course has kit)
+        const isRobo = Boolean(student.courseTitle?.toLowerCase().includes("robotics"));
+        const receiptData = {
+          registrationNo: student.registrationNo,
+          studentName: student.studentName,
+          courseTitle: student.courseTitle,
+          admissionFee: "2006",
+          kitPrice: isRobo ? "₹1,100" : "",
+          hasKit: isRobo,
+          total: isRobo ? "₹3,106" : "₹2,006",
+          date: cycle.paidDateFormatted || cycle.dueDateFormatted,
+        };
+
+        const res = await fetch("/api/email-receipt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "ADMISSION",
+            studentEmail: student.studentEmail,
+            studentName: student.studentName,
+            receiptData,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || "Failed to send admission receipt.");
+          return;
+        }
+
+        alert(data.message || `Official Admission Receipt emailed to ${student.studentEmail}!`);
+        return;
+      }
+
+      // Subsequent months (Month 2, 3, etc.): Pure Course Fee ONLY (₹2,006)
       const receiptData = {
-        receiptNo: cycle.receiptNo || `NA-FEE-${selectedStudentForLedger.registrationNo}`,
-        registrationNo: selectedStudentForLedger.registrationNo,
-        studentName: selectedStudentForLedger.studentName,
-        courseTitle: selectedStudentForLedger.courseTitle,
+        receiptNo: cycle.receiptNo || `NA-FEE-${student.registrationNo}`,
+        registrationNo: student.registrationNo,
+        studentName: student.studentName,
+        courseTitle: student.courseTitle,
         cycleLabel: cycle.cycleLabel,
         amount: cycle.amount,
         paymentMode: cycle.paymentMethod || "UPI",
@@ -491,8 +523,8 @@ export default function PaymentsManagement() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "MONTHLY",
-          studentEmail: selectedStudentForLedger.studentEmail,
-          studentName: selectedStudentForLedger.studentName,
+          studentEmail: student.studentEmail,
+          studentName: student.studentName,
           receiptData,
         }),
       });
@@ -503,12 +535,21 @@ export default function PaymentsManagement() {
         return;
       }
 
-      alert(data.message || `Receipt successfully emailed to ${selectedStudentForLedger.studentEmail}!`);
+      alert(data.message || `Tuition fee receipt (${cycle.cycleLabel}) emailed to ${student.studentEmail}!`);
     } catch (err: any) {
       console.error("Email receipt error:", err);
       alert("An error occurred while emailing the receipt.");
     } finally {
       setEmailingCycleIndex(null);
+    }
+  };
+
+  const handleEmailDirectFromTable = async (student: StudentPaymentInfo, cycle: any) => {
+    setEmailingDirectId(student.id);
+    try {
+      await handleEmailMonthlyReceipt(cycle, student);
+    } finally {
+      setEmailingDirectId(null);
     }
   };
 
@@ -729,6 +770,26 @@ export default function PaymentsManagement() {
                             >
                               <MessageCircle className="h-4 w-4" />
                             </a>
+
+                            {/* Direct Email Receipt for Latest Paid Cycle */}
+                            {(() => {
+                              const latestPaid = [...student.cycles].reverse().find((c) => c.status === "PAID");
+                              if (!latestPaid) return null;
+                              return (
+                                <button
+                                  onClick={() => handleEmailDirectFromTable(student, latestPaid)}
+                                  disabled={emailingDirectId === student.id}
+                                  title={`Email Fee Receipt (${latestPaid.cycleLabel}) to ${student.studentEmail}`}
+                                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-purple-500/30 bg-purple-500/10 text-purple-300 transition-colors hover:bg-purple-500 hover:text-white disabled:opacity-50"
+                                >
+                                  {emailingDirectId === student.id ? (
+                                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    <Mail className="h-3.5 w-3.5" />
+                                  )}
+                                </button>
+                              );
+                            })()}
 
                             {/* Student Ledger / History */}
                             <button
