@@ -12,6 +12,7 @@ export interface ReceiptData {
   total?: string | number;
   date?: string | Date;
   paymentMode?: string;
+  emailOnly?: boolean;
 }
 
 // Parse numeric value from string (e.g. "₹2,006" or "2006" -> 2006)
@@ -47,7 +48,7 @@ export function formatReceiptDate(val?: string | Date | null): string {
   return `${day}${suffix} ${months[d.getMonth()]}, ${d.getFullYear()}`;
 }
 
-export function generateOfficialFeeReceiptHTML(data: ReceiptData): string {
+export function generateOfficialFeeReceiptHTML(data: ReceiptData, emailOnly = false): string {
   const dateStr = formatReceiptDate(data.date);
   const receiptNo = data.registrationNo || "NA-2026-08-08-010";
 
@@ -416,21 +417,19 @@ export function generateOfficialFeeReceiptHTML(data: ReceiptData): string {
 </head>
 <body>
 
-  <!-- PAGE 1: Course Fee (STUDENT COPY & OFFICE COPY) -->
+  <!-- PAGE 1: Course Fee -->
   <div class="page">
     ${renderCourseReceiptUnit("STUDENT COPY")}
-    ${dividerLine}
-    ${renderCourseReceiptUnit("OFFICE COPY")}
+    ${emailOnly ? '' : `${dividerLine}${renderCourseReceiptUnit("OFFICE COPY")}`}
   </div>
 
   ${
     hasKit
       ? `
-    <!-- PAGE 2: Innovators Starter Kit Fee (STUDENT COPY & OFFICE COPY) -->
+    <!-- PAGE 2: Innovators Starter Kit Fee -->
     <div class="page">
       ${renderKitReceiptUnit("STUDENT COPY")}
-      ${dividerLine}
-      ${renderKitReceiptUnit("OFFICE COPY")}
+      ${emailOnly ? '' : `${dividerLine}${renderKitReceiptUnit("OFFICE COPY")}`}
     </div>
   `
       : ""
@@ -460,7 +459,7 @@ export interface MonthlyReceiptData {
   notes?: string | null;
 }
 
-export function generateMonthlyFeeReceiptHTML(data: MonthlyReceiptData): string {
+export function generateMonthlyFeeReceiptHTML(data: MonthlyReceiptData, emailOnly = false): string {
   const dateStr = formatReceiptDate(data.date);
   const amtNum = typeof data.amount === "number" ? data.amount : parseAmt(data.amount);
   
@@ -755,11 +754,10 @@ export function generateMonthlyFeeReceiptHTML(data: MonthlyReceiptData): string 
 </head>
 <body>
 
-  <!-- Dual Copy: Student Copy & Office Copy -->
+  <!-- Fee Receipt -->
   <div class="page">
     ${renderSingleMonthlyUnit("STUDENT COPY")}
-    ${dividerLine}
-    ${renderSingleMonthlyUnit("OFFICE COPY")}
+    ${emailOnly ? '' : `${dividerLine}${renderSingleMonthlyUnit("OFFICE COPY")}`}
   </div>
 
   <script>

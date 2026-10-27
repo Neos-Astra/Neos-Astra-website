@@ -26,10 +26,10 @@ export async function POST(request: Request) {
 
     if (type === "ADMISSION") {
       subject = `Official Admission Fee Receipt — Neos Astra School of Innovation [${receiptData.registrationNo}]`;
-      htmlReceipt = generateOfficialFeeReceiptHTML(receiptData);
+      htmlReceipt = generateOfficialFeeReceiptHTML(receiptData, true);
     } else {
       subject = `Official Tuition Fee Receipt (${receiptData.cycleLabel || "Monthly Fee"}) — Neos Astra [${receiptData.receiptNo}]`;
-      htmlReceipt = generateMonthlyFeeReceiptHTML(receiptData);
+      htmlReceipt = generateMonthlyFeeReceiptHTML(receiptData, true);
     }
 
     // Email Body Wrapper for email inboxes
