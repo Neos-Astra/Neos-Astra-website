@@ -13,6 +13,7 @@ export async function POST(request: Request) {
     let classGrade = "";
     let utrNumber = "";
     let screenshotUrl = "";
+    let amount = "2006";
 
     if (contentType.includes("application/json")) {
       const body = await request.json();
@@ -22,6 +23,7 @@ export async function POST(request: Request) {
       classGrade = (body.classGrade || body.class || "").trim();
       utrNumber = (body.utrNumber || "").trim();
       screenshotUrl = (body.screenshotUrl || "").trim();
+      if (body.amount) amount = String(body.amount).trim();
     } else {
       const formData = await request.formData();
       studentName = ((formData.get("studentName") as string) || "").trim();
@@ -30,6 +32,7 @@ export async function POST(request: Request) {
       classGrade = ((formData.get("classGrade") as string) || (formData.get("class") as string) || "").trim();
       utrNumber = ((formData.get("utrNumber") as string) || "").trim();
       const file = formData.get("screenshot") as File | null;
+      if (formData.get("amount")) amount = String(formData.get("amount")).trim();
 
       if (file && file.size > 0) {
         // Validate file type
@@ -93,8 +96,8 @@ export async function POST(request: Request) {
 
     const schoolDisplay = classGrade ? `${schoolName} (Class: ${classGrade})` : schoolName;
     const noteText = classGrade
-      ? `Class: ${classGrade} | ₹2,006 via Direct Bandhan UPI (3451323a@bandhan)`
-      : `₹2,006 via Direct Bandhan UPI (3451323a@bandhan)`;
+      ? `Class: ${classGrade} | ₹${amount} via Direct Bandhan UPI (3451323a@bandhan)`
+      : `₹${amount} via Direct Bandhan UPI (3451323a@bandhan)`;
 
     // Save to database
     const submission = await prisma.paymentSubmission.create({

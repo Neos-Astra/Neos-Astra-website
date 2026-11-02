@@ -21,6 +21,7 @@ import {
   Clock,
   ArrowRight,
   Info,
+  IndianRupee,
 } from "lucide-react";
 
 export default function DirectUPIPaymentPage() {
@@ -29,6 +30,9 @@ export default function DirectUPIPaymentPage() {
   const [schoolName, setSchoolName] = useState("");
   const [emailId, setEmailId] = useState("");
   const [classGrade, setClassGrade] = useState("");
+
+  // Editable Payment Amount (Default ₹2,006)
+  const [paymentAmount, setPaymentAmount] = useState<string>("2006");
 
   // Post-payment optional verification fields
   const [utrNumber, setUtrNumber] = useState("");
@@ -46,18 +50,21 @@ export default function DirectUPIPaymentPage() {
   const [proofSubmitted, setProofSubmitted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fixed payment configuration
+  // Merchant payment configuration
   const MERCHANT_UPI_ID = "3451323a@bandhan";
   const PAYEE_NAME = "Neos Astra";
-  const FIXED_AMOUNT = "2006.00";
-  const DISPLAY_AMOUNT = "₹2,006";
   const TRANSACTION_NOTE = "Neos Astra Student Registration";
+
+  // Dynamic Amount Calculations
+  const numericAmount = parseFloat(paymentAmount) || 0;
+  const formattedAmount = numericAmount > 0 ? numericAmount.toFixed(2) : "2006.00";
+  const displayAmount = `₹${numericAmount > 0 ? numericAmount.toLocaleString("en-IN") : "0"}`;
 
   // Standard URL-encoded UPI Payment URI
   const upiPaymentUri = `upi://pay?pa=${encodeURIComponent(
     MERCHANT_UPI_ID
   )}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${encodeURIComponent(
-    FIXED_AMOUNT
+    formattedAmount
   )}&cu=INR&tn=${encodeURIComponent(TRANSACTION_NOTE)}`;
 
   // Detect mobile vs desktop
@@ -70,20 +77,22 @@ export default function DirectUPIPaymentPage() {
     checkMobile();
   }, []);
 
-  // Generate QR code for standard UPI URI
+  // Generate QR code dynamically whenever amount or upiPaymentUri changes
   useEffect(() => {
-    QRCode.toDataURL(upiPaymentUri, {
-      width: 320,
-      margin: 2,
-      color: {
-        dark: "#090C14",
-        light: "#FFFFFF",
-      },
-      errorCorrectionLevel: "M",
-    })
-      .then((url) => setQrCodeDataUrl(url))
-      .catch((err) => console.error("QR Code generation error:", err));
-  }, [upiPaymentUri]);
+    if (numericAmount > 0) {
+      QRCode.toDataURL(upiPaymentUri, {
+        width: 320,
+        margin: 2,
+        color: {
+          dark: "#090C14",
+          light: "#FFFFFF",
+        },
+        errorCorrectionLevel: "M",
+      })
+        .then((url) => setQrCodeDataUrl(url))
+        .catch((err) => console.error("QR Code generation error:", err));
+    }
+  }, [upiPaymentUri, numericAmount]);
 
   // Copy UPI ID to clipboard
   const handleCopyUpiId = () => {
@@ -114,6 +123,10 @@ export default function DirectUPIPaymentPage() {
       setErrorMessage("Please enter your class / grade (e.g. Class 10, Class 12).");
       return;
     }
+    if (!paymentAmount || numericAmount <= 0) {
+      setErrorMessage("Please enter a valid payment amount greater than ₹0.");
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -128,7 +141,7 @@ export default function DirectUPIPaymentPage() {
           emailId: emailId.trim().toLowerCase(),
           classGrade: classGrade.trim(),
           utrNumber: "",
-          amount: FIXED_AMOUNT,
+          amount: formattedAmount,
           paymentMethod: "UPI",
         }),
       });
@@ -149,7 +162,6 @@ export default function DirectUPIPaymentPage() {
 
       // 3. If on mobile, immediately trigger the UPI URI to launch installed UPI apps (GPay, PhonePe, Paytm, BHIM)
       if (isMobileDevice) {
-        // Direct click event handler invocation for operating system URI handler
         window.location.href = upiPaymentUri;
       }
     } catch (err) {
@@ -188,7 +200,7 @@ export default function DirectUPIPaymentPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             status: "PENDING",
-            adminNotes: `Class: ${classGrade} | Direct UPI ₹2,006 | UTR: ${utrNumber.trim()}`,
+            adminNotes: `Class: ${classGrade} | Direct UPI ₹${formattedAmount} | UTR: ${utrNumber.trim()}`,
           }),
         });
       }
@@ -208,8 +220,6 @@ export default function DirectUPIPaymentPage() {
         <div className="absolute -top-40 right-1/4 h-96 w-96 rounded-full bg-[#4DE8E0]/10 blur-[120px]" />
         <div className="absolute -bottom-40 left-1/4 h-96 w-96 rounded-full bg-[#8B7CFF]/10 blur-[120px]" />
       </div>
-
-      
 
       {/* Main Container */}
       <main className="relative mx-auto max-w-xl px-4 py-8 sm:py-12">
@@ -304,8 +314,8 @@ export default function DirectUPIPaymentPage() {
               />
             </div>
 
-            {/* Section 2: Fixed Payment Details Display */}
-            <div className="rounded-xl border border-[#1D2436] bg-[#0A0D16] p-4.5 space-y-2.5">
+            {/* Section 2: Editable Payment Amount Details */}
+            <div className="rounded-xl border border-[#1D2436] bg-[#0A0D16] p-4.5 space-y-3">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-[#8891A8]">Company Name</span>
                 <span className="font-bold text-[#F3F6FB]">{PAYEE_NAME}</span>
@@ -320,21 +330,37 @@ export default function DirectUPIPaymentPage() {
                 <span className="text-[#8891A8]">Bandhan Merchant UPI ID</span>
                 <span className="font-mono text-xs text-[#8B7CFF]">{MERCHANT_UPI_ID}</span>
               </div>
-              <div className="pt-2.5 border-t border-[#1D2436] flex items-center justify-between">
+
+              {/* Editable Amount Input */}
+              <div className="pt-3 border-t border-[#1D2436] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
                 <div>
-                  <span className="text-xs font-bold text-[#F3F6FB]">Monthly Subscription Fee</span>
-                  <p className="text-[10px] text-[#8891A8]">Fixed standard rate • Non-editable</p>
+                  <span className="text-xs font-bold text-[#F3F6FB] flex items-center gap-1">
+                    Payment Fee Amount <span className="text-xs font-normal text-[#8891A8]">(Editable)</span>
+                  </span>
+                  <p className="text-[10px] text-[#8891A8]">You can modify the amount if needed</p>
                 </div>
-                <span className="text-xl font-extrabold text-[#4DE8E0]">
-                  {DISPLAY_AMOUNT}
-                </span>
+                <div className="relative w-full sm:w-44">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-[#4DE8E0]">
+                    ₹
+                  </span>
+                  <input
+                    type="number"
+                    min="1"
+                    step="any"
+                    value={paymentAmount}
+                    onChange={(e) => setPaymentAmount(e.target.value)}
+                    required
+                    placeholder="2006"
+                    className="w-full rounded-xl border border-[#4DE8E0]/40 bg-[#0F1420] py-2 pl-8 pr-3 text-right text-lg font-black text-[#4DE8E0] focus:border-[#4DE8E0] focus:outline-none focus:ring-2 focus:ring-[#4DE8E0]/20 transition-all"
+                  />
+                </div>
               </div>
             </div>
 
             {/* Section 3: Prominent Pay Now Button */}
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || numericAmount <= 0}
               className="w-full rounded-xl bg-gradient-to-r from-[#4DE8E0] via-[#5EEAD4] to-[#8B7CFF] px-6 py-4 text-sm sm:text-base font-bold text-[#090C14] transition-all hover:opacity-95 hover:shadow-lg hover:shadow-[#4DE8E0]/25 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
             >
               {isSubmitting ? (
@@ -348,7 +374,7 @@ export default function DirectUPIPaymentPage() {
               ) : (
                 <>
                   <Smartphone className="h-5 w-5" />
-                  Pay ₹2,006 via UPI
+                  Pay {displayAmount} via UPI
                 </>
               )}
             </button>
@@ -393,7 +419,7 @@ export default function DirectUPIPaymentPage() {
               </div>
               <div className="flex justify-between border-t border-[#1D2436] pt-2">
                 <span className="text-[#8891A8]">Subscription Amount:</span>
-                <span className="font-bold text-[#4DE8E0]">₹2,006.00</span>
+                <span className="font-bold text-[#4DE8E0]">{displayAmount}</span>
               </div>
             </div>
 
@@ -407,7 +433,7 @@ export default function DirectUPIPaymentPage() {
                   href={upiPaymentUri}
                   className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#4DE8E0] px-4 py-3 text-sm font-bold text-[#090C14] hover:opacity-90 transition-all"
                 >
-                  <Smartphone className="h-4 w-4" /> Open Compatible UPI App
+                  <Smartphone className="h-4 w-4" /> Open Compatible UPI App ({displayAmount})
                 </a>
                 <p className="text-[10px] text-[#555E73]">
                   Works with Google Pay, PhonePe, Paytm, BHIM, or any UPI-enabled banking app.
@@ -435,7 +461,7 @@ export default function DirectUPIPaymentPage() {
                 )}
 
                 <div className="text-xs text-[#8891A8]">
-                  Amount: <strong className="text-[#4DE8E0]">₹2,006.00</strong> • Payee: <strong className="text-[#F3F6FB]">{PAYEE_NAME}</strong>
+                  Amount: <strong className="text-[#4DE8E0]">{displayAmount}</strong> • Payee: <strong className="text-[#F3F6FB]">{PAYEE_NAME}</strong>
                 </div>
               </div>
             )}
@@ -570,4 +596,3 @@ export default function DirectUPIPaymentPage() {
     </div>
   );
 }
-
