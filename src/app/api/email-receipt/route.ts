@@ -12,7 +12,8 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { type, studentEmail, studentName, receiptData } = body;
+    const { type, studentName, receiptData } = body;
+    const studentEmail = (body.studentEmail || "").trim().toLowerCase();
 
     if (!studentEmail || !studentEmail.includes("@")) {
       return NextResponse.json(

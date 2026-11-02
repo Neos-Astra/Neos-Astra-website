@@ -13,6 +13,13 @@ export const sendMail = async (to: string, subject: string, html: string) => {
     );
   }
 
+  // Clean and sanitize recipient email
+  const cleanTo = (to || "").trim().toLowerCase();
+
+  if (!cleanTo || !cleanTo.includes("@")) {
+    throw new Error(`Invalid recipient email address: "${to}"`);
+  }
+
   const transporter = nodemailer.createTransport({
     host,
     port,
@@ -25,11 +32,11 @@ export const sendMail = async (to: string, subject: string, html: string) => {
 
   const info = await transporter.sendMail({
     from: `"Neos Astra School of Innovation" <${user}>`,
-    to,
+    to: cleanTo,
     subject,
     html,
   });
 
-  console.log("Email sent successfully: %s", info.messageId);
+  console.log("Email sent successfully: %s to %s", info.messageId, cleanTo);
   return info;
 };

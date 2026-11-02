@@ -3,93 +3,116 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/superadmin/prisma/client";
 import { auth } from "@/superadmin/auth";
 
-// POST: Public — Student submits payment proof (no auth required)
+// POST: Public — Student submits payment details / proof (no auth required)
 export async function POST(request: Request) {
   try {
-    const formData = await request.formData();
+    const contentType = request.headers.get("content-type") || "";
+    let studentName = "";
+    let schoolName = "";
+    let emailId = "";
+    let classGrade = "";
+    let utrNumber = "";
+    let screenshotUrl = "";
 
-    const studentName = formData.get("studentName") as string | null;
-    const schoolName = formData.get("schoolName") as string | null;
-    const emailId = formData.get("emailId") as string | null;
-    const utrNumber = (formData.get("utrNumber") as string) || "";
-    const file = formData.get("screenshot") as File | null;
+    if (contentType.includes("application/json")) {
+      const body = await request.json();
+      studentName = (body.studentName || "").trim();
+      schoolName = (body.schoolName || "").trim();
+      emailId = (body.emailId || "").trim().toLowerCase();
+      classGrade = (body.classGrade || body.class || "").trim();
+      utrNumber = (body.utrNumber || "").trim();
+      screenshotUrl = (body.screenshotUrl || "").trim();
+    } else {
+      const formData = await request.formData();
+      studentName = ((formData.get("studentName") as string) || "").trim();
+      schoolName = ((formData.get("schoolName") as string) || "").trim();
+      emailId = ((formData.get("emailId") as string) || "").trim().toLowerCase();
+      classGrade = ((formData.get("classGrade") as string) || (formData.get("class") as string) || "").trim();
+      utrNumber = ((formData.get("utrNumber") as string) || "").trim();
+      const file = formData.get("screenshot") as File | null;
 
-    // Validation
-    if (!studentName?.trim() || !schoolName?.trim() || !emailId?.trim()) {
+      if (file && file.size > 0) {
+        // Validate file type
+        const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+        if (!allowedTypes.includes(file.type)) {
+          return NextResponse.json(
+            { error: "Only JPG, PNG, and WEBP images are allowed." },
+            { status: 400 }
+          );
+        }
+
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+          return NextResponse.json(
+            { error: "File size must be less than 5MB." },
+            { status: 400 }
+          );
+        }
+
+        // Upload to persistent storage (Supabase / local fallback)
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        const rawName = file.name ? file.name.replace(/[^a-zA-Z0-9.-]/g, "") : "screenshot.jpg";
+        const filename = `payment-${Date.now()}-${rawName}`;
+        const mimeType = file.type || "image/jpeg";
+
+        try {
+          const { uploadPersistentFile } = await import("@/lib/storage");
+          screenshotUrl = await uploadPersistentFile({
+            bucket: "payment-submissions",
+            filename,
+            buffer,
+            contentType: mimeType,
+          });
+        } catch (uploadErr) {
+          console.warn("Persistent upload failed, using base64 fallback:", uploadErr);
+          screenshotUrl = `data:${mimeType};base64,${buffer.toString("base64")}`;
+        }
+      }
+    }
+
+    // Required Field Validations
+    if (!studentName || !schoolName || !emailId) {
       return NextResponse.json(
         { error: "Student Name, School Name, and Email ID are required." },
         { status: 400 }
       );
     }
 
-    if (!file || file.size === 0) {
+    if (!emailId.includes("@") || !emailId.includes(".")) {
       return NextResponse.json(
-        { error: "Payment screenshot is required." },
+        { error: "Please enter a valid email address." },
         { status: 400 }
       );
     }
 
-    // Validate file type
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json(
-        { error: "Only JPG, PNG, and WEBP images are allowed." },
-        { status: 400 }
-      );
-    }
-
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "File size must be less than 5MB." },
-        { status: 400 }
-      );
-    }
-
-    // Upload to persistent storage (Supabase / local fallback)
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const rawName = file.name ? file.name.replace(/[^a-zA-Z0-9.-]/g, "") : "screenshot.jpg";
-    const filename = `payment-${Date.now()}-${rawName}`;
-    const mimeType = file.type || "image/jpeg";
-
-    let screenshotUrl = "";
-    try {
-      const { uploadPersistentFile } = await import("@/lib/storage");
-      screenshotUrl = await uploadPersistentFile({
-        bucket: "payment-submissions",
-        filename,
-        buffer,
-        contentType: mimeType,
-      });
-    } catch (uploadErr) {
-      console.warn("Persistent upload failed, using base64 fallback:", uploadErr);
-      screenshotUrl = `data:${mimeType};base64,${buffer.toString("base64")}`;
-    }
-
+    // If no screenshot was uploaded (e.g. initial Direct UPI click), use clean default
     if (!screenshotUrl) {
-      return NextResponse.json(
-        { error: "Could not process screenshot image." },
-        { status: 400 }
-      );
+      screenshotUrl = "/logo.jpg";
     }
+
+    const schoolDisplay = classGrade ? `${schoolName} (Class: ${classGrade})` : schoolName;
+    const noteText = classGrade
+      ? `Class: ${classGrade} | ₹2,006 via Direct Bandhan UPI (3451323a@bandhan)`
+      : `₹2,006 via Direct Bandhan UPI (3451323a@bandhan)`;
 
     // Save to database
     const submission = await prisma.paymentSubmission.create({
       data: {
-        studentName: studentName.trim(),
-        schoolName: schoolName.trim(),
-        emailId: emailId.trim().toLowerCase(),
+        studentName,
+        schoolName: schoolDisplay,
+        emailId,
         screenshotUrl,
-        utrNumber: utrNumber.trim(),
+        utrNumber: utrNumber || "",
         status: "PENDING",
+        adminNotes: noteText,
       },
     });
 
     return NextResponse.json(
       {
         success: true,
-        message: "Payment details submitted successfully! Admin will verify it shortly.",
+        message: "Payment submitted — awaiting verification.",
         submission: {
           id: submission.id,
           studentName: submission.studentName,
