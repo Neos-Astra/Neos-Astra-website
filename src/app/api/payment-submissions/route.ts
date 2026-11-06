@@ -14,9 +14,11 @@ export async function POST(request: Request) {
     let utrNumber = "";
     let screenshotUrl = "";
     let amount = "2006";
+    let registrationNo = "";
 
     if (contentType.includes("application/json")) {
       const body = await request.json();
+      registrationNo = (body.registrationNo || "").trim();
       studentName = (body.studentName || "").trim();
       schoolName = (body.schoolName || "").trim();
       emailId = (body.emailId || "").trim().toLowerCase();
@@ -26,6 +28,7 @@ export async function POST(request: Request) {
       if (body.amount) amount = String(body.amount).trim();
     } else {
       const formData = await request.formData();
+      registrationNo = ((formData.get("registrationNo") as string) || "").trim();
       studentName = ((formData.get("studentName") as string) || "").trim();
       schoolName = ((formData.get("schoolName") as string) || "").trim();
       emailId = ((formData.get("emailId") as string) || "").trim().toLowerCase();

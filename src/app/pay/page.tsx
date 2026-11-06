@@ -22,9 +22,17 @@ import {
   ArrowRight,
   Info,
   IndianRupee,
+  Fingerprint,
+  Loader2,
 } from "lucide-react";
 
 export default function DirectUPIPaymentPage() {
+  // Registration Number Auto-lookup state
+  const [regNo, setRegNo] = useState("NA-");
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupFound, setLookupFound] = useState<boolean | null>(null);
+  const [verifiedStudentInfo, setVerifiedStudentInfo] = useState<string | null>(null);
+
   // Form fields in exact required order
   const [studentName, setStudentName] = useState("");
   const [schoolName, setSchoolName] = useState("");
@@ -93,6 +101,63 @@ export default function DirectUPIPaymentPage() {
         .catch((err) => console.error("QR Code generation error:", err));
     }
   }, [upiPaymentUri, numericAmount]);
+
+  // Handle Registration Number input with auto-formatting
+  const handleRegNoChange = (raw: string) => {
+    let val = raw.toUpperCase();
+    if (!val.startsWith("NA-") && !val.startsWith("NA")) {
+      if (val.length === 0) {
+        val = "NA-";
+      } else {
+        val = `NA-${val.replace(/^NA-?/, "")}`;
+      }
+    }
+    setRegNo(val);
+  };
+
+  // Debounced lookup when registration number is entered
+  useEffect(() => {
+    const clean = regNo.trim().toUpperCase();
+    // Only query if user entered characters beyond "NA-"
+    if (clean.length < 6 || clean === "NA-") {
+      setLookupFound(null);
+      setVerifiedStudentInfo(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setLookupLoading(true);
+      try {
+        const res = await fetch(`/api/enrollments/lookup?regNo=${encodeURIComponent(clean)}`);
+        const data = await res.json();
+        if (res.ok && data.found && data.student) {
+          setLookupFound(true);
+          const info = data.student.courseTitle || data.student.school || "Enrolled Student";
+          setVerifiedStudentInfo(info);
+          if (data.student.studentName) setStudentName(data.student.studentName);
+          if (data.student.school) setSchoolName(data.student.school);
+          if (data.student.studentEmail) setEmailId(data.student.studentEmail);
+          if (data.student.classGrade) setClassGrade(data.student.classGrade);
+          if (data.student.monthlyFee) {
+            const feeClean = String(data.student.monthlyFee).replace(/[^0-9.]/g, "");
+            if (parseFloat(feeClean) > 0) {
+              setPaymentAmount(feeClean);
+            }
+          }
+        } else {
+          setLookupFound(false);
+          setVerifiedStudentInfo(null);
+        }
+      } catch (err) {
+        console.error("Lookup error:", err);
+        setLookupFound(false);
+      } finally {
+        setLookupLoading(false);
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [regNo]);
 
   // Copy UPI ID to clipboard
   const handleCopyUpiId = () => {
@@ -249,6 +314,53 @@ export default function DirectUPIPaymentPage() {
                 <span>{errorMessage}</span>
               </div>
             )}
+
+            {/* Registration Number Field (Auto-lookup & Autofill) */}
+            <div className="rounded-xl border border-[#4DE8E0]/20 bg-[#4DE8E0]/5 p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-1.5 text-xs font-semibold text-[#4DE8E0] uppercase tracking-wider">
+                  <Fingerprint className="h-3.5 w-3.5 text-[#4DE8E0]" />
+                  Student Registration No <span className="text-[10px] lowercase font-normal text-[#8891A8]">(Optional - Auto-fills details)</span>
+                </label>
+                {lookupLoading && (
+                  <span className="flex items-center gap-1 text-[11px] text-[#4DE8E0]">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Looking up student...
+                  </span>
+                )}
+              </div>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={regNo}
+                  onChange={(e) => handleRegNoChange(e.target.value)}
+                  placeholder="NA-20260101"
+                  className="w-full rounded-xl border border-[#1D2436] bg-[#0A0D16] px-4 py-3 font-mono text-sm tracking-wider text-[#4DE8E0] placeholder-[#555E73] focus:border-[#4DE8E0] focus:outline-none focus:ring-1 focus:ring-[#4DE8E0]/40 transition-all"
+                />
+              </div>
+
+              {/* Lookup Found Success Feedback */}
+              {lookupFound === true && (
+                <div className="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
+                  <div className="flex items-center gap-1.5">
+                    <Check className="h-4 w-4 shrink-0 text-emerald-400" />
+                    <span>
+                      Verified: <strong>{studentName}</strong> {verifiedStudentInfo ? `• ${verifiedStudentInfo}` : ""}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-emerald-400/80 font-medium">Fields auto-filled below (editable)</span>
+                </div>
+              )}
+
+              {/* Lookup Not Found Feedback */}
+              {lookupFound === false && regNo.trim().length >= 6 && (
+                <div className="rounded-lg border border-[#1D2436] bg-[#0A0D16] px-3 py-2 text-[11px] text-[#8891A8]">
+                  No existing student found for <strong className="text-[#F3F6FB]">{regNo}</strong>. Parents can still fill the form manually below.
+                </div>
+              )}
+              <p className="text-[11px] text-[#8891A8]">
+                Already enrolled? Enter your Registration No (e.g. <strong className="text-[#F3F6FB]">NA-20260101</strong>) to auto-load your details. You can still edit any field.
+              </p>
+            </div>
 
             {/* Field 1: Student Name */}
             <div>
@@ -407,7 +519,14 @@ export default function DirectUPIPaymentPage() {
             <div className="rounded-xl border border-[#1D2436] bg-[#0A0D16] p-4 text-xs space-y-2">
               <div className="flex justify-between">
                 <span className="text-[#8891A8]">Student Name:</span>
-                <span className="font-semibold text-[#F3F6FB]">{studentName}</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-[#F3F6FB]">{studentName}</span>
+                  {regNo && regNo.trim() !== "NA-" && (
+                    <span className="font-mono text-xs text-[#4DE8E0] bg-[#4DE8E0]/15 px-2 py-0.5 rounded border border-[#4DE8E0]/30 font-bold">
+                      {regNo}
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#8891A8]">School & Class:</span>

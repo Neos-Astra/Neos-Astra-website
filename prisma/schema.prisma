@@ -171,6 +171,7 @@ model HomeMedia {
 
 model PaymentSubmission {
   id              String   @id @default(cuid())
+  registrationNo  String?  @default("")
   studentName     String
   schoolName      String
   emailId         String

@@ -26,6 +26,7 @@ import {
 
 interface PaymentSubmission {
   id: string;
+  registrationNo?: string | null;
   studentName: string;
   schoolName: string;
   emailId: string;
@@ -98,6 +99,7 @@ export default function PaymentSubmissionsManagement() {
       if (search.trim()) {
         const q = search.toLowerCase();
         return (
+          (s.registrationNo && s.registrationNo.toLowerCase().includes(q)) ||
           s.studentName.toLowerCase().includes(q) ||
           s.schoolName.toLowerCase().includes(q) ||
           s.emailId.toLowerCase().includes(q) ||
@@ -318,9 +320,14 @@ export default function PaymentSubmissionsManagement() {
                     <tr key={s.id} className="transition-colors hover:bg-[#151B2B]/60">
                       {/* Student Details */}
                       <td className="px-4 py-3.5">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <User className="h-3.5 w-3.5 text-[#4DE8E0]" />
                           <span className="font-semibold text-[#F3F6FB]">{s.studentName}</span>
+                          {s.registrationNo && (
+                            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#4DE8E0]/15 text-[#4DE8E0] border border-[#4DE8E0]/30 font-bold">
+                              {s.registrationNo}
+                            </span>
+                          )}
                         </div>
                         <div className="mt-1 flex items-center gap-1.5 text-[11px] text-[#8891A8]">
                           <Mail className="h-3 w-3" />

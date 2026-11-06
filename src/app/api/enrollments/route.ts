@@ -7,9 +7,10 @@ import { prisma } from "@/superadmin/prisma/client";
 import { auth } from "@/superadmin/auth";
 import { checkFormRateLimit } from "@/lib/rateLimiter";
 
-function generateRegistrationNo() {
-  const rand = Math.random().toString(36).slice(2, 8).toUpperCase();
-  return `NA-${new Date().getFullYear()}-${rand}`;
+import { buildRegistrationNo } from "@/lib/registrationNo";
+
+function generateRegistrationNo(year?: string | number, batch?: string | number, studentId?: string | number) {
+  return buildRegistrationNo(year, batch, studentId);
 }
 
 // POST: public enrollment submission
@@ -20,6 +21,10 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const {
+      registrationNo: customRegNo,
+      regYear,
+      regBatch,
+      regStudentId,
       studentName,
       dob,
       gender,
@@ -63,7 +68,30 @@ export async function POST(request: Request) {
       );
     }
 
-    const registrationNo = generateRegistrationNo();
+    let registrationNo = "";
+    if (customRegNo && String(customRegNo).trim()) {
+      registrationNo = String(customRegNo).trim().toUpperCase();
+      if (!registrationNo.startsWith("NA-")) {
+        registrationNo = `NA-${registrationNo}`;
+      }
+    } else {
+      registrationNo = generateRegistrationNo(regYear, regBatch, regStudentId);
+    }
+
+    // Check for duplicate registrationNo
+    const existingEnrollment = await prisma.enrollment.findUnique({
+      where: { registrationNo },
+    });
+    if (existingEnrollment) {
+      if (customRegNo) {
+        return NextResponse.json(
+          { error: `Registration number "${registrationNo}" already exists (${existingEnrollment.studentName}). Please select a different Student ID or Batch.` },
+          { status: 400 }
+        );
+      }
+      // If auto-generated collision, append suffix
+      registrationNo = `${registrationNo}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    }
 
     const enrollment = await prisma.enrollment.create({
       data: {

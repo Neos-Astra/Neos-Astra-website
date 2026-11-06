@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Users, Search, Eye, X, RefreshCw, Printer, Trash2, Plus, Save, Download, Calendar, FileSpreadsheet, Mail } from "lucide-react";
+import { Users, Search, Eye, X, RefreshCw, Printer, Trash2, Plus, Save, Download, Calendar, FileSpreadsheet, Mail, Fingerprint } from "lucide-react";
 import AdminShell from "@/app/components/AdminShell";
 import { generateOfficialFeeReceiptHTML } from "@/lib/receiptTemplate";
 
@@ -111,6 +111,10 @@ export default function EnrollmentsManagement() {
   // New Official Enrollment modal
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [newForm, setNewForm] = useState({
+    regYear: "2026",
+    regBatch: "01",
+    regStudentId: "01",
+    registrationNo: "NA-20260101",
     studentName: "",
     studentEmail: "",
     studentPhone: "",
@@ -128,6 +132,35 @@ export default function EnrollmentsManagement() {
     message: "",
   });
   const [submittingNew, setSubmittingNew] = useState(false);
+
+  const updateRegComponent = (key: "regYear" | "regBatch" | "regStudentId", val: string) => {
+    setNewForm((prev) => {
+      const updated = { ...prev, [key]: val };
+      const y = updated.regYear || "2026";
+      const b = updated.regBatch || "01";
+      const s = updated.regStudentId || "01";
+      return {
+        ...updated,
+        registrationNo: `NA-${y}${b}${s}`,
+      };
+    });
+  };
+
+  const handleOpenNewModal = () => {
+    const currentYear = String(new Date().getFullYear());
+    const batch = "01";
+    const prefix = `NA-${currentYear}${batch}`;
+    const matching = enrollments.filter((e) => e.registrationNo?.startsWith(prefix));
+    const nextId = String(matching.length + 1).padStart(2, "0");
+    setNewForm((prev) => ({
+      ...prev,
+      regYear: currentYear,
+      regBatch: batch,
+      regStudentId: nextId,
+      registrationNo: `${prefix}${nextId}`,
+    }));
+    setIsNewModalOpen(true);
+  };
 
   const fetchEnrollments = async (showLoadingSpinner = false) => {
     if (showLoadingSpinner) setLoading(true);
@@ -549,7 +582,7 @@ export default function EnrollmentsManagement() {
             <RefreshCw className="h-4 w-4" /> Refresh
           </button>
           <button
-            onClick={() => setIsNewModalOpen(true)}
+            onClick={handleOpenNewModal}
             className="flex items-center justify-center gap-2 rounded-xl bg-[#4DE8E0] px-4 py-2.5 text-sm font-semibold text-[#090C14] hover:bg-[#5FF0E8] transition-all w-full sm:w-auto"
           >
             <Plus className="h-4 w-4" /> Register New Student
@@ -789,6 +822,61 @@ export default function EnrollmentsManagement() {
               </div>
 
               <form onSubmit={handleCreateOfficialEnrollment} className="space-y-4">
+                {/* Registration Number Format Section */}
+                <div className="rounded-xl border border-[#4DE8E0]/30 bg-[#4DE8E0]/5 p-3.5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#4DE8E0] uppercase tracking-wider flex items-center gap-1.5">
+                      <Fingerprint className="h-4 w-4" /> Registration ID Format
+                    </span>
+                    <span className="text-[11px] font-mono text-[#8891A8]">Format: NA-YYYYBBSS</span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] text-[#8891A8] mb-1">Year</label>
+                      <input
+                        type="text"
+                        value={newForm.regYear}
+                        onChange={(e) => updateRegComponent("regYear", e.target.value)}
+                        className="w-full px-3 py-2 bg-[#0A0D16] border border-[#1D2436] text-[#F3F6FB] text-xs font-mono rounded-lg focus:border-[#4DE8E0] outline-none"
+                        placeholder="2026"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-[#8891A8] mb-1">Batch</label>
+                      <input
+                        type="text"
+                        value={newForm.regBatch}
+                        onChange={(e) => updateRegComponent("regBatch", e.target.value)}
+                        className="w-full px-3 py-2 bg-[#0A0D16] border border-[#1D2436] text-[#F3F6FB] text-xs font-mono rounded-lg focus:border-[#4DE8E0] outline-none"
+                        placeholder="01"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-[#8891A8] mb-1">Student ID</label>
+                      <input
+                        type="text"
+                        value={newForm.regStudentId}
+                        onChange={(e) => updateRegComponent("regStudentId", e.target.value)}
+                        className="w-full px-3 py-2 bg-[#0A0D16] border border-[#1D2436] text-[#F3F6FB] text-xs font-mono rounded-lg focus:border-[#4DE8E0] outline-none"
+                        placeholder="01"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] text-[#8891A8] mb-1">Official Registration No (Editable)</label>
+                    <input
+                      type="text"
+                      required
+                      value={newForm.registrationNo}
+                      onChange={(e) => setNewForm((prev) => ({ ...prev, registrationNo: e.target.value.toUpperCase() }))}
+                      className="w-full px-3.5 py-2.5 bg-[#090C14] border border-[#4DE8E0]/40 text-[#4DE8E0] font-mono text-sm font-bold rounded-lg focus:border-[#4DE8E0] outline-none"
+                      placeholder="NA-20260101"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-xs text-[#8891A8] mb-1.5">Student Full Name *</label>
                   <input

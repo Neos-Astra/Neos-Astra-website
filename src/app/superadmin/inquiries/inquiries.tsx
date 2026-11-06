@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Users, Search, Eye, X, RefreshCw, Trash2, ShieldCheck, Download, Calendar, FileSpreadsheet, CheckCircle } from "lucide-react";
+import { Users, Search, Eye, X, RefreshCw, Trash2, ShieldCheck, Download, Calendar, FileSpreadsheet, CheckCircle, Fingerprint } from "lucide-react";
 import AdminShell from "@/app/components/AdminShell";
 import { generateOfficialFeeReceiptHTML } from "@/lib/receiptTemplate";
 
@@ -66,7 +66,21 @@ export default function InquiriesManagement() {
 
   // Conversion Modal state
   const [convertingInquiry, setConvertingInquiry] = useState<Inquiry | null>(null);
-  const [convertForm, setConvertForm] = useState({
+  const [convertForm, setConvertForm] = useState<{
+    regYear: string;
+    regBatch: string;
+    regStudentId: string;
+    registrationNo: string;
+    admissionFee: string;
+    kitPrice: string;
+    hasKit: boolean;
+    gstPercent: number;
+    total: string;
+  }>({
+    regYear: "2026",
+    regBatch: "01",
+    regStudentId: "01",
+    registrationNo: "NA-20260101",
     admissionFee: "",
     kitPrice: "",
     hasKit: false,
@@ -74,6 +88,19 @@ export default function InquiriesManagement() {
     total: "",
   });
   const [converting, setConverting] = useState(false);
+
+  const updateConvertRegComponent = (key: "regYear" | "regBatch" | "regStudentId", val: string) => {
+    setConvertForm((prev) => {
+      const updated = { ...prev, [key]: val };
+      const y = updated.regYear || "2026";
+      const b = updated.regBatch || "01";
+      const s = updated.regStudentId || "01";
+      return {
+        ...updated,
+        registrationNo: `NA-${y}${b}${s}`,
+      };
+    });
+  };
 
   const fetchInquiries = async (showSpinner = false) => {
     if (showSpinner) setLoading(true);
@@ -160,7 +187,12 @@ export default function InquiriesManagement() {
     const gstAmt = Math.round((base * gstPercent) / 100);
     const totalVal = match?.price || fmtAmt(base + gstAmt);
 
+    const currentYear = String(new Date().getFullYear());
     setConvertForm({
+      regYear: currentYear,
+      regBatch: "01",
+      regStudentId: "01",
+      registrationNo: `NA-${currentYear}0101`,
       admissionFee,
       kitPrice,
       hasKit: isRobo,
