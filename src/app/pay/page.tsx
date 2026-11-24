@@ -333,7 +333,7 @@ export default function DirectUPIPaymentPage() {
                   type="text"
                   value={regNo}
                   onChange={(e) => handleRegNoChange(e.target.value)}
-                  placeholder="NA-20260101"
+                  placeholder="NA-202600101"
                   className="w-full rounded-xl border border-[#1D2436] bg-[#0A0D16] px-4 py-3 font-mono text-sm tracking-wider text-[#4DE8E0] placeholder-[#555E73] focus:border-[#4DE8E0] focus:outline-none focus:ring-1 focus:ring-[#4DE8E0]/40 transition-all"
                 />
               </div>
@@ -358,7 +358,7 @@ export default function DirectUPIPaymentPage() {
                 </div>
               )}
               <p className="text-[11px] text-[#8891A8]">
-                Already enrolled? Enter your Registration No (e.g. <strong className="text-[#F3F6FB]">NA-20260101</strong>) to auto-load your details. You can still edit any field.
+                Already enrolled? Enter your Registration No (e.g. <strong className="text-[#F3F6FB]">NA-202600101</strong>) to auto-load your details. You can still edit any field.
               </p>
             </div>
 

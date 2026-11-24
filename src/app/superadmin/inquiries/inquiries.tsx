@@ -80,7 +80,7 @@ export default function InquiriesManagement() {
     regYear: "2026",
     regBatch: "01",
     regStudentId: "01",
-    registrationNo: "NA-20260101",
+    registrationNo: "NA-202600101",
     admissionFee: "",
     kitPrice: "",
     hasKit: false,
@@ -97,7 +97,7 @@ export default function InquiriesManagement() {
       const s = updated.regStudentId || "01";
       return {
         ...updated,
-        registrationNo: `NA-${y}${b}${s}`,
+        registrationNo: `NA-${y}${b.padStart(3, "0")}${s.padStart(2, "0")}`,
       };
     });
   };

@@ -114,7 +114,7 @@ export default function EnrollmentsManagement() {
     regYear: "2026",
     regBatch: "01",
     regStudentId: "01",
-    registrationNo: "NA-20260101",
+    registrationNo: "NA-202600101",
     studentName: "",
     studentEmail: "",
     studentPhone: "",
@@ -141,7 +141,7 @@ export default function EnrollmentsManagement() {
       const s = updated.regStudentId || "01";
       return {
         ...updated,
-        registrationNo: `NA-${y}${b}${s}`,
+        registrationNo: `NA-${y}${b.padStart(3, "0")}${s.padStart(2, "0")}`,
       };
     });
   };
@@ -149,7 +149,7 @@ export default function EnrollmentsManagement() {
   const handleOpenNewModal = () => {
     const currentYear = String(new Date().getFullYear());
     const batch = "01";
-    const prefix = `NA-${currentYear}${batch}`;
+    const prefix = `NA-${currentYear}001`;
     const matching = enrollments.filter((e) => e.registrationNo?.startsWith(prefix));
     const nextId = String(matching.length + 1).padStart(2, "0");
     setNewForm((prev) => ({
@@ -828,7 +828,7 @@ export default function EnrollmentsManagement() {
                     <span className="text-xs font-bold text-[#4DE8E0] uppercase tracking-wider flex items-center gap-1.5">
                       <Fingerprint className="h-4 w-4" /> Registration ID Format
                     </span>
-                    <span className="text-[11px] font-mono text-[#8891A8]">Format: NA-YYYYBBSS</span>
+                    <span className="text-[11px] font-mono text-[#8891A8]">Format: NA-YYYYBBBSS (e.g. NA-202600101)</span>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2.5">
@@ -872,7 +872,7 @@ export default function EnrollmentsManagement() {
                       value={newForm.registrationNo}
                       onChange={(e) => setNewForm((prev) => ({ ...prev, registrationNo: e.target.value.toUpperCase() }))}
                       className="w-full px-3.5 py-2.5 bg-[#090C14] border border-[#4DE8E0]/40 text-[#4DE8E0] font-mono text-sm font-bold rounded-lg focus:border-[#4DE8E0] outline-none"
-                      placeholder="NA-20260101"
+                      placeholder="NA-202600101"
                     />
                   </div>
                 </div>

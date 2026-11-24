@@ -3,11 +3,11 @@
 /**
  * Standard format for student registrations:
  * NA-YYYYBBSS
- * E.g. NA-20260101 (or NA-202600101)
+ * E.g. NA-202600101
  * Prefix: NA-
  * Year: 2026
- * Batch: 01
- * Student ID: 01
+ * Batch: 01 (formatted as 001)
+ * Student ID: 01 (formatted as 01)
  */
 
 export interface RegNoComponents {
@@ -24,8 +24,8 @@ export function buildRegistrationNo(
   prefix: string = "NA-"
 ): string {
   const y = String(year || new Date().getFullYear()).trim();
-  const b = String(batch || "01").trim();
-  const s = String(studentId || "01").trim();
+  const b = String(batch || "01").trim().padStart(3, "0");
+  const s = String(studentId || "01").trim().padStart(2, "0");
   const cleanPrefix = prefix.endsWith("-") ? prefix : `${prefix}-`;
   return `${cleanPrefix}${y}${b}${s}`;
 }
